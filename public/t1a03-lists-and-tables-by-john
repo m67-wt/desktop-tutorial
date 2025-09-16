@@ -1,0 +1,36 @@
+<h5>Version 0.0.2</h5>
+<h1 align=center>t1a03-lists-and-tables-by-john</h1>
+<h2> lists</h2>
+<ol> orderws list of fav foods (at least 5)
+  <li>kd
+  <li>steak
+</ol>
+
+<ul> unordered list of countires (at least 5)
+  <li>camada
+  <li>france
+</ul>
+<=
+<b>assignment</b>. you make a list inside a list of multiple items<br>
+<h2> tables</h2>
+<table border=1>
+<tr><td>a</td><td>b</td></tr>
+<tr><td>1</td><td>2</td></tr>
+</table><br>
+
+<b>assignment</b> make a 3 x 4 table,
+then make a link and image table with border = 0<br><br><br>
+
+<h2>advanced</h2>
+
+load an image and get it to move 10 pixels to the left using the button below<br>
+
+<image id="myimage01" src="" style"position:relative; left:0; top:0; width:50; height:50; '><br>
+
+<input type=button value="go left" onclick="{
+  document.getelementbyid('myimage01').style.left='200px'
+  document.getelementid('mydiv01').innerHTML = 'it went left'
+}">
+
+
+<div id="mydiv01">...</div>
