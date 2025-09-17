@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Simple Flappy Bird</title>
+<style>
+  body { margin: 0; overflow: hidden; background: #70c5ce; }
+  canvas { display: block; margin: 0 auto; background: #70c5ce; }
+</style>
+</head>
+<body>
+<canvas id="game" width="400" height="600"></canvas>
+<script>
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+
+  let birdY = 300;
+  let velocity = 0;
+  const gravity = 0.5;
+  const jump = -8;
+
+  let pipeX = 400;
+  let pipeHeight = 200;
+  const pipeWidth = 50;
+  const gap = 150;
+
+  let score = 0;
+  let gameOver = false;
+
+  function drawBird() {
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    ctx.arc(80, birdY, 15, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawPipe() {
+    ctx.fillStyle = "green";
+    // Top pipe
+    ctx.fillRect(pipeX, 0, pipeWidth, pipeHeight);
+    // Bottom pipe
+    ctx.fillRect(pipeX, pipeHeight + gap, pipeWidth, canvas.height);
+  }
+
+  function reset() {
+    birdY = 300;
+    velocity = 0;
+    pipeX = 400;
+    pipeHeight = Math.random() * 300 + 50;
+    score = 0;
+    gameOver = false;
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Bird physics
+    velocity += gravity;
+    birdY += velocity;
+
+    // Move pipe
+    pipeX -= 2;
+
+    // If pipe goes off screen, reset it and increase score
+    if (pipeX + pipeWidth < 0) {
+      pipeX = 400;
+      pipeHeight = Math.random() * 300 + 50;
+      score++;
+    }
+
+    // Draw everything
+    drawBird();
+    drawPipe();
+
+    // Check collisions
+    if (
+      birdY < pipeHeight || 
+      birdY > pipeHeight + gap || 
+      birdY > canvas.height || 
+      birdY < 0
+    ) {
+      if (80 > pipeX && 80 < pipeX + pipeWidth) {
+        gameOver = true;
+      }
+    }
+
+    // Draw score
+    ctx.fillStyle = "white";
+    ctx.font = "20px sans-serif";
+    ctx.fillText("Score: " + score, 10, 30);
+
+    if (gameOver) {
+      ctx.fillStyle = "white";
+      ctx.font = "30px sans-serif";
+      ctx.fillText("Game Over! Press SPACE", 40, canvas.height / 2);
+      return;
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  document.addEventListener("keydown", e => {
+    if (e.code === "Space") {
+      if (gameOver) {
+        reset();
+        loop();
+      } else {
+        velocity = jump;
+      }
+    }
+  });
+
+  reset();
+  loop();
+</script>
+</body>
+</html>
