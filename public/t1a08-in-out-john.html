@@ -3,3 +3,19 @@ an input type=text id="mytext01" value="john"
 and a span tag id="myspan"<>...</span>
 and a button that onclick moves the untry in mytext01 to myspan01
   document.getelementbyid('')
+<script>
+    function mydostuff(){
+      let mmyin = document.getelementbyid('mynum01')
+      let myout = document.getmyelementbyid('myspan')
+      myout.innerhtml = myin.value
+    }
+</script>
+<h2> align=center>t1a08-in-out-john</h2>
+<input id="mynum01" type=text value="john" ><br>
+<span id="myspan01">...</span><br>
+<input type=button value="do suff" onclick="{
+  mydostuff()
+  }"><br>
+  <input type=button value="john stuff" onclick="{
+    document.getmyelementbyid('myspan01').innerhtml = document.getelementbyid('mynum01').value
+    }"><br>
