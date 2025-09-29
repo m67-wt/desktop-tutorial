@@ -1,3 +1,15 @@
+<h2 align=center>t1a09-variables-john.html</h2>
 show javascript variables that set all the different types of variables
 integers, charaters, boolean, float, string, 
 and also typeo, var, const, let
+<input id="mynum01" type=text value="john" >
++
+<input id="mynum02" type=text value="mary" ><br>
+<span id="myspan01">...</span><br>
+<input type=button value="add (concatenate) strings" onclick="{
+  let myjohn = document.getelementbyid('mynum01').value
+  var mymary = document.getelementbyid('mynum02').value
+  const myout = document.getelementbyid('myspan01')
+  myout.innerTHML = john +''+ mymary
+  }"><br>
+  you do similar  versions of this for integer character, boolean and float.
