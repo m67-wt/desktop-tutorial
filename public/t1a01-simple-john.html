@@ -1,24 +1,27 @@
-
 <h1 align="center">t1a01-simple-john</h1>
-    Hello world<br> 
-    <a href="https://openai.com/chatgpt/">Visit openai.com</a><br>
-    
-    <button onclick="changeBackground()">Change Background Color</button>
-    
-    <div class="image-container">
-        <img width="300" src="https://www.nylabone.com/-/media/project/oneweb/nylabone/images/dog101/activities-fun/10-great-small-dog-breeds/boston-terrier-portrait.jpg" alt="Cat Image." class="padded-image">
-        <img width="300" src="https://www.nylabone.com/-/media/project/oneweb/nylabone/images/dog101/activities-fun/10-great-small-dog-breeds/maltese-portrait.jpg?h=448&w=740&hash=B111F1998758CA0ED2442A4928D5105D" class="padded-image">
-        <img width="300" src="https://www.nylabone.com/-/media/project/oneweb/nylabone/images/dog101/activities-fun/10-great-small-dog-breeds/dachshund-portrait.jpg" class="padded-image">
-        <img width="300" src="https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg" class="padded-image">
-        <img width="300" src="https://upload.wikimedia.org/wikipedia/commons/6/68/Orange_tabby_cat_sitting_on_fallen_leaves-Hisashi-01A.jpg">
-    </div>
+Hello world<br> 
+<a href="https://github.com/m67-wt/desktop-tutorial">john's github page</a><br>
 
-    <script>
-        function changeBackground() {
-            const colors = ['#ADD8E6', '#FFB6C1', '#90EE90', '#FFD700', '#FF6347', '#FF69B4'];
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
-            document.body.style.backgroundColor = randomColor;
-        }
-    </script>
+<div class="image-container">
+    <img width="300" src="https://www.nylabone.com/-/media/project/oneweb/nylabone/images/dog101/activities-fun/10-great-small-dog-breeds/boston-terrier-portrait.jpg" alt="Dog Image." class="padded-image">
+    <img width="300" src="https://www.nylabone.com/-/media/project/oneweb/nylabone/images/dog101/activities-fun/10-great-small-dog-breeds/maltese-portrait.jpg?h=448&w=740&hash=B111F1998758CA0ED2442A4928D5105D" class="padded-image">
+    <img width="300" src="https://www.nylabone.com/-/media/project/oneweb/nylabone/images/dog101/activities-fun/10-great-small-dog-breeds/dachshund-portrait.jpg" class="padded-image">
+    <img width="300" src="https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg" class="padded-image">
+    <img width="300" src="https://upload.wikimedia.org/wikipedia/commons/6/68/Orange_tabby_cat_sitting_on_fallen_leaves-Hisashi-01A.jpg">
+</div>
+
+<script>
+    const colors = ['#ADD8E6', '#FFB6C1', '#90EE90', '#FFD700', '#FF6347', '#FF69B4'];
+    let currentIndex = 0;
+
+    function switchBackground() {
+        document.body.style.backgroundColor = colors[currentIndex];
+        currentIndex = (currentIndex + 1) % colors.length;
+    }
+
+    // Run immediately and then every 5 seconds
+    switchBackground();
+    setInterval(switchBackground, 5000);
+</script>
 </body>
 </html>
