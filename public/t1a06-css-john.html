@@ -1,5 +1,172 @@
-<h1 align=center>t1a06-css-john.html</h1>
-<a href="https://www.w3schools.com/Css/css_border.asp">w3schools css</a><br><br>
-this is <b>bold</b> true?<br>
-this is <b style="color:red; background-color:yellow;">cool</b> yes!<br><br>
-this is <i style="border-style:groove;">italic witha border</i>
+
+
+  <style>
+    body {
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      position: relative;
+      height: 100vh;
+      transition: opacity 2s ease;
+      opacity: 1;
+    }
+
+    body.fade-out {
+      opacity: 0;
+    }
+
+    .content-box {
+      background-color: rgba(255, 255, 255, 0.9); 
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      max-width: 600px;
+      margin: auto;
+      position: relative;
+      z-index: 10;
+      top: 50%;
+      transform: translateY(-50%);
+      
+      background-image:
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 10px,
+          rgba(255, 182, 193, 0.3) 10px,
+          rgba(255, 182, 193, 0.3) 20px
+        ),
+        repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 10px,
+          rgba(255, 182, 193, 0.3) 10px,
+          rgba(255, 182, 193, 0.3) 20px
+        );
+      background-blend-mode: overlay;
+    }
+
+    .ctrimg {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .ctrimg img {
+      border: 10px solid white;
+      border-radius: 20px;
+    }
+
+    a {
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    /* Fish GIF Styles */
+    #fish {
+      position: absolute;
+      width: 100px;
+      height: auto;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Cookie Clicker Styles */
+    #cookie {
+      font-size: 50px;
+      cursor: pointer;
+      user-select: none;
+      margin: 20px auto 10px auto;
+      display: block;
+      transition: transform 0.1s ease;
+    }
+
+    #cookie:active {
+      transform: scale(0.9);
+    }
+
+    #counter {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <img id="fish" src="https://media1.tenor.com/m/R5IECfIf34YAAAAd/fish-spinning.gif" alt="Spinning Fish">
+
+  <div class="content-box">
+    <h1>t1a06-Css-john.html</h1>
+
+    <a href="https://www.w3schools.com/Css/css_border.asp">w3schools css</a><br><br>
+
+    This is <b>bold</b> true?<br>
+    This is <b style="color:red; background-color:yellow;">cool</b> yes!<br><br>
+    This is <i style="border-style:groove;">italic with a border</i><br><br>
+
+    <div class="ctrimg">
+      <a href="https://github.com/m67-wt/desktop-tutorial">
+        <img src="https://www.pixelstalk.net/wp-content/uploads/images2/Beautiful-cat-wallpaper.jpg" width="300" height="200" alt="Beautiful Cat">
+      </a>
+    </div>
+DO NOT CLICK THE COOKIE 50 TIMES
+   
+    <div>
+      <span id="cookie" role="button" aria-label="Cookie">🍪</span>
+      <div id="counter">Clicks: 0</div>
+    </div>
+  </div>
+
+  <script>
+    const fish = document.getElementById("fish");
+    let x = 100;
+    let y = 100;
+    let dx = 2;
+    let dy = 2;
+
+    function animateFish() {
+      const fishWidth = fish.offsetWidth;
+      const fishHeight = fish.offsetHeight;
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+
+      x += dx;
+      y += dy;
+
+      if (x + fishWidth >= screenWidth || x <= 0) {
+        dx *= -1;
+      }
+
+      if (y + fishHeight >= screenHeight || y <= 0) {
+        dy *= -1;
+      }
+
+      fish.style.left = x + "px";
+      fish.style.top = y + "px";
+
+      requestAnimationFrame(animateFish);
+    }
+
+    animateFish();
+
+    // Cookie Clicker Logic with fade out at 50 clicks
+    const cookie = document.getElementById("cookie");
+    const counter = document.getElementById("counter");
+    let clickCount = 0;
+
+    cookie.onclick = () => {
+      clickCount++;
+      counter.textContent = `Clicks: ${clickCount}`;
+
+      if (clickCount === 50) {
+        document.body.classList.add("fade-out");
+      }
+    };
+  </script>
+
+</body>
+</html>
