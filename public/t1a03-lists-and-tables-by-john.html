@@ -1,36 +1,267 @@
-<h5>Version 0.0.2</h5>
-<h1 align=center>t1a03-lists-and-tables-by-john</h1>
-<h2> lists</h2>
-<ol> orderws list of fav foods (at least 5)
-  <li>kd
-  <li>steak
+<h1 align="center">t1a03-lists-and-tables-by-john</h1>
+
+<h2>lists</h2>
+
+<p>
+  <span style="cursor:pointer; color:blue; text-decoration:underline;" onclick="toggleFavFoods()">Fav Foods ▼</span>
+</p>
+
+<ol id="favFoodsList" style="display:none; margin-left:20px;">
+  <li>kd</li>
+  <li>steak</li>
+  <li>fries</li>
+  <li>almonds</li>
+  <li>grapes</li>
 </ol>
 
-<ul> unordered list of countires (at least 5)
-  <li>camada
-  <li>france
-</ul>
-<=
-<b>assignment</b>. you make a list inside a list of multiple items<br>
-<h2> tables</h2>
-<table border=1>
-<tr><td>a</td><td>b</td></tr>
-<tr><td>1</td><td>2</td></tr>
-</table><br>
+<script>
+  function toggleFavFoods() {
+    const list = document.getElementById('favFoodsList');
+    if (list.style.display === 'none') {
+      list.style.display = 'block';
+    } else {
+      list.style.display = 'none';
+    }
+  }
+</script>
 
-<b>assignment</b> make a 3 x 4 table,
-then make a link and image table with border = 0<br><br><br>
+<p>unordered list of countries (at least 5)</p>
+<ul>
+<p>Click a country to see some cities:</p>
+
+<ul>
+  <li>
+    <span style="cursor:pointer; color:blue;" onclick="toggleCities('canadaCities')">Canada</span>
+    <ul id="canadaCities" style="display:none; margin-left:20px;">
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('torontoFoods')">Toronto</span>
+        <ul id="torontoFoods" style="display:none; margin-left:20px;">
+          <li>Poutine</li>
+          <li>Peameal Bacon Sandwich</li>
+          <li>St. Lawrence Market (restaurant)</li>
+        </ul>
+      </li>
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('vancouverFoods')">Vancouver</span>
+        <ul id="vancouverFoods" style="display:none; margin-left:20px;">
+          <li>Japadog</li>
+          <li>Seafood</li>
+          <li>Blue Water Cafe</li>
+        </ul>
+      </li>
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('montrealFoods')">Montreal</span>
+        <ul id="montrealFoods" style="display:none; margin-left:20px;">
+          <li>Bagels</li>
+          <li>Smoked Meat Sandwich</li>
+          <li>Schwartz's Deli</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  
+  <li>
+    <span style="cursor:pointer; color:blue;" onclick="toggleCities('franceCities')">France</span>
+    <ul id="franceCities" style="display:none; margin-left:20px;">
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('parisFoods')">Paris</span>
+        <ul id="parisFoods" style="display:none; margin-left:20px;">
+          <li>Croissants</li>
+          <li>Escargots</li>
+          <li>Le Jules Verne (restaurant)</li>
+        </ul>
+      </li>
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('lyonFoods')">Lyon</span>
+        <ul id="lyonFoods" style="display:none; margin-left:20px;">
+          <li>Quenelles</li>
+          <li>Salade Lyonnaise</li>
+          <li>Les Halles de Lyon Paul Bocuse (market/restaurant)</li>
+        </ul>
+      </li>
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('marseilleFoods')">Marseille</span>
+        <ul id="marseilleFoods" style="display:none; margin-left:20px;">
+          <li>Bouillabaisse</li>
+          <li>Panisse</li>
+          <li>Chez Fonfon (restaurant)</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  
+  <li>
+    <span style="cursor:pointer; color:blue;" onclick="toggleCities('japanCities')">Japan</span>
+    <ul id="japanCities" style="display:none; margin-left:20px;">
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('tokyoFoods')">Tokyo</span>
+        <ul id="tokyoFoods" style="display:none; margin-left:20px;">
+          <li>Sushi</li>
+          <li>Ramen</li>
+          <li>Tsukiji Fish Market (restaurants)</li>
+        </ul>
+      </li>
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('kyotoFoods')">Kyoto</span>
+        <ul id="kyotoFoods" style="display:none; margin-left:20px;">
+          <li>Kaiseki</li>
+          <li>Yuba</li>
+          <li>Nishiki Market (food stalls)</li>
+        </ul>
+      </li>
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('osakaFoods')">Osaka</span>
+        <ul id="osakaFoods" style="display:none; margin-left:20px;">
+          <li>Takoyaki</li>
+          <li>Okonomiyaki</li>
+          <li>Dotonbori (restaurant district)</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  
+  <li>
+    <span style="cursor:pointer; color:blue;" onclick="toggleCities('germanyCities')">Germany</span>
+    <ul id="germanyCities" style="display:none; margin-left:20px;">
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('berlinFoods')">Berlin</span>
+        <ul id="berlinFoods" style="display:none; margin-left:20px;">
+          <li>Currywurst</li>
+          <li>Berliner Pfannkuchen</li>
+          <li>Mustafa’s Gemüse Kebap</li>
+        </ul>
+      </li>
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('munichFoods')">Munich</span>
+        <ul id="munichFoods" style="display:none; margin-left:20px;">
+          <li>Weisswurst</li>
+          <li>Brezn (pretzel)</li>
+          <li>Hofbräuhaus (beer hall)</li>
+        </ul>
+      </li>
+      <li>
+        <span style="cursor:pointer; color:blue;" onclick="toggleCities('hamburgFoods')">Hamburg</span>
+        <ul id="hamburgFoods" style="display:none; margin-left:20px;">
+          <li>Franzbrötchen</li>
+          <li>Labskaus</li>
+          <li>Fischmarkt (fish market)</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<script>
+  function toggleCities(id) {
+    const el = document.getElementById(id);
+    if (el.style.display === "none") {
+      el.style.display = "block";
+    } else {
+      el.style.display = "none";
+    }
+  }
+</script>
+
+</ul>
+
+<p><b>assignment</b>: you make a list inside a list of multiple items</p>
+
+<h2>tables</h2>
+
+<table border="0" style="border-collapse: collapse; text-align: center; width: 600px; height: 300px;">
+  <tr style="height: 100px;">
+    <td style="width: 150px;">
+      <a href="https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg" target="_blank" rel="noopener noreferrer">
+        <img src="https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg" alt="A" width="50" height="50">
+      </a>
+    </td>
+    <td style="width: 150px;">
+      <a href="https://jooinn.com/images1280_/dogs.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://jooinn.com/images1280_/dogs.jpg" alt="B" width="50" height="50">
+      </a>
+    </td>
+    <td style="width: 150px;">
+      <a href="https://images.pexels.com/photos/257540/pexels-photo-257540.jpeg" target="_blank" rel="noopener noreferrer">
+        <img src="https://images.pexels.com/photos/257540/pexels-photo-257540.jpeg" alt="C" width="50" height="50">
+      </a>
+    </td>
+    <td style="width: 150px;">
+      <a href="https://jooinn.com/images/dog-67.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://jooinn.com/images/dog-67.jpg" alt="D" width="50" height="50">
+      </a>
+    </td>
+  </tr>
+  <tr style="height: 100px;">
+    <td style="width: 150px;">
+      <a href="https://www.zastavki.com/pictures/1920x1200/2012/Animals_Cats_Beautiful_kitten_033169_.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://www.zastavki.com/pictures/1920x1200/2012/Animals_Cats_Beautiful_kitten_033169_.jpg" alt="1" width="50" height="50">
+      </a>
+    </td>
+    <td style="width: 150px;">
+      <a href="https://www.zastavki.com/pictures/1920x1200/2011/Animals_Cats_Cat_in_the_Grass_033046_.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://www.zastavki.com/pictures/1920x1200/2011/Animals_Cats_Cat_in_the_Grass_033046_.jpg" alt="2" width="50" height="50">
+      </a>
+    </td>
+    <td style="width: 150px;">
+      <a href="https://www.zastavki.com/pictures/1920x1200/2011/Animals_Cats_British_lop-eared_cat_033008_.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://www.zastavki.com/pictures/1920x1200/2011/Animals_Cats_British_lop-eared_cat_033008_.jpg" alt="3" width="50" height="50">
+      </a>
+    </td>
+    <td style="width: 150px;">
+      <a href="https://www.zastavki.com/pictures/1920x1200/2011/Animals_Cats_Cat_in_the_glasses_032992_.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://www.zastavki.com/pictures/1920x1200/2011/Animals_Cats_Cat_in_the_glasses_032992_.jpg" alt="4" width="50" height="50">
+      </a>
+    </td>
+  </tr>
+  <tr style="height: 100px;">
+    <td style="width: 150px;">
+      <a href="https://cdn.britannica.com/10/250610-050-BC5CCDAF/Zebra-finch-Taeniopygia-guttata-bird.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://cdn.britannica.com/10/250610-050-BC5CCDAF/Zebra-finch-Taeniopygia-guttata-bird.jpg" alt="5" width="50" height="50">
+      </a>
+    </td>
+    <td style="width: 150px;">
+      <a href="https://cdn.britannica.com/02/44002-004-1E8F5CA6/canary-member-finch-family-pet-songbirds-world.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://cdn.britannica.com/02/44002-004-1E8F5CA6/canary-member-finch-family-pet-songbirds-world.jpg" alt="6" width="50" height="50">
+      </a>
+    </td>
+    <td style="width: 150px;">
+      <a href="https://cdn.britannica.com/68/3668-050-24805F05/California-quail.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://cdn.britannica.com/68/3668-050-24805F05/California-quail.jpg" alt="7" width="50" height="50">
+      </a>
+    </td>
+    <td style="width: 150px;">
+      <a href="https://cdn.britannica.com/45/251245-050-86C44E19/black-woodpecker-bird-dryocopus-martius.jpg" target="_blank" rel="noopener noreferrer">
+        <img src="https://cdn.britannica.com/45/251245-050-86C44E19/black-woodpecker-bird-dryocopus-martius.jpg" alt="8" width="50" height="50">
+      </a>
+    </td>
+  </tr>
+</table>
+
+<br>
+
+<p><b>assignment</b>: make a 3 x 4 table, then make a link and image table with border = 0</p>
+
+<br><br><br>
 
 <h2>advanced</h2>
 
-load an image and get it to move 10 pixels to the left using the button below<br>
+<p>load an image and get it to move 10 pixels to the left using the button below</p>
 
-<image id="myimage01" src="" style"position:relative; left:0; top:0; width:50; height:50; '><br>
 
-<input type=button value="go left" onclick="{
-  document.getelementbyid('myimage01').style.left='200px'
-  document.getelementid('mydiv01').innerHTML = 'it went left'
+<img id="myimage01" src="https://wallpapercave.com/wp/wp4821782.jpg" style="position:relative; left:0px; top:0px; width:50px; height:50px;"><br>
+
+<input type="button" value="go left" onclick="{
+  const img = document.getElementById('myimage01');
+  // Get current left position, convert to number
+  let currentLeft = parseInt(img.style.left) || 0;
+  // Move left by 10 pixels
+  img.style.left = (currentLeft - 10) + 'px';
+
+  document.getElementById('mydiv01').innerHTML = 'it went left';
 }">
 
-
 <div id="mydiv01">...</div>
+<style>
+body {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+</style>
