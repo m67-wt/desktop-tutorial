@@ -1,37 +1,141 @@
-<h1 align=center>t1a05-forms-john.html</h1>
 
-use a llm like <a href="https://copilot.microsoft.com">copilot</a> and ask it to "show me how to do all the simle form elements on none html page as if I was a 10 year old" <br><br>
+  <h1 align="center">t1a05-forms-john.html</h1>
+<!-- use a llm like <a href="https://copilot.microsoft.com">copilot</a> and ask it to "show me how to do all the simle form elements on none html page as if I was a 10 year old" --> <br><br>
 
-<form   >
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+    }
 
-name:<input type="text" id="name" value="john"><br>
-password:<input type="password" id="password" id="password" value="never"><br><br>
-number: <input type=number value=6><br>
-button as an input: <input type=button value=click onclick="alert('hi')"><br>
-button as a button tag: <button></button><br>
-<br><br>
+    h1 {
+      text-align: center;
+      color: #333;
+    }
 
-  radio buttons:<br>
-    <input type="radio" name="myrad" value="red">red<br>
-    <input type="radio" name="myrad" value="blue">blue<br>
+    form {
+      background-color: #ffffff;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 25px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
 
-  checkboxes:<br>
-    <input type="checkbox" value="reading">reading<br>
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      margin: 8px 0 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    input[type="radio"],
+    input[type="checkbox"] {
+      margin-right: 6px;
+    }
+
+    input[type="submit"],
+    input[type="reset"],
+    input[type="button"],
+    button {
+      padding: 10px 20px;
+      margin: 8px 5px 15px 0;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    input[type="submit"] {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    input[type="reset"] {
+      background-color: #f44336;
+      color: white;
+    }
+
+    input[type="button"] {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    button {
+      background-color: #9c27b0;
+      color: white;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+
+
+  <form>
+
+    <div class="section">
+      <label for="name">Name:</label><br>
+      <input type="text" id="name" value="john"><br>
+
+      <label for="password">Password:</label><br>
+      <input type="password" id="password" value="never"><br>
+
+      <label for="number">Number:</label><br>
+      <input type="number" value="6"><br>
+    </div>
+
+    <div class="section">
+      <label>Button as an input:</label><br>
+      <input type="button" value="click" onclick="alert('hi')"><br><br>
+
+      <label>Button as a button tag:</label><br>
+      <button>Click Me!</button><br>
+
+    </div>
+
+    <div class="section">
+      <label>Radio buttons:</label><br>
+      <input type="radio" name="myrad" value="red">red<br>
+      <input type="radio" name="myrad" value="blue">blue<br>
+    </div>
+
+    <div class="section">
+      <label>Checkboxes:</label><br>
+      <input type="checkbox" value="reading">reading<br>
       <input type="checkbox" value="sports">sports<br>
+    </div>
 
-  <br><br>
-
-  <textarea rows=4 cols=90 >
+    <div class="section">
+      <label for="textarea">Textarea:</label><br>
+      <textarea rows=4 cols=90>
   writiing here
-  </textarea><br><br>
+      </textarea><br>
+    </div>
 
-    select box:<br>
-    <select >
-      <option value="use">usa</option>
-      <option value="canada">canada</option>
-      
-    </select><br><br>
+    <div class="section">
+      <label for="select">Select box:</label><br>
+      <select>
+        <option value="use">usa</option>
+        <option value="canada">canada</option>
+      </select><br>
+    </div>
 
-  <input type="submit" value="submit">
-  <input type="reset" value="reset">
-</form>
+    <input type="submit" value="submit">
+    <input type="reset" value="reset">
+  </form>
