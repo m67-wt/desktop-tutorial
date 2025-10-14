@@ -1,21 +1,44 @@
-<h1> t1a08-in-out-john.html</h1>
-an input type=text id="mytext01" value="john"
-and a span tag id="myspan"<>...</span>
-and a button that onclick moves the untry in mytext01 to myspan01
-  document.getelementbyid('')
-<script>
-    function mydostuff(){
-      let myin = document.getelementbyid('mynum01')
-      let myout = document.getmyelementbyid('myspan')
-      myout.innerhtml = myin.value
-    }
-</script>
-<h2> align=center>t1a08-in-out-john</h2>
-<input id="mynum01" type=text value="john" ><br>
+<h1>t1a08-in-out-john.html</h1>
+
+<h2 style="text-align:center;">t1a08-in-out-john</h2>
+
+<!-- Original input/output -->
+<input id="mynum01" type="text" value="john" placeholder="Type English here..." oninput="autoTranslateOnline()"><br>
+
+<!-- Span for original buttons -->
 <span id="myspan01">...</span><br>
-<input type=button value="do suff" onclick="{
-  mydostuff()
-  }"><br>
-  <input type=button value="john stuff" onclick="{
-    document.getmyelementbyid('myspan01').innerhtml = document.getelementbyid('mynum01').value
-    }"><br>
+
+<!-- Span for online translation -->
+<span id="myspan02">French (live): ...</span><br>
+
+<!-- Buttons from original assignment -->
+<input type="button" value="do stuff" onclick="mydostuff()"><br>
+<input type="button" value="john stuff" onclick="{
+  document.getElementById('myspan01').innerHTML = document.getElementById('mynum01').value;
+}"><br>
+
+<script>
+// Original assignment function fixed
+function mydostuff(){
+  let myin = document.getElementById('mynum01');
+  let myout = document.getElementById('myspan01');
+  myout.innerHTML = myin.value;
+}
+
+// Live online translator function
+async function autoTranslateOnline(){
+  let text = document.getElementById('mynum01').value;
+  if (text.trim() === '') {
+    document.getElementById('myspan02').innerHTML = 'French (live): ...';
+    return;
+  }
+
+  try {
+    let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|fr`);
+    let data = await res.json();
+    document.getElementById('myspan02').innerHTML = 'French (live): ' + data.responseData.translatedText;
+  } catch (err) {
+    document.getElementById('myspan02').innerHTML = 'French (live): (translation error)';
+  }
+}
+</script>
