@@ -1,15 +1,193 @@
-<h2 align=center>t1a09-variables-john.html</h2>
-show javascript variables that set all the different types of variables
-integers, charaters, boolean, float, string, 
-and also typeo, var, const, let
-<input id="mynum01" type=text value="john" >
-+
-<input id="mynum02" type=text value="mary" ><br>
-<span id="myspan01">...</span><br>
-<input type=button value="add (concatenate) strings" onclick="{
-  let myjohn = document.getelementbyid('mynum01').value
-  var mymary = document.getelementbyid('mynum02').value
-  const myout = document.getelementbyid('myspan01')
-  myout.innerTHML = john +''+ mymary
-  }"><br>
-  you do similar  versions of this for integer character, boolean and float.
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 30px;
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    p {
+      text-align: center;
+      font-size: 1.1em;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 120px;
+      padding: 8px;
+      margin: 10px 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    input[type="button"] {
+      margin-top: 10px;
+      padding: 10px 15px;
+      border: none;
+      background-color: #3498db;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.95em;
+      transition: background-color 0.3s ease;
+    }
+
+    input[type="button"]:hover {
+      background-color: #2980b9;
+    }
+
+    span {
+      display: inline-block;
+      margin-top: 5px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    hr {
+      margin: 30px 0;
+      border: none;
+      height: 1px;
+      background-color: #ccc;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>t1a09-variables-john.html</h2>
+    <p>Show correct use of const, var, let and the types: integer, character, boolean, float, and string.</p>
+    <p>Enter values and click buttons to see examples.</p>
+
+
+    <div class="section">
+      <input id="mynum01" type="text" value="john">
+      +
+      <input id="mynum02" type="text" value="mary"><br>
+      <span id="myspan01">...</span><br>
+      <input type="button" value="Add (concatenate) strings" onclick="
+        let myjohn = document.getElementById('mynum01').value;
+        var mymary = document.getElementById('mynum02').value;
+        const myout = document.getElementById('myspan01');
+        myout.innerHTML = myjohn + ' ' + mymary;
+      ">
+    </div>
+
+  
+    <div class="section">
+      <input id="int01" type="number" value="10">
+      +
+      <input id="int02" type="number" value="20"><br>
+      <span id="intOut">...</span><br>
+      <input type="button" value="Add integers" onclick="
+        let intA = parseInt(document.getElementById('int01').value);
+        var intB = parseInt(document.getElementById('int02').value);
+        const outInt = document.getElementById('intOut');
+        outInt.innerHTML = 'Sum (int): ' + (intA + intB);
+      ">
+    </div>
+
+    <div class="section">
+      <input id="char01" type="text" maxlength="1" value="A">
+      +
+      <input id="char02" type="text" maxlength="1" value="B"><br>
+      <span id="charOut">...</span><br>
+      <input type="button" value="Concatenate characters" onclick="
+        let c1 = document.getElementById('char01').value;
+        var c2 = document.getElementById('char02').value;
+        const outChar = document.getElementById('charOut');
+        outChar.innerHTML = 'Chars combined: ' + c1 + c2;
+      ">
+    </div>
+
+    
+    <div class="section">
+      <select id="bool01">
+        <option value="true" selected>true</option>
+        <option value="false">false</option>
+      </select>
+      +
+      <select id="bool02">
+        <option value="true" selected>true</option>
+        <option value="false">false</option>
+      </select><br>
+      <span id="boolOut">...</span><br>
+      <input type="button" value="AND booleans" onclick="
+        let b1 = (document.getElementById('bool01').value === 'true');
+        var b2 = (document.getElementById('bool02').value === 'true');
+        const outBool = document.getElementById('boolOut');
+        outBool.innerHTML = 'AND result: ' + (b1 && b2);
+      ">
+    </div>
+
+
+    <div class="section">
+      <input id="float01" type="text" value="3.14">
+      +
+      <input id="float02" type="text" value="2.71"><br>
+      <span id="floatOut">...</span><br>
+      <input type="button" value="Add floats" onclick="
+        let f1 = parseFloat(document.getElementById('float01').value);
+        var f2 = parseFloat(document.getElementById('float02').value);
+        const outFloat = document.getElementById('floatOut');
+        outFloat.innerHTML = 'Sum (float): ' + (f1 + f2);
+      ">
+    </div>
+
+  
+    <div class="section">
+      <p>Check the types in console:</p>
+      <input type="button" value="Show types in console" onclick="
+        let myStr = 'Hello';
+        var myInt = 123;
+        const myBool = false;
+        let myFloat = 3.14;
+        var myChar = 'Z';
+
+        console.log('myStr is:', typeof myStr);   
+        console.log('myInt is:', typeof myInt);    
+        console.log('myBool is:', typeof myBool);  
+        console.log('myFloat is:', typeof myFloat);
+        console.log('myChar is:', typeof myChar);  
+        alert('Check the browser console (F12) for variable types.');
+      ">
+    </div>
+
+    <div class="section">
+      <h3>Test for boolean</h3>
+      <input id="mybool" type="text" value="2.1"><br>
+      <span id="myspan03">...</span><br>
+      <input type="button" value="Is boolean?" onclick="
+        let mybool = document.getElementById('mybool').value;
+        const myout = document.getElementById('myspan03');
+        let myanswer;
+        if (mybool.toLowerCase() === 'true' || mybool.toLowerCase() === 'false') {
+          myanswer = 'yes';
+        } else {
+          myanswer = 'no';
+        }
+        myout.innerHTML = 'Is \"' + mybool + '\" a boolean? ' + myanswer;
+      ">
+    </div>
+  </div>
+
+
