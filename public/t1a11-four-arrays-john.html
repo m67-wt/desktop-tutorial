@@ -1,21 +1,86 @@
-<script>
-  let myArray = new Array()
-  myArray[0] = 'fred'
-  myArray[1] = 'mary'
-  myArray[2] = 'zizzy'
-</script>
-<h2 align=center>t1a11-four-arrays-john.html</h2>
-Max Array Entry: <input type=text id="myText01" value="3"><br>
-<input type=button value="example onClick" onclick="{
-  let mymax = document.getelementbyid('mytext01').value
-  let mysum = ''
-  document.getelementbyid('mydiv01').innerhtml = ''
+<title>t1a11-different-arrays-john.html</title>
+<style>
+      body {
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      font-family: 'Roboto', sans-serif;
+    }
+  input[type="button"] {
+    margin-top: 5px;
+    background-color: white;
+    color: black;
+    border: 1px solid navy;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  input[type="text"] {
+    width: 50px;
+    text-align: center;
+  }
+</style>
 
-for (let myLoop=0; myLoop < myMax; myLoop++){
-mySum += 'Loop #: + myLoop + 'array entry: ' + myArray[myLoop] +'<br>'
-}
-document.getelementbyid('mydiv01').innerhtml = mysum
-  }">
-  <div id="mydiv01">...</div>
-  <br>
-  you do atleast 7 other arrays:<br>
+<script>
+  // Different types of arrays
+  let namesArray = ['Liam', 'Noah', 'Olivia', 'Emma', 'Sophia', 'James', 'Mia'];
+  let numbersArray = [5, 10, 15, 20, 25, 30];
+  let floatArray = [3.14, 2.71, 1.61, 9.81, 6.28];
+  let boolArray = [true, false, true, true, false];
+  let animalsArray = ['Dog', 'Cat', 'Elephant', 'Horse', 'Panda', 'Tiger'];
+  let mixArray = ['Banana', 42, false, 7.5, 'Blue', null];
+  let nestedArray = [
+    ['A', 1],
+    ['B', 2],
+    ['C', 3]
+  ];
+  let objectArray = [
+    { name: 'Car', type: 'Vehicle' },
+    { name: 'Plane', type: 'Aircraft' },
+    { name: 'Boat', type: 'Watercraft' }
+  ];
+
+  // Simple reusable function
+  function showArray(array, inputId, outputId) {
+    let max = parseInt(document.getElementById(inputId).value);
+    let out = '';
+
+    for (let i = 0; i < max && i < array.length; i++) {
+      if (Array.isArray(array[i])) {
+        out += 'Index ' + i + ': ' + array[i].join(' - ') + '<br>';
+      } else if (typeof array[i] === 'object' && array[i] !== null) {
+        out += 'Index ' + i + ': ' + array[i].name + ' (' + array[i].type + ')<br>';
+      } else {
+        out += 'Index ' + i + ': ' + array[i] + '<br>';
+      }
+    }
+
+    document.getElementById(outputId).innerHTML = out;
+  }
+</script>
+
+<body>
+  <h2 align="center">t1a11-different-arrays-john.html</h2>
+  Max Array Entry: <input type="text" id="myText01" value="5"><br><br>
+
+  <input type="button" value="Show Names" onclick="showArray(namesArray, 'myText01', 'myDiv01')"><br>
+  <div id="myDiv01">...</div><br>
+
+  <input type="button" value="Show Numbers" onclick="showArray(numbersArray, 'myText01', 'myDiv02')"><br>
+  <div id="myDiv02">...</div><br>
+
+  <input type="button" value="Show Floats" onclick="showArray(floatArray, 'myText01', 'myDiv03')"><br>
+  <div id="myDiv03">...</div><br>
+
+  <input type="button" value="Show Booleans" onclick="showArray(boolArray, 'myText01', 'myDiv04')"><br>
+  <div id="myDiv04">...</div><br>
+
+  <input type="button" value="Show Animals" onclick="showArray(animalsArray, 'myText01', 'myDiv05')"><br>
+  <div id="myDiv05">...</div><br>
+
+  <input type="button" value="Show Mixed Data" onclick="showArray(mixArray, 'myText01', 'myDiv06')"><br>
+  <div id="myDiv06">...</div><br>
+
+  <input type="button" value="Show Nested Pairs" onclick="showArray(nestedArray, 'myText01', 'myDiv07')"><br>
+  <div id="myDiv07">...</div><br>
+
+  <input type="button" value="Show Objects" onclick="showArray(objectArray, 'myText01', 'myDiv08')"><br>
+  <div id="myDiv08">...</div><br>
+</body>
