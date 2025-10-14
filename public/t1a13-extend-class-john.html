@@ -1,0 +1,34 @@
+<script>
+  class myAnimal {
+    constructor(passName, passAge) {
+      this.myName = passName;
+      this.myAge = passAge;
+    }
+    myShow() {
+      document.getElementById('myDiv01').innerHTML = 'hello ' + this.myName + '<br>';
+    }
+  } // end class myAnimal
+</script>
+
+<h2 align=center>t1a13-extend-class-john.html</h2>
+<h4>example working classes code</h4>
+
+<input type=button value="example class set and show class animal" onClick="{
+  let myDog = new myAnimal('Snickers', 5);
+  myDog.myShow();
+}">
+
+<h4>example extending class code</h4>
+nothing: <input type=text id="myText01" value="useless at the moment"><br>
+
+<input type=button value="example extend class animal" onClick="{
+  class myCat extends myAnimal {
+    myShow() {
+      document.getElementById('myDiv01').innerHTML = this.myName + ' is a great cat<br>';
+    }
+  } // end extended class myCat
+  let myPet = new myCat('Fluffy', 14);
+  myPet.myShow();
+}">
+
+<div id="myDiv01">...</div>
