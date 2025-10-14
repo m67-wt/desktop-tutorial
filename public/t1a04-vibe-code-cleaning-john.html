@@ -1,13 +1,28 @@
-<h1 align=center>t1a04-vibe-code-cleaning-john.htnl</h1>
+<h1 align=center>t1a04-vibe-code-cleaning-john.html</h1>
 
 you need to put the cleaned code here. no Css, no confusing divs and paragraphs. just as simple as possible webpage html. <br><br>
 
-if doing javascript script are the variables sensibly named using camelcase "myvar" etc don't use promises (then.) instead use async/await, no addeventlisteners useless necessary, get chatgpt to make the changes. more changes... only simple javascript nothing fancy.
+if doing javascript script are the variables sensibly named using camelcase "myvar" etc don't use promises (then.) instead use async/await, no addeventlisteners unless necessary, get chatgpt to make the changes. more changes... only simple javascript nothing fancy.
 
 <br><br>
 
 here is the original vibecode<br>
-<iframe width="100%" height=400 src"webcam03.html"></iframe>
+<iframe width="100%" height="400" src="webcam03.html"></iframe>
 
 <br><br>
-final commets: any observations about your code comparied to the vibecode<br>
+
+final comments: any observations about your code compared to the vibecode<br><br>
+
+<textarea id="myComments" rows="4" cols="50">Type your comments here...</textarea><br>
+<input type="button" value="show comments" onclick="{
+  showComments()
+}"><br>
+<span id="myOutput">...</span>
+
+<script>
+  async function showComments() {
+    let myText = document.getElementById('myComments').value
+    let myOutput = document.getElementById('myOutput')
+    myOutput.innerHTML = 'Your comments: ' + myText
+  }
+</script>
