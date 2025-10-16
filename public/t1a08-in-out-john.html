@@ -1,36 +1,122 @@
-<h1>t1a08-in-out-john.html</h1>
-<h2 style="text-align:center;">t1a08-in-out-john</h2>
-<input id="mynum01" type="text" value="john" placeholder="Type English here..." oninput="autoTranslateOnline()"><br>
-<span id="myspan01">...</span><br>
-<span id="myspan02">French (live): ...</span><br>
-<input type="button" value="do stuff" onclick="mydostuff()"><br>
-<input type="button" value="john stuff" onclick="{
-  document.getElementById('myspan01').innerHTML = document.getElementById('mynum01').value;
-}"><br>
+
+
+<head>
+<meta charset="UTF-8" />
+<title>Test Page</title>
 <script>
-function mydostuff(){
-  let myin = document.getElementById('mynum01');
-  let myout = document.getElementById('myspan01');
-  myout.innerHTML = myin.value;
+function updateSpan() {
+  var inputValue = document.getElementById("userInput").value;
+  console.log("Update Text:", inputValue);
+  document.getElementById("displayText").textContent = inputValue;
 }
-async function autoTranslateOnline(){
-  let text = document.getElementById('mynum01').value;
-  if (text.trim() === '') {
-    document.getElementById('myspan02').innerHTML = 'French (live): ...';
-    return;
+
+function spamtext() {
+  var inputValue = document.getElementById("userInput").value;
+  console.log("Spam Text:", inputValue);
+  var spammed = "";
+  for (var i = 0; i < 10; i++) {
+    spammed += inputValue + " ";
   }
-  try {
-    let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|fr`);
-    let data = await res.json();
-    document.getElementById('myspan02').innerHTML = 'French (live): ' + data.responseData.translatedText;
-  } catch (err) {
-    document.getElementById('myspan02').innerHTML = 'French (live): (translation error)';
+  document.getElementById("displayText").textContent = spammed.trim();
+}
+
+function double() {
+  var inputValue = document.getElementById("numberinput").value;
+  var number = parseFloat(inputValue);
+  if (!isNaN(number)) {
+    var result = number * 2;
+    console.log("Double Number:", result);
+    document.getElementById("numberdisplay").textContent = "Double: " + result;
+  } else {
+    console.log("Invalid number input");
+    document.getElementById("numberdisplay").textContent = "Please enter a valid number";
   }
 }
 </script>
-  <style>
-    body {
-      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-      font-family: 'Roboto', sans-serif;
-    }
-  </style>
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  font-family: Arial, sans-serif;
+  color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 320px; /* optional: ensures on small screens */
+}
+
+.container {
+  background: white;
+  border: 2px solid white;
+  padding: 40px 50px; /* increased padding */
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(255,255,255,0.4);
+  max-width: 450px;  /* bigger max width */
+  width: 100%;
+  text-align: center;
+  min-height: 350px; /* optional for better vertical size */
+}
+
+h1 {
+  background-color: grey;
+  padding: 10px 0;
+  margin: 0 0 20px 0;
+  color: white;
+  border-radius: 5px;
+}
+
+/* Buttons styling */
+button {
+  margin: 10px 5px;
+  padding: 10px 18px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #23a6d5;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #1b7cb8;
+}
+
+input[type="text"],
+input[type="number"] {
+  padding: 8px 12px;
+  font-size: 16px;
+  width: 100%;
+  margin-bottom: 15px;
+  border: 1.5px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+#displayText, #numberdisplay {
+  font-weight: bold;
+  margin-bottom: 20px;
+  display: block;
+  font-size: 18px;
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>t1a08-john-in-out</h1>
+    <span id="displayText">Hello!</span>
+    <input type="text" id="userInput" placeholder="Type something…" />
+    <div>
+      <button onclick="updateSpan()">Update Text</button>
+      <button onclick="spamtext()">press to repeat the text</button>
+    </div>
+
+    <span id="numberdisplay">Doubled Number</span>
+    <input type="number" min="1" max="100" step="1" placeholder="testing…" id="numberinput" />
+    <div>
+      <button onclick="double()">Double Number</button>
+    </div>
+  </div>
+</body>
+
