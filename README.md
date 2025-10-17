@@ -113,9 +113,9 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details><summary>Tuesday Sept 23rd, 2025</summary>
 
 ### Title
+1. learned inline css
 1.
-1.
-1.
+1. make a doom game that possibly is multiplayer
 
 </details>
 
@@ -177,7 +177,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 ### Title
 1.
 1.
-1.
+1. make a doom game that possibly is multiplayer
 
 </details>
 
@@ -186,7 +186,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 ### Title
 1.
 1.
-1.
+1.make a doom game that possibly is multiplayer
 
 </details>
 
@@ -195,7 +195,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 ### Title
 1.
 1.
-1.
+1.make a doom game that possibly is multiplayer
 
 </details>
 
@@ -206,7 +206,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 ### Title
 1.
 1.
-1.
+1.make a doom game that possibly is multiplayer
 
 </details>
 
@@ -215,7 +215,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 ### Title
 1.
 1.
-1.
+1.make a doom game that possibly is multiplayer
 
 </details>
 
@@ -224,7 +224,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 ### Title
 1.
 1.
-1.
+1.make a doom game that possibly is multiplayer
 
 </details>
 
@@ -233,7 +233,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 ### Title
 1.
 1.
-1.
+1.make a doom game that possibly is multiplayer
 
 </details>
 
@@ -242,7 +242,7 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 ### Title
 1.
 1.
-1.
+1.make a doom game that possibly is multiplayer
 
 </details>
 
@@ -265,18 +265,18 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details><summary>Wednesday Oct 15th, 2025</summary>
 
 ### Title
-1.
-1.
-1.
+1. worked on t1a13-extend-class-john.html
+1. learned how to use edgeimpulse
+1.make a doom game that possibly is multiplayer
 
 </details>
 
 <details><summary>Thursday Oct 16th, 2025</summary>
 
 ### Title
-1.
-1.
-1.
+1. we started t1a14-ai-edgeimpulse-john.html
+1. I learned how to make the endgimpulse ai work
+1.make a doom game that possibly is multiplayer
 
 </details>
 
