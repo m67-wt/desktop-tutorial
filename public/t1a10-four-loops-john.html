@@ -1,7 +1,84 @@
-<h2> align=center>t1a10-four-loops-john.html</h2>
-<input id="myNum01" type=number value="4" ><br>
-<input type=button value="myEvent squares" onclick="{
-    let myTemp = ''
-  document.getElementById('myDiv01').innerHTML = myTemp
-  }"><br>
-  <div id="myDive01">...</div>
+<h2 align="center">t1a10-four-loops-john.html</h2>
+<style>
+  body {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<input id="myNum01" type="number" value="4"><br><br>
+
+<input type="button" value="myEvent squares" onclick="{
+  let myTemp = '';
+  let num = document.getElementById('myNum01').value;
+
+  for (let i = 1; i <= num; i++) {
+    myTemp += i + ' squared = ' + (i * i) + '<br>';
+  }
+
+  document.getElementById('myDiv01').innerHTML = myTemp;
+}"><br>
+<div id="myDiv01">...</div><br>
+
+<input type="button" value="myEvent cubes" onclick="{
+  let myTemp = '';
+  let num = document.getElementById('myNum01').value;
+
+  for (let i = 1; i <= num; i++) {
+    myTemp += i + ' cubed = ' + (i * i * i) + '<br>';
+  }
+
+  document.getElementById('myDiv02').innerHTML = myTemp;
+}"><br>
+<div id="myDiv02">...</div><br>
+
+<input type="button" value="myEvent factorials" onclick="{
+  let myTemp = '';
+  let num = document.getElementById('myNum01').value;
+
+  function factorial(n) {
+    let f = 1;
+    for(let j=1; j<=n; j++) {
+      f *= j;
+    }
+    return f;
+  }
+
+  for (let i = 1; i <= num; i++) {
+    myTemp += i + '! = ' + factorial(i) + '<br>';
+  }
+
+  document.getElementById('myDiv03').innerHTML = myTemp;
+}"><br>
+<div id="myDiv03">...</div><br>
+
+<input type="button" value="myEvent even numbers" onclick="{
+  let myTemp = '';
+  let num = document.getElementById('myNum01').value;
+
+  for (let i = 1; i <= num; i++) {
+    if (i % 2 === 0) {
+      myTemp += i + ' is even<br>';
+    }
+  }
+
+  document.getElementById('myDiv04').innerHTML = myTemp;
+}"><br>
+<div id="myDiv04">...</div>
+
+</body>
