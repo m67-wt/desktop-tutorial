@@ -1,1 +1,15 @@
-
+<body onkeypress="myKeyPress(event)">
+  <script>
+    let myTimer01
+    function myAuto(){
+      const myIm = document.gElementById('myImage01')
+      myIm.style.left = parseInt(myIm.style.left) + 5 + 'px'
+      if (parseInt (myIm.style.left) > 600){
+        myIm.style.left = '10px'
+      }
+    }
+    function myKeyPress(event) {
+      alert('you pressed: ${event.key}`);
+            }
+  </script>
+  <
