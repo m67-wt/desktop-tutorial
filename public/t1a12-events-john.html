@@ -53,7 +53,6 @@
     document.getElementById("score").innerText = "Points: " + points;
   }
 
-  // Optional: Auto-assign ID to drag box if needed
   window.onload = function () {
     if (!document.getElementById("dragBox").id) {
       document.getElementById("dragBox").id = "dragBox";
@@ -85,12 +84,10 @@ body {
   }
 
 </style>
-<!-- Mouse movement area -->
 <div id="inverted-area">
   <div id="dot"></div>
 </div>
 
-<!-- Toggle button -->
 <button onclick="toggleInvert()">Toggle Invert Mouse</button>
 
 <script>
@@ -121,7 +118,7 @@ body {
       dotX += dx;
       dotY += dy;
 
-      // Keep the dot inside the box
+  
       dotX = Math.max(0, Math.min(290, dotX));
       dotY = Math.max(0, Math.min(290, dotY));
 
