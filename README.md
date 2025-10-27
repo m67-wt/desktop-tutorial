@@ -1,4 +1,4 @@
-# School Course GameDev 11-12, Learning Journal for _________________, Semester 1 2025
+# School Course GameDev 11-12, Learning Journal for Johnathan, Semester 1 2025
 
 
 Note: If you have a link to an assignment that has not been marked, put "open" after the word details inside the tag.
@@ -341,9 +341,9 @@ Note: If you have a link to an assignment that has not been marked, put "open" a
 <details ><summary>Monday Oct 27th, 2025</summary>
 
 ### Title
-1.
-1.
-1.
+1.working on getting assigments in
+1.learned collision between objects relates to X and Y
+1.make a fun desktop game that is like a platformer and an like doom
 
 </details>
 
