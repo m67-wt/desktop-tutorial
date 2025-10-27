@@ -1,84 +1,62 @@
-<h2 align="center">t1a10-four-loops-john.html</h2>
+<h2 align="center">t1a10-five-loops-john.html</h2>
+
 <style>
   body {
-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: gradientShift 15s ease infinite;
+    background-color: teal;
+    color: white;
+    font-family: Arial, sans-serif;
   }
-
-  @keyframes gradientShift {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+  input[type="button"], input[type="number"] {
+    margin: 5px;
+    padding: 5px 10px;
+    font-size: 16px;
   }
 </style>
-</head>
-<body>
 
 <input id="myNum01" type="number" value="4"><br><br>
 
 <input type="button" value="myEvent squares" onclick="{
-  let myTemp = '';
-  let num = document.getElementById('myNum01').value;
-
-  for (let i = 1; i <= num; i++) {
-    myTemp += i + ' squared = ' + (i * i) + '<br>';
-  }
-
-  document.getElementById('myDiv01').innerHTML = myTemp;
+  let num = parseInt(myNum01.value);
+  let out = '';
+  for (let i = 1; i <= num; i++) out += `${i} squared = ${i*i}<br>`;
+  myDiv01.innerHTML = out;
 }"><br>
 <div id="myDiv01">...</div><br>
 
 <input type="button" value="myEvent cubes" onclick="{
-  let myTemp = '';
-  let num = document.getElementById('myNum01').value;
-
-  for (let i = 1; i <= num; i++) {
-    myTemp += i + ' cubed = ' + (i * i * i) + '<br>';
-  }
-
-  document.getElementById('myDiv02').innerHTML = myTemp;
+  let num = parseInt(myNum01.value);
+  let out = '';
+  for (let i = 1; i <= num; i++) out += `${i} cubed = ${i*i*i}<br>`;
+  myDiv02.innerHTML = out;
 }"><br>
 <div id="myDiv02">...</div><br>
 
 <input type="button" value="myEvent factorials" onclick="{
-  let myTemp = '';
-  let num = document.getElementById('myNum01').value;
-
-  function factorial(n) {
-    let f = 1;
-    for(let j=1; j<=n; j++) {
-      f *= j;
-    }
+  let num = parseInt(myNum01.value);
+  let out = '';
+  function factorial(n){
+    let f=1; 
+    for(let j=1;j<=n;j++) f*=j; 
     return f;
   }
-
-  for (let i = 1; i <= num; i++) {
-    myTemp += i + '! = ' + factorial(i) + '<br>';
-  }
-
-  document.getElementById('myDiv03').innerHTML = myTemp;
+  for (let i=1;i<=num;i++) out += `${i}! = ${factorial(i)}<br>`;
+  myDiv03.innerHTML = out;
 }"><br>
 <div id="myDiv03">...</div><br>
 
 <input type="button" value="myEvent even numbers" onclick="{
-  let myTemp = '';
-  let num = document.getElementById('myNum01').value;
-
-  for (let i = 1; i <= num; i++) {
-    if (i % 2 === 0) {
-      myTemp += i + ' is even<br>';
-    }
-  }
-
-  document.getElementById('myDiv04').innerHTML = myTemp;
+  let num = parseInt(myNum01.value);
+  let out = '';
+  for (let i=1;i<=num;i++) if(i%2==0) out += `${i} is even<br>`;
+  myDiv04.innerHTML = out;
 }"><br>
-<div id="myDiv04">...</div>
+<div id="myDiv04">...</div><br>
 
-</body>
+<input type="button" value="myEvent sum of numbers" onclick="{
+  let num = parseInt(myNum01.value);
+  let out = '';
+  let sum = 0;
+  for (let i=1;i<=num;i++){ sum+=i; out += `Sum up to ${i} = ${sum}<br>`; }
+  myDiv05.innerHTML = out;
+}"><br>
+<div id="myDiv05">...</div>
