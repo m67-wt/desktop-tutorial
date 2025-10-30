@@ -1,25 +1,171 @@
-<body onkeypress="myKeyPress(event)">
-  <script>
-    let myTimer01
-    function myAuto(){
-      const myIm = document.gElementById('myImage01')
-      myIm.style.left = parseInt(myIm.style.left) + 5 + 'px'
-      if (parseInt (myIm.style.left) > 600){
-        myIm.style.left = '10px'
-      }
-    }
-    function myKeyPress(event) {
-      alert('you pressed: ${event.key}`);
-            }
-  </script>
-  <h1 align=center>t1a16-move-div-john.html</h1>
-have 8 different tyops of objects move in different ways
-<div style="position:relative; left:0; right:0" id="myDiv01">...</div>
-<button onclick="{
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    text-align: center;
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientBG 12s ease infinite;
+    font-family: Arial, sans-serif;
+    color: white;
+    overflow: hidden;
+  }
+
+  @keyframes gradientBG {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+  }
+
+  h1 {
+    margin-top: 20px;
+    text-shadow: 2px 2px 4px #000;
+  }
+
+  #myDiv01 {
+    position: absolute;
+    font-size: 22px;
+    font-weight: bold;
+    top: 200px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  #myImage01 {
+    position: absolute;
+    width: 80px;
+    top: 260px; /* slightly lower than the text */
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+  }
+
+  .btn-container {
+    margin-top: 350px;
+  }
+
+  button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+    border-radius: 10px;
+    padding: 10px 15px;
+    margin: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-size: 15px;
+  }
+
+  button:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+  }
+</style>
+</head>
+
+<body onkeydown="keyMove(event)">
+<h1>t1a16-move-div-john.html</h1>
+<p>Use the buttons or arrow keys to move the text and image!</p>
+
+<div id="myDiv01">...</div>
+<img id="myImage01" src="https://media.istockphoto.com/id/1307609675/photo/bluebird.webp?s=2048x2048&w=is&k=20&c=Z3kebebIHnLDBaWiV7XgQ5_kHzGELfPkB6IhDmPAcLE=">
+
+<div class="btn-container">
+  <button onclick="move('up')">Up</button>
+  <button onclick="move('down')">Down</button>
+  <button onclick="move('left')">Left</button>
+  <button onclick="move('right')">Right</button>
+  <button onclick="move('bounce')">Bounce</button>
+  <button onclick="move('circle')">Circular</button>
+  <button onclick="autoMove('left')">Auto Left</button>
+  <button onclick="autoMove('right')">Auto Right</button>
+  <button onclick="stopAll()">Stop</button>
+</div>
+
+<script>
+  let myTimer01
   const myDiv = document.getElementById('myDiv01')
-  myDiv.style.left += '100px'
-  }"Move Right</button><br>
-  <b onclick="{
-    myTimer01 = setInterval(myAuto, 50)
-  }">move Auto</b><br>
-  <img src="myImage01.jpg id="myImage01" width=40 style="position:relative; left:0; right:0">
+  const myImg = document.getElementById('myImage01')
+
+  function move(direction) {
+    clearInterval(myTimer01)
+    let step = 10
+    let divLeft = parseInt(myDiv.style.left) || myDiv.offsetLeft
+    let divTop = parseInt(myDiv.style.top) || myDiv.offsetTop
+    let imgLeft = parseInt(myImg.style.left) || myImg.offsetLeft
+    let imgTop = parseInt(myImg.style.top) || myImg.offsetTop
+
+    if (direction === 'up') {
+      myDiv.style.top = (divTop - step) + 'px'
+      myImg.style.top = (imgTop - step) + 'px'
+    } else if (direction === 'down') {
+      myDiv.style.top = (divTop + step) + 'px'
+      myImg.style.top = (imgTop + step) + 'px'
+    } else if (direction === 'left') {
+      myDiv.style.left = (divLeft - step) + 'px'
+      myImg.style.left = (imgLeft - step) + 'px'
+    } else if (direction === 'right') {
+      myDiv.style.left = (divLeft + step) + 'px'
+      myImg.style.left = (imgLeft + step) + 'px'
+    } else if (direction === 'circle') {
+      let angle = 0
+      myTimer01 = setInterval(() => {
+        angle += 5
+        let radius = 100
+        myDiv.style.left = 300 + radius * Math.cos(angle * Math.PI / 180) + 'px'
+        myDiv.style.top = 200 + radius * Math.sin(angle * Math.PI / 180) + 'px'
+        myImg.style.left = 300 + radius * Math.cos(angle * Math.PI / 180) + 'px'
+        myImg.style.top = 260 + radius * Math.sin(angle * Math.PI / 180) + 'px'
+      }, 50)
+    } else if (direction === 'bounce') {
+      let dx = 5, dy = 5
+      myTimer01 = setInterval(() => {
+        let left = parseInt(myDiv.style.left)
+        let top = parseInt(myDiv.style.top)
+        if (left < 0 || left > window.innerWidth - 100) dx *= -1
+        if (top < 0 || top > window.innerHeight - 150) dy *= -1
+        myDiv.style.left = left + dx + 'px'
+        myDiv.style.top = top + dy + 'px'
+        myImg.style.left = left + dx + 'px'
+        myImg.style.top = top + dy + 60 + 'px' // bird always below text
+      }, 30)
+    }
+  }
+
+  function autoMove(dir) {
+    clearInterval(myTimer01)
+    myTimer01 = setInterval(() => {
+      let step = 5
+      let left = parseInt(myDiv.style.left) || myDiv.offsetLeft
+      let imgLeft = parseInt(myImg.style.left) || myImg.offsetLeft
+      if (dir === 'right') {
+        myDiv.style.left = left + step + 'px'
+        myImg.style.left = imgLeft + step + 'px'
+        if (left > window.innerWidth - 100) {
+          myDiv.style.left = '0px'
+          myImg.style.left = '0px'
+        }
+      } else if (dir === 'left') {
+        myDiv.style.left = left - step + 'px'
+        myImg.style.left = imgLeft - step + 'px'
+        if (left < 0) {
+          myDiv.style.left = window.innerWidth - 100 + 'px'
+          myImg.style.left = window.innerWidth - 100 + 'px'
+        }
+      }
+    }, 30)
+  }
+
+  function stopAll() {
+    clearInterval(myTimer01)
+  }
+
+  function keyMove(event) {
+    const key = event.key.toLowerCase()
+    if (key === 'arrowup' || key === 'w') move('up')
+    else if (key === 'arrowdown' || key === 's') move('down')
+    else if (key === 'arrowleft' || key === 'a') move('left')
+    else if (key === 'arrowright' || key === 'd') move('right')
+  }
+</script>
