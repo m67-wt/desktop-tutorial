@@ -1,1 +1,278 @@
-make an object that makes a crown (aka draw the crown by itself)
+
+
+
+  <h2 align=center>t2a17-prince-john.html</h2>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      background: #f0f0f0;
+      font-family: sans-serif;
+      padding-top: 20px;
+    }
+
+    canvas {
+      border: 2px solid #222;
+      background: white;
+      cursor: crosshair;
+    }
+
+    button {
+      margin: 10px 5px 5px 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: gold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #ffdb58;
+    }
+
+    #textCrown {
+      margin-top: 25px;
+      font-family: monospace;
+      white-space: pre;
+      background: white;
+      border: 2px solid #222;
+      padding: 15px;
+      border-radius: 6px;
+      display: none;
+      text-align: center;
+      color: #d4af37;
+      font-weight: bold;
+      box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="crownCanvas" width="400" height="300"></canvas>
+  <div>
+    <button id="drawBtn">Draw & Fill Crown</button>
+    <button id="textBtn">Generate Text Crown</button>
+    <button id="clearBtn">Clear Canvas</button>
+    <button id="handDrawBtn">Draw Your Own Crown</button>
+  </div>
+  <div id="textCrown"></div>
+<div id="colorSelector" style="display:flex; align-items:center; margin: 10px 0;">
+  <div style="display:flex; align-items:center; margin-right:15px;">
+    <div style="width:20px; height:20px; background: yellow; border:1px solid #222; margin-right:5px;"></div>1
+  </div>
+  <div style="display:flex; align-items:center; margin-right:15px;">
+    <div style="width:20px; height:20px; background: red; border:1px solid #222; margin-right:5px;"></div>2
+  </div>
+  <div style="display:flex; align-items:center; margin-right:15px;">
+    <div style="width:20px; height:20px; background: black; border:1px solid #222; margin-right:5px;"></div>3
+  </div>
+</div>
+
+
+
+  <script>
+    const canvas = document.getElementById('crownCanvas');
+    const ctx = canvas.getContext('2d');
+    const drawButton = document.getElementById('drawBtn');
+    const textButton = document.getElementById('textBtn');
+    const clearButton = document.getElementById('clearBtn');
+    const handDrawButton = document.getElementById('handDrawBtn');
+    const textCrown = document.getElementById('textCrown');
+
+    let drawing = false;
+    let filled = false;
+    let handDrawing = false;
+    let isMouseDown = false;
+
+    const baseY = 200;
+    const points = [
+      [50, baseY],
+      [100, 100],
+      [150, baseY],
+      [200, 100],
+      [250, baseY],
+      [300, 100],
+      [350, baseY],
+    ];
+
+    let progress = 0;
+
+
+    function drawCrownPath(pct) {
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+
+      let totalLength = 0;
+      for (let i = 1; i < points.length; i++) {
+        const dx = points[i][0] - points[i - 1][0];
+        const dy = points[i][1] - points[i - 1][1];
+        totalLength += Math.sqrt(dx * dx + dy * dy);
+      }
+
+      let drawLength = totalLength * pct;
+      let drawn = 0;
+
+      for (let i = 1; i < points.length; i++) {
+        const [x1, y1] = points[i - 1];
+        const [x2, y2] = points[i];
+        const segLen = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+        if (drawn + segLen < drawLength) {
+          ctx.lineTo(x2, y2);
+          drawn += segLen;
+        } else {
+          const remain = drawLength - drawn;
+          const ratio = remain / segLen;
+          ctx.lineTo(x1 + (x2 - x1) * ratio, y1 + (y2 - y1) * ratio);
+          break;
+        }
+      }
+
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      if (pct === 1) {
+        ctx.beginPath();
+        ctx.rect(50, baseY, 300, 40);
+        ctx.stroke();
+      }
+    }
+
+    function animate() {
+      if (!drawing) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      progress += 0.01;
+      if (progress >= 1) {
+        progress = 1;
+        drawing = false;
+      }
+      drawCrownPath(progress);
+      if (drawing) requestAnimationFrame(animate);
+      else if (!filled) fillCrown();
+    }
+
+    function fillCrown() {
+      filled = true;
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i][0], points[i][1]);
+      }
+      ctx.lineTo(350, baseY + 40);
+      ctx.lineTo(50, baseY + 40);
+      ctx.closePath();
+
+      ctx.fillStyle = 'gold';
+      ctx.fill();
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      drawGem();
+    }
+
+    function drawGem() {
+      const gemX = 200;
+      const gemY = 100;
+      const gemRadius = 12;
+
+      const gemGradient = ctx.createRadialGradient(gemX - 3, gemY - 3, 2, gemX, gemY, gemRadius);
+      gemGradient.addColorStop(0, '#ff8080');
+      gemGradient.addColorStop(0.5, '#ff0000');
+      gemGradient.addColorStop(1, '#800000');
+
+      ctx.beginPath();
+      ctx.arc(gemX, gemY, gemRadius, 0, Math.PI * 2);
+      ctx.fillStyle = gemGradient;
+      ctx.fill();
+      ctx.strokeStyle = '#660000';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(gemX - 4, gemY - 5, 3, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.fill();
+    }
+
+
+    drawButton.addEventListener('click', () => {
+      handDrawing = false;
+      if (!drawing && !filled) {
+        drawing = true;
+        progress = 0;
+        animate();
+      }
+    });
+
+    textButton.addEventListener('click', () => {
+      handDrawing = false;
+      const textCrownArt = `
+         /\\
+       /  \\
+       /\\    /----\\    /\\
+      /  \\  /      \\  /  \\
+     /____\\/________\\/____\\
+     \\                    /
+      \\__________________/
+      `;
+      textCrown.style.display = 'block';
+      textCrown.textContent = textCrownArt.trim();
+    });
+
+    clearButton.addEventListener('click', () => {
+      handDrawing = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      filled = false;
+      drawing = false;
+    });
+
+    handDrawButton.addEventListener('click', () => {
+      handDrawing = true;
+      filled = false;
+      drawing = false;
+    });
+
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (!handDrawing) return;
+      isMouseDown = true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!handDrawing || !isMouseDown) return;
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      isMouseDown = false;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      isMouseDown = false;
+    });
+let currentColor = 'black'; 
+document.addEventListener('keydown', (e) => {
+  if (!handDrawing) return;
+  if (e.key === '1') currentColor = 'yellow';
+  else if (e.key === '2') currentColor = 'red';
+  else if (e.key === '3') currentColor = 'black';
+});
+canvas.addEventListener('mousemove', (e) => {
+  if (!handDrawing || !isMouseDown) return;
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.strokeStyle = currentColor;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+});
+  </script>
