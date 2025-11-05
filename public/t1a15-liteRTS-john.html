@@ -1,234 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <h2 align=center>t1a15-liteRTS-john.html</h2>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LiteRTS Object Detection</title>
 
-    <style>
-        body { 
-            font-family: 'Inter', sans-serif;
-            margin: 20px; 
-            background-color: #f0f4f8;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        #myMainContainer {
-            max-width: 800px;
-            width: 100%;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-        }
-        h1 {
-            text-align: center;
-            color: #3c4043;
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-        #myInstructions {
-            text-align: center;
-            color: #5f6368;
-            margin-bottom: 20px;
-            font-size: 0.95em;
-        }
-        #myVideo { display: none; }
-        .myButton {
-            background-color: #1a73e8; 
-            color: white; 
-            padding: 12px 24px; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 16px; 
-            margin: 5px;
-            transition: background-color 0.3s, transform 0.1s;
-            font-weight: 600;
-        }
-        .myButton:hover { background-color: #155cb8; }
-        .myButton:active { transform: translateY(1px); }
-        .myButton:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        .myButton.stop { background-color: #d93025; }
-        .myButton.stop:hover { background-color: #b02419; }
-        #myControlSection {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        #myStatusMessage {
-            font-size: 1em;
-            margin: 15px 0;
-            color: #3c4043;
-            font-weight: 500;
-            text-align: center;
-            padding: 12px;
-            background-color: #e6f7ff;
-            border: 1px solid #90caff;
-            border-radius: 8px;
-        }
-        #myCanvasContainer {
-            position: relative;
-            text-align: center;
-            margin-top: 20px;
-        }
-        #myCanvas { 
-            border: 3px solid #1a73e8;
-            border-radius: 8px; 
-            background-color: #333; 
-            width: 100%; 
-            height: auto;
-            max-width: 600px; 
-            aspect-ratio: 1 / 1;
-            display: block;
-            margin: 0 auto;
-            transition: border-color 0.3s;
-        }
-        #myCanvas.drag-over {
-            border-color: #0f9d58;
-            border-style: dashed;
-            border-width: 4px;
-            background-color: #e8f5e9;
-        }
-        #myDropOverlay {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 600px;
-            height: 100%;
-            background-color: rgba(15, 157, 88, 0.1);
-            border: 4px dashed #0f9d58;
-            border-radius: 8px;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-        }
-        #myDropOverlay.active { display: flex; }
-        #myDropText {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #0f9d58;
-            background-color: white;
-            padding: 20px 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .myModelInfo {
-            text-align: center;
-            margin-top: 15px;
-            padding: 12px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-        }
-        .myInfoLabel {
-            font-size: 0.85em;
-            color: #6c757d;
-            font-weight: 600;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .myInfoValue {
-            font-size: 0.95em;
-            color: #212529;
-            font-family: monospace;
-        }
-        .myInputGroup {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        .myInputGroup input[type="text"] {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        #myLabelEditor {
-            width: 100%;
-            height: 80px;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-        #myResultDisplay {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            background-color: #e6ffe6;
-            border: 2px solid #0f9d58;
-            text-align: center;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #0f9d58;
-            display: none;
-        }
-        #myResultDisplay.active { display: block; }
-        #myResultLabel {
-            font-size: 1.8em;
-            color: #0c8046;
-            margin-top: 5px;
-            display: block;
-        }
-        #myResultConfidence {
-            font-size: 1em;
-            color: #3c4043;
-            display: block;
-            margin-top: 5px;
-        }
-    </style>
+  <h2 align="center">t1a15-liteRTS-john.html</h2>
 
-    <script>
-        // Replace the TFLite model with your new one
-        const modelPath = 'public/my-model.tflite'; // <-- your new model file
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif;
+      margin: 20px; 
+      background-color: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    #myMainContainer {
+      max-width: 800px;
+      width: 100%;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+    h1 {
+      text-align: center;
+      color: #3c4043;
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    #myStatusMessage {
+      font-size: 1em;
+      margin: 15px 0;
+      color: #3c4043;
+      font-weight: 500;
+      text-align: center;
+      padding: 12px;
+      background-color: #e6f7ff;
+      border: 1px solid #90caff;
+      border-radius: 8px;
+    }
+    .myButton {
+      background-color: #1a73e8; 
+      color: white; 
+      padding: 12px 24px; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-size: 16px; 
+      margin: 5px;
+      transition: background-color 0.3s, transform 0.1s;
+      font-weight: 600;
+    }
+    .myButton:hover { background-color: #155cb8; }
+    #myCanvas {
+      border: 3px solid #1a73e8;
+      border-radius: 8px; 
+      background-color: #333; 
+      width: 100%; 
+      max-width: 600px; 
+      aspect-ratio: 1 / 1;
+      display: block;
+      margin: 0 auto;
+    }
+    .myModelInfo {
+      text-align: center;
+      margin-top: 15px;
+      padding: 12px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+    }
+    .myInfoLabel {
+      font-size: 0.85em;
+      color: #6c757d;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .myInfoValue {
+      font-size: 0.95em;
+      color: #212529;
+      font-family: monospace;
+    }
+  </style>
 
-        async function loadModel() {
-            try {
-                document.getElementById('myStatusMessage').textContent = 'Loading model...';
-                const tfliteModel = await tflite.loadTFLiteModel(modelPath);
-                document.getElementById('myStatusMessage').textContent = 'Model loaded successfully!';
-                document.getElementById('myModelName').textContent = modelPath;
-                return tfliteModel;
-            } catch (err) {
-                console.error('Error loading model:', err);
-                document.getElementById('myStatusMessage').textContent = 'Error loading model. Check console.';
-            }
-        }
+  <!-- ✅ TensorFlow.js + TFLite runtime -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.12.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@0.0.1"></script>
 
-        window.onload = loadModel;
-    </script>
+  <script>
+    // ✅ This is your one and only model
+    const modelPath = 'public/ei-m67-wt-project-1-object-detection-tensorflow-lite-float32-model.38.tflite';
+    let tfliteModel = null;
+
+    async function loadModel() {
+      const status = document.getElementById('myStatusMessage');
+      const nameDisplay = document.getElementById('myModelName');
+
+      status.textContent = 'Loading your TensorFlow Lite model...';
+      nameDisplay.textContent = modelPath;
+
+      try {
+        // Load your .tflite model
+        tfliteModel = await tflite.loadTFLiteModel(modelPath);
+
+        status.style.backgroundColor = '#e6ffe6';
+        status.style.borderColor = '#0f9d58';
+        status.textContent = '✅ Model loaded successfully and ready for use!';
+        console.log('Loaded TFLite model:', tfliteModel);
+
+      } catch (err) {
+        console.error('❌ Error loading model:', err);
+        status.style.backgroundColor = '#ffe6e6';
+        status.style.borderColor = '#d93025';
+        status.textContent = '❌ Error loading model. Check the console for details.';
+      }
+    }
+
+    window.onload = loadModel;
+  </script>
 </head>
+
 <body>
-    <div id="myMainContainer">
-        <h1>LiteRTS Object Detection</h1>
-        <p id="myInstructions">This page loads your TensorFlow Lite model and prepares it for inference.</p>
-        
-        <div id="myControlSection">
-            <button class="myButton" onclick="loadModel()">Reload Model</button>
-        </div>
-
-        <div id="myStatusMessage">Waiting to load model...</div>
-
-        <div class="myModelInfo">
-            <span class="myInfoLabel">Loaded model:</span>
-            <span class="myInfoValue" id="myModelName">public/ei-m67-wt-project-1-object-detection-tensorflow-lite-float32-model.38.tflite</span>
-        </div>
-
-        <div id="myCanvasContainer">
-            <canvas id="myCanvas" width="400" height="400"></canvas>
-        </div>
+  <div id="myMainContainer">
+    <h1>LiteRTS Object Detection</h1>
+    <p id="myInstructions" style="text-align:center;">
+      This page automatically loads your TensorFlow Lite object detection model.
+    </p>
+    
+    <div id="myControlSection" style="text-align:center;">
+      <button class="myButton" onclick="loadModel()">Reload Model</button>
     </div>
+
+    <div id="myStatusMessage">Waiting to load model...</div>
+
+    <div class="myModelInfo">
+      <span class="myInfoLabel">Loaded model:</span>
+      <span class="myInfoValue" id="myModelName">
+        public/ei-m67-wt-project-1-object-detection-tensorflow-lite-float32-model.38.tflite
+      </span>
+    </div>
+
+    <div id="myCanvasContainer">
+      <canvas id="myCanvas" width="400" height="400"></canvas>
+    </div>
+  </div>
 </body>
 </html>
