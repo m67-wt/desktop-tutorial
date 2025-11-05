@@ -1,4 +1,208 @@
-<h1 align=center>t1a15-liteRTS-john.html</h1>
-<a href="https://hpssjellis.github.io/my-examples-of-liteRTSjs/public/index.html">liteRTjs</a><br>
-<!-- try to get one of the edgeimpulse tflite 32 bit downloads working --><br>
-<!--replace this entie page with your working demo -->
+<!DOCTYPE html>
+<html lang=”en”>
+<head>
+    <meta charset=”UTF-8”>
+    <meta name=”viewport” content=”width=device-width, initial-scale=1.0”>
+    <title>Unified FOMO & Classification Detector</title>
+
+    <style>
+        Body { 
+            Font-family: ‘Inter’, sans-serif;
+            Margin: 20px; 
+            Background-color: #f0f4f8;
+            Display: flex;
+            Justify-content: center;
+            Align-items: center;
+            Min-height: 100vh;
+        }
+        #myMainContainer {
+            Max-width: 800px;
+            Width: 100%;
+            Background: white;
+            Padding: 30px;
+            Border-radius: 12px;
+            Box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+        H1 {
+            Text-align: center;
+            Color: #3c4043;
+            Font-size: 2em;
+            Margin-bottom: 10px;
+        }
+        #myInstructions {
+            Text-align: center;
+            Color: #5f6368;
+            Margin-bottom: 20px;
+            Font-size: 0.95em;
+        }
+        #myVideo { 
+            Display: none; 
+        }
+        .myButton {
+            Background-color: #1a73e8; 
+            Color: white; 
+            Padding: 12px 24px; 
+            Border: none; 
+            Border-radius: 8px; 
+            Cursor: pointer; 
+            Font-size: 16px; 
+            Margin: 5px;
+            Transition: background-color 0.3s, transform 0.1s;
+            Font-weight: 600;
+        }
+        .myButton:hover { 
+            Background-color: #155cb8; 
+        }
+        .myButton:active {
+            Transform: translateY(1px);
+        }
+        .myButton:disabled {
+            Background-color: #ccc;
+            Cursor: not-allowed;
+        }
+        .myButton.stop {
+            Background-color: #d93025;
+        }
+        .myButton.stop:hover {
+            Background-color: #b02419;
+        }
+        #myControlSection {
+            Text-align: center;
+            Margin-bottom: 20px;
+        }
+        #myStatusMessage {
+            Font-size: 1em;
+            Margin: 15px 0;
+            Color: #3c4043;
+            Font-weight: 500;
+            Text-align: center;
+            Padding: 12px;
+            Background-color: #e6f7ff;
+            Border: 1px solid #90caff;
+            Border-radius: 8px;
+        }
+        #myCanvasContainer {
+            Position: relative;
+            Text-align: center;
+            Margin-top: 20px;
+        }
+        #myCanvas { 
+            Border: 3px solid #1a73e8;
+            Border-radius: 8px; 
+            Background-color: #333; 
+            Width: 100%; 
+            Height: auto;
+            Max-width: 600px; 
+            Aspect-ratio: 1 / 1;
+            Display: block;
+            Margin: 0 auto;
+            Transition: border-color 0.3s;
+        }
+        #myCanvas.drag-over {
+            Border-color: #0f9d58;
+            Border-style: dashed;
+            Border-width: 4px;
+            Background-color: #e8f5e9;
+        }
+        #myDropOverlay {
+            Position: absolute;
+            Top: 0;
+            Left: 50%;
+            Transform: translateX(-50%);
+            Width: 100%;
+            Max-width: 600px;
+            Height: 100%;
+            Background-color: rgba(15, 157, 88, 0.1);
+            Border: 4px dashed #0f9d58;
+            Border-radius: 8px;
+            Display: none;
+            Justify-content: center;
+            Align-items: center;
+            Pointer-events: none;
+        }
+        #myDropOverlay.active {
+            Display: flex;
+        }
+        #myDropText {
+            Font-size: 1.5em;
+            Font-weight: bold;
+            Color: #0f9d58;
+            Background-color: white;
+            Padding: 20px 40px;
+            Border-radius: 8px;
+            Box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .myModelInfo {
+            Text-align: center;
+            Margin-top: 15px;
+            Padding: 12px;
+            Background-color: #f8f9fa;
+            Border-radius: 8px;
+            Border: 1px solid #dee2e6;
+        }
+        .myInfoLabel {
+            Font-size: 0.85em;
+            Color: #6c757d;
+            Font-weight: 600;
+            Display: block;
+            Margin-bottom: 5px;
+        }
+        .myInfoValue {
+            Font-size: 0.95em;
+            Color: #212529;
+            Font-family: monospace;
+        }
+        .myInputGroup {
+            Display: flex;
+            Gap: 5px;
+            Margin-bottom: 10px;
+        }
+        .myInputGroup input[type=”text”] {
+            Flex-grow: 1;
+            Padding: 10px;
+            Border: 1px solid #ccc;
+            Border-radius: 8px;
+            Font-size: 16px;
+        }
+        #myLabelEditor {
+            Width: 100%;
+            Height: 80px;
+            Padding: 10px;
+            Box-sizing: border-box;
+            Border: 1px solid #ccc;
+            Border-radius: 8px;
+            Font-family: monospace;
+            Font-size: 14px;
+            Margin-bottom: 15px;
+        }
+        #myResultDisplay {
+            Margin-top: 20px;
+            Padding: 15px;
+            Border-radius: 8px;
+            Background-color: #e6ffe6;
+            Border: 2px solid #0f9d58;
+            Text-align: center;
+            Font-size: 1.5em;
+            Font-weight: bold;
+            Color: #0f9d58;
+            Display: none;
+        }
+        #myResultDisplay.active {
+            Display: block;
+        }
+        #myResultLabel {
+            Font-size: 1.8em;
+            Color: #0c8046;
+            Margin-top: 5px;
+            Display: block;
+        }
+        #myResultConfidence {
+            Font-size: 1em;
+            Color: #3c4043;
+            Display: block;
+            Margin-top: 5px;
+        }
+    </style>
+    
+    <script
+
