@@ -1,208 +1,224 @@
 <!DOCTYPE html>
-<html lang=”en”>
+<html lang="en">
 <head>
-    <meta charset=”UTF-8”>
-    <meta name=”viewport” content=”width=device-width, initial-scale=1.0”>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unified FOMO & Classification Detector</title>
 
     <style>
-        Body { 
-            Font-family: ‘Inter’, sans-serif;
-            Margin: 20px; 
-            Background-color: #f0f4f8;
-            Display: flex;
-            Justify-content: center;
-            Align-items: center;
-            Min-height: 100vh;
+        body { 
+            font-family: 'Inter', sans-serif;
+            margin: 20px; 
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
         #myMainContainer {
-            Max-width: 800px;
-            Width: 100%;
-            Background: white;
-            Padding: 30px;
-            Border-radius: 12px;
-            Box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
         }
-        H1 {
-            Text-align: center;
-            Color: #3c4043;
-            Font-size: 2em;
-            Margin-bottom: 10px;
+        h1 {
+            text-align: center;
+            color: #3c4043;
+            font-size: 2em;
+            margin-bottom: 10px;
         }
         #myInstructions {
-            Text-align: center;
-            Color: #5f6368;
-            Margin-bottom: 20px;
-            Font-size: 0.95em;
+            text-align: center;
+            color: #5f6368;
+            margin-bottom: 20px;
+            font-size: 0.95em;
         }
         #myVideo { 
-            Display: none; 
+            display: none; 
         }
         .myButton {
-            Background-color: #1a73e8; 
-            Color: white; 
-            Padding: 12px 24px; 
-            Border: none; 
-            Border-radius: 8px; 
-            Cursor: pointer; 
-            Font-size: 16px; 
-            Margin: 5px;
-            Transition: background-color 0.3s, transform 0.1s;
-            Font-weight: 600;
+            background-color: #1a73e8; 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin: 5px;
+            transition: background-color 0.3s, transform 0.1s;
+            font-weight: 600;
         }
         .myButton:hover { 
-            Background-color: #155cb8; 
+            background-color: #155cb8; 
         }
         .myButton:active {
-            Transform: translateY(1px);
+            transform: translateY(1px);
         }
         .myButton:disabled {
-            Background-color: #ccc;
-            Cursor: not-allowed;
+            background-color: #ccc;
+            cursor: not-allowed;
         }
         .myButton.stop {
-            Background-color: #d93025;
+            background-color: #d93025;
         }
         .myButton.stop:hover {
-            Background-color: #b02419;
+            background-color: #b02419;
         }
         #myControlSection {
-            Text-align: center;
-            Margin-bottom: 20px;
+            text-align: center;
+            margin-bottom: 20px;
         }
         #myStatusMessage {
-            Font-size: 1em;
-            Margin: 15px 0;
-            Color: #3c4043;
-            Font-weight: 500;
-            Text-align: center;
-            Padding: 12px;
-            Background-color: #e6f7ff;
-            Border: 1px solid #90caff;
-            Border-radius: 8px;
+            font-size: 1em;
+            margin: 15px 0;
+            color: #3c4043;
+            font-weight: 500;
+            text-align: center;
+            padding: 12px;
+            background-color: #e6f7ff;
+            border: 1px solid #90caff;
+            border-radius: 8px;
         }
         #myCanvasContainer {
-            Position: relative;
-            Text-align: center;
-            Margin-top: 20px;
+            position: relative;
+            text-align: center;
+            margin-top: 20px;
         }
         #myCanvas { 
-            Border: 3px solid #1a73e8;
-            Border-radius: 8px; 
-            Background-color: #333; 
-            Width: 100%; 
-            Height: auto;
-            Max-width: 600px; 
-            Aspect-ratio: 1 / 1;
-            Display: block;
-            Margin: 0 auto;
-            Transition: border-color 0.3s;
+            border: 3px solid #1a73e8;
+            border-radius: 8px; 
+            background-color: #333; 
+            width: 100%; 
+            height: auto;
+            max-width: 600px; 
+            aspect-ratio: 1 / 1;
+            display: block;
+            margin: 0 auto;
+            transition: border-color 0.3s;
         }
         #myCanvas.drag-over {
-            Border-color: #0f9d58;
-            Border-style: dashed;
-            Border-width: 4px;
-            Background-color: #e8f5e9;
+            border-color: #0f9d58;
+            border-style: dashed;
+            border-width: 4px;
+            background-color: #e8f5e9;
         }
         #myDropOverlay {
-            Position: absolute;
-            Top: 0;
-            Left: 50%;
-            Transform: translateX(-50%);
-            Width: 100%;
-            Max-width: 600px;
-            Height: 100%;
-            Background-color: rgba(15, 157, 88, 0.1);
-            Border: 4px dashed #0f9d58;
-            Border-radius: 8px;
-            Display: none;
-            Justify-content: center;
-            Align-items: center;
-            Pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            background-color: rgba(15, 157, 88, 0.1);
+            border: 4px dashed #0f9d58;
+            border-radius: 8px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
         }
         #myDropOverlay.active {
-            Display: flex;
+            display: flex;
         }
         #myDropText {
-            Font-size: 1.5em;
-            Font-weight: bold;
-            Color: #0f9d58;
-            Background-color: white;
-            Padding: 20px 40px;
-            Border-radius: 8px;
-            Box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #0f9d58;
+            background-color: white;
+            padding: 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .myModelInfo {
-            Text-align: center;
-            Margin-top: 15px;
-            Padding: 12px;
-            Background-color: #f8f9fa;
-            Border-radius: 8px;
-            Border: 1px solid #dee2e6;
+            text-align: center;
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
         }
         .myInfoLabel {
-            Font-size: 0.85em;
-            Color: #6c757d;
-            Font-weight: 600;
-            Display: block;
-            Margin-bottom: 5px;
+            font-size: 0.85em;
+            color: #6c757d;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
         }
         .myInfoValue {
-            Font-size: 0.95em;
-            Color: #212529;
-            Font-family: monospace;
+            font-size: 0.95em;
+            color: #212529;
+            font-family: monospace;
         }
         .myInputGroup {
-            Display: flex;
-            Gap: 5px;
-            Margin-bottom: 10px;
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
         }
-        .myInputGroup input[type=”text”] {
-            Flex-grow: 1;
-            Padding: 10px;
-            Border: 1px solid #ccc;
-            Border-radius: 8px;
-            Font-size: 16px;
+        .myInputGroup input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
         }
         #myLabelEditor {
-            Width: 100%;
-            Height: 80px;
-            Padding: 10px;
-            Box-sizing: border-box;
-            Border: 1px solid #ccc;
-            Border-radius: 8px;
-            Font-family: monospace;
-            Font-size: 14px;
-            Margin-bottom: 15px;
+            width: 100%;
+            height: 80px;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-bottom: 15px;
         }
         #myResultDisplay {
-            Margin-top: 20px;
-            Padding: 15px;
-            Border-radius: 8px;
-            Background-color: #e6ffe6;
-            Border: 2px solid #0f9d58;
-            Text-align: center;
-            Font-size: 1.5em;
-            Font-weight: bold;
-            Color: #0f9d58;
-            Display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #e6ffe6;
+            border: 2px solid #0f9d58;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #0f9d58;
+            display: none;
         }
         #myResultDisplay.active {
-            Display: block;
+            display: block;
         }
         #myResultLabel {
-            Font-size: 1.8em;
-            Color: #0c8046;
-            Margin-top: 5px;
-            Display: block;
+            font-size: 1.8em;
+            color: #0c8046;
+            margin-top: 5px;
+            display: block;
         }
         #myResultConfidence {
-            Font-size: 1em;
-            Color: #3c4043;
-            Display: block;
-            Margin-top: 5px;
+            font-size: 1em;
+            color: #3c4043;
+            display: block;
+            margin-top: 5px;
         }
     </style>
     
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@0.0.1-alpha.9/dist/tf-tflite.min.js"></script>
 </head>
+<body>
 
+    <script>
+        // =================================================================
+        // 🚀 DEFAULT CONFIGURATION (FOMO Model)
+        // =================================================================
+        const myDefaultConfig = {
+            myDefaultUrl: 'https://hpssjellis.github.io/my-examples-of-liteRTjs/public/tflite/MINST.tflite',
+            myInputResolution: 320,
+            myGridScaleFactor: 8,
+            myConfidenceThreshold: 0.5,
+            myClassLabels: ['background', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+            myInputChannels: 3,
+            myModelType: 'fomo', // 'fomo' or 'classification'
+            myGithubRepoPath: 'hpssjellis/my-examples-of-liteRTjs/main/public/tflite' // user/repo/branch/path
