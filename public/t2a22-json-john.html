@@ -1,0 +1,17 @@
+<h1 align=center>t2a22-json-john.html</h1>
+<script>
+  async function fetchData(url){
+    const response = await response.json();
+    console.log(data);
+
+    const myJson = JSON.stringify(data, null, 2);
+    document.getElementById('myDiv01').innerHTML = <pre>${myJson}</pre> ;
+    document,getElementById('myDive01').innerHTML += <img src="${data.image}" alt="Random Image"
+    style="max-width: 100%; height; auto;">`;
+    }
+</script>
+<select id="mySelect" size="1" onchange="fetchData(this.value)">
+  <option ></option>
+  <option value="https://randomfox.ca/floof/">randomfox</option>
+</select><br><br>
+<div id="myDiv1">...</div>
