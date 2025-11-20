@@ -1,14 +1,16 @@
 <h1 align=center>t2a21-collisions-john.html</h1>
-   // global functions here
+<script>
 function myHitOther(my1,my2){
    left1   = parseInt(document.getElementById(my1).style.left)
    right1  = left1 + parseInt(document.getElementById(my1).style.width)
    top1    = parseInt(document.getElementById(my1).style.top)   
    bottom1 = top1   + parseInt(document.getElementById(my1).style.height)
+
    left2   = parseInt(document.getElementById(my2).style.left)
    right2  = left2 + parseInt(document.getElementById(my2).style.width)
    top2    = parseInt(document.getElementById(my2).style.top)   
    bottom2 = top2   + parseInt(document.getElementById(my2).style.height)
+
    if ((right1  >=  left2  ) &&      	   
        (bottom1 >=  top2   ) &&
        (left1   <=  right2 ) &&
@@ -16,11 +18,36 @@ function myHitOther(my1,my2){
        return true
    }
 }
-
-
 function myCheckHit(){
    if ( myHitOther('myImg01','myImg02') ){
        alert('you lose')  
        document.getElementById('myImg01').style.left = '20px'
-       location = 't2a13-keydown.html'  // go to your next level
-   }
+       location = 't2a13-keydown.html'  
+   } 
+}
+let dragObj = null;
+let offsetX, offsetY;
+document.addEventListener("mousedown", function(e){
+    if(e.target.classList.contains("draggable")){
+        dragObj = e.target;
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+    }
+});
+document.addEventListener("mousemove", function(e){
+    if(dragObj){
+        dragObj.style.left = (e.pageX - offsetX) + "px";
+        dragObj.style.top  = (e.pageY - offsetY) + "px";
+        myCheckHit();
+    }
+});
+document.addEventListener("mouseup", function(){
+    dragObj = null;
+});
+</script>
+<img id="myImg01" class="draggable" 
+     src="myImage01.jpg"
+     style="position:absolute; left:20px; top:100px; width:100px; height:80px;">
+<img id="myImg02" class="draggable"
+     src="myImage02.jpg"
+     style="position:absolute; left:300px; top:100px; width:100px; height:80px;">
