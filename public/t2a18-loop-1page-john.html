@@ -1,4 +1,67 @@
 <h1 align=center>t2a18-loops-1-page-john</h1>
-
-
 Use an LLM to make a one page html file that shows all the types of javascript loops, then print the page and circle the code you don't understand.
+  <section>
+    <h2>1. for Loop</h2>
+    <pre><code>
+for (let i = 0; i < 5; i++) {
+  console.log(i);
+}
+    </code></pre>
+  </section>
+  <section>
+    <h2>2. while Loop</h2>
+    <pre><code>
+let i = 0;
+while (i < 5) {
+  console.log(i);
+  i++;
+}
+    </code></pre>
+  </section>
+  <section>
+    <h2>3. do...while Loop</h2>
+    <pre><code>
+let i = 0;
+do {
+  console.log(i);
+  i++;
+} while (i < 5);
+    </code></pre>
+  </section>
+  <section>
+    <h2>4. for...of Loop (iterables like arrays, strings)</h2>
+    <pre><code>
+const arr = [10, 20, 30];
+for (const value of arr) {
+  console.log(value);
+}
+    </code></pre>
+  </section>
+  <section>
+    <h2>5. for...in Loop (objects, enumerable properties)</h2>
+    <pre><code>
+const obj = { a: 1, b: 2, c: 3 };
+for (const key in obj) {
+  console.log(key, obj[key]);
+}
+    </code></pre>
+  </section>
+  <section>
+    <h2>6. Array.forEach() Loop</h2>
+    <pre><code>
+const arr = [1, 2, 3];
+arr.forEach(num => {
+  console.log(num);
+});
+    </code></pre>
+  </section>
+  <section>
+    <h2>7. Looping with map/filter/reduce (functional loops)</h2>
+    <pre><code>
+const arr = [1, 2, 3];
+const doubled = arr.map(n => n * 2);
+const evens = arr.filter(n => n % 2 === 0);
+const sum = arr.reduce((a, b) => a + b, 0);
+console.log(doubled, evens, sum);
+    </code></pre>
+  </section>
