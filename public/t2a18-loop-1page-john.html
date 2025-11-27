@@ -1,45 +1,4 @@
-<h1 align=center>t2a18-loop-1page.html</h1>
-show all javascript loops in one page
-// 1. for loop
-for (let i = 1; i <= 5; i++) {
-  console.log("for:", i);
-}
-// 2. while loop
-let w = 1;
-while (w <= 5) {
-  console.log("while:", w);
-  w++;
-}
-// 3. do…while loop
-let d = 1;
-do {
-  console.log("do while:", d);
-  d++;
-} while (d <= 5);
-// 4. for…of loop (arrays / iterables)
-const arr = [1, 2, 3, 4, 5];
-for (const num of arr) {
-  console.log("for...of:", num);
-}
-// 5. for…in loop (object keys)
-const obj = { a: 1, b: 2, c: 3, d: 4, e: 5 };
-for (const key in obj) {
-  console.log("for...in:", key, obj[key]);
-}
-// 6. Array.forEach()
-[1, 2, 3, 4, 5].forEach(n => {
-  console.log("forEach:", n);
-});
-// 7. Array.map() — not a loop but iterates
-[1, 2, 3, 4, 5].map(n => {
-  console.log("map:", n);
-});
-// 8. Custom iterator with a generator
-function* counter() {
-  for (let i = 1; i <= 5; i++) {
-    yield i;
-  }
-}
-for (const n of counter()) {
-  console.log("generator:", n);
-}
+<h1 align=center>t2a18-loops-1-page-john</h1>
+
+
+Use an LLM to make a one page html file that shows all the types of javascript loops, then print the page and circle the code you don't understand.
