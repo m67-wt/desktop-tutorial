@@ -1,0 +1,20 @@
+render instructions
+1. render
+2. dashboard
+3. new webservice
+4. make your own repo for each copy relavent files (github.com/hpssjellis/render-node)
+language node
+node has a package.json and server.js
+php has an index.php and package.json
+python has a app.py
+instance type=fred
+give it a lisence and a read me
+
+ellis instructions
+on render.com
+1. make a newgithub repository with a README.md file and an MIT license click the + top right of your github
+2. in render.com click dashboard, new -- webservice
+link to your github
+check language "node" instance type free.
+deploy and put link on your index t2a27-render-node.
+do the same for python and php
