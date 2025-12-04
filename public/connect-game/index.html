@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shared Text Room</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f0f0f0;
+            font-family: Arial;
+        }
+        #box {
+            width: 50%;
+            max-width: 500px;
+            padding: 10px;
+        }
+        #text {
+            width: 100%;
+            height: 200px;
+            font-size: 18px;
+            padding: 10px;
+        }
+        #codeInput {
+            padding: 8px;
+            font-size: 16px;
+            width: 200px;
+        }
+        #joinBtn {
+            padding: 8px 12px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="box">
+
+    <div id="joinArea">
+        <h2>Enter Join Code</h2>
+        <input id="codeInput" placeholder="Join code">
+        <button id="joinBtn">Join</button>
+        <p id="error" style="color:red;"></p>
+    </div>
+
+    <textarea id="text" style="display:none;"></textarea>
+
+</div>
+
+<script>
+    let socket;
+    const text = document.getElementById("text");
+    const joinArea = document.getElementById("joinArea");
+    const error = document.getElementById("error");
+
+    document.getElementById("joinBtn").onclick = () => {
+        const code = document.getElementById("codeInput").value;
+
+        socket = new WebSocket("ws://" + window.location.hostname + ":8080");
+
+        socket.onopen = () => {
+            socket.send(JSON.stringify({ type: "join", code }));
+        };
+
+        socket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+
+            if (msg.type === "error") {
+                error.textContent = msg.message;
+            }
+
+            if (msg.type === "init") {
+                joinArea.style.display = "none";
+                text.style.display = "block";
+                text.value = msg.text;
+            }
+
+            if (msg.type === "updateText") {
+                text.value = msg.text;
+            }
+        };
+    };
+
+    // Send text updates
+    text.addEventListener("input", () => {
+        socket.send(JSON.stringify({ type: "updateText", text: text.value }));
+    });
+</script>
+
+</body>
+</html>
