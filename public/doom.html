@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Doom Raycaster + Enemy</title>
+<style>
+body { margin: 0; overflow: hidden; background: black; }
+canvas { display: block; }
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<script>
+// ========================================================
+// CANVAS
+// ========================================================
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// SKY CANVAS
+const skyCanvas = document.createElement("canvas");
+const skyCtx = skyCanvas.getContext("2d");
+
+// WALL BUFFERS
+const wallTopBuffer = [];
+const wallDistBuffer = [];
+
+// ========================================================
+// RESIZE
+// ========================================================
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    skyCanvas.width = canvas.width * 2;
+    skyCanvas.height = canvas.height / 2;
+
+    if (skyTexture.complete) {
+        const pattern = skyCtx.createPattern(skyTexture, "repeat");
+        skyCtx.fillStyle = pattern;
+        skyCtx.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
+    }
+
+    wallTopBuffer.length = canvas.width;
+    wallDistBuffer.length = canvas.width;
+}
+window.addEventListener("resize", resize);
+
+// ========================================================
+// MAP
+// ========================================================
+const mapString = `
+111111111111111
+100000000000001
+101111011111101
+100001000100001
+101101010101101
+100000000000001
+111111111111111
+`;
+
+const map = mapString.trim().split("\n").map(r => r.split("").map(Number));
+const mapW = map[0].length;
+const mapH = map.length;
+const TILE = 64;
+
+// ========================================================
+// TEXTURES
+// ========================================================
+const wallTexture = new Image();
+wallTexture.src = "https://naldzgraphics.net/wp-content/uploads/2014/08/18-wall-metal-texture.jpg";
+
+const skyTexture = new Image();
+skyTexture.src = "https://www.sketchuptextureclub.com/public/texture_m/9-concrete-bare-clean-texture-seamless.jpg";
+
+wallTexture.onload = skyTexture.onload = resize;
+
+// ========================================================
+// PLAYER
+// ========================================================
+const player = {
+    x: TILE * 1.5,
+    y: TILE * 1.5,
+    angle: 0,
+    move: 3,
+    rot: 0.04,
+    hp: 100,
+    ammo: 50
+};
+
+// ========================================================
+// ENEMY
+// ========================================================
+const enemy = {
+    x: TILE * 5.5,
+    y: TILE * 3.5,
+    state: "idle",
+    frame: 0,
+    frameTimer: 0,
+    dist: 0,
+    alive: true
+};
+
+// ========================================================
+// ENEMY SPRITES (YOUR PISKEL SPRITES HERE)
+// ========================================================
+const enemySprites = {
+    idle: new Image(),
+    walkToward: new Image(),
+    walkAway: new Image(),
+    attack: new Image(),
+    dead: new Image()
+};
+
+// Replace these paths with your Piskel exports
+enemySprites.idle.src      = "sprites/idle.png";
+enemySprites.walkToward.src = "sprites/walkToward.png";
+enemySprites.walkAway.src   = "sprites/walkAway.png";
+enemySprites.attack.src     = "sprites/attack.png";
+enemySprites.dead.src       = "sprites/dead.png";
+
+const ENEMY_FRAMES = {
+    idle: 4,
+    walkToward: 6,
+    walkAway: 6,
+    attack: 4,
+    dead: 6
+};
+
+// ========================================================
+// INPUT
+// ========================================================
+const keys = {};
+addEventListener("keydown", e => keys[e.key] = true);
+addEventListener("keyup", e => keys[e.key] = false);
+
+// ========================================================
+// SHOOTING
+// ========================================================
+let laserTimer = 0;
+addEventListener("mousedown", () => {
+    if (player.ammo > 0) {
+        laserTimer = 5;
+        player.ammo--;
+
+        if (enemy.alive && enemy.dist < 400) {
+            enemy.alive = false;
+            enemy.state = "dead";
+            enemy.frame = 0;
+        }
+    }
+});
+
+// ========================================================
+// COLLISION
+// ========================================================
+function canMove(x, y) {
+    const mx = Math.floor(x / TILE);
+    const my = Math.floor(y / TILE);
+    if (mx < 0 || my < 0 || mx >= mapW || my >= mapH) return false;
+    return map[my][mx] === 0;
+}
+
+// ========================================================
+// UPDATE
+// ========================================================
+function update() {
+    let nx = player.x;
+    let ny = player.y;
+
+    if (keys["w"]) {
+        nx += Math.cos(player.angle) * player.move;
+        ny += Math.sin(player.angle) * player.move;
+    }
+    if (keys["s"]) {
+        nx -= Math.cos(player.angle) * player.move;
+        ny -= Math.sin(player.angle) * player.move;
+    }
+    if (keys["a"]) player.angle -= player.rot;
+    if (keys["d"]) player.angle += player.rot;
+
+    if (canMove(nx, player.y)) player.x = nx;
+    if (canMove(player.x, ny)) player.y = ny;
+
+    if (enemy.alive) {
+        const dx = player.x - enemy.x;
+        const dy = player.y - enemy.y;
+        enemy.dist = Math.hypot(dx, dy);
+
+        if (enemy.dist < 200) {
+            enemy.state = "attack";
+        } else {
+            const a = Math.atan2(dy, dx);
+            enemy.state = Math.cos(a - player.angle) > 0 ? "walkToward" : "walkAway";
+            enemy.x += Math.cos(a) * 0.6;
+            enemy.y += Math.sin(a) * 0.6;
+        }
+    }
+
+    if (laserTimer > 0) laserTimer--;
+}
+
+// ========================================================
+// SKY
+// ========================================================
+function drawSky() {
+    const skyW = skyCanvas.width;
+    const baseScroll = (player.angle * 1.3 / (Math.PI * 2)) * skyW;
+
+    for (let x = 0; x < canvas.width; x++) {
+        let sx = (baseScroll + x) % skyW;
+        if (sx < 0) sx += skyW;
+
+        const top = Math.max(0, Math.min(wallTopBuffer[x], skyCanvas.height));
+        ctx.drawImage(skyCanvas, sx, 0, 1, top, x, 0, 1, top);
+    }
+}
+
+// ========================================================
+// RAYCASTING
+// ========================================================
+function castRays() {
+    const fov = Math.PI / 3;
+    const half = fov / 2;
+
+    for (let x = 0; x < canvas.width; x++) {
+        const rayAngle = player.angle - half + (x / canvas.width) * fov;
+        const sin = Math.sin(rayAngle);
+        const cos = Math.cos(rayAngle);
+
+        let rx = player.x;
+        let ry = player.y;
+        let dist = 0;
+        let hitX = 0;
+        let hitVertical = false;
+
+        while (dist < 1000) {
+            rx += cos;
+            ry += sin;
+            dist++;
+
+            const mx = Math.floor(rx / TILE);
+            const my = Math.floor(ry / TILE);
+            if (mx < 0 || my < 0 || mx >= mapW || my >= mapH) break;
+
+            if (map[my][mx] === 1) {
+                const dx = Math.abs((rx % TILE) - TILE / 2);
+                const dy = Math.abs((ry % TILE) - TILE / 2);
+                hitVertical = dx > dy;
+                hitX = hitVertical ? (ry % TILE) : (rx % TILE);
+                break;
+            }
+        }
+
+        const corrected = dist * Math.cos(rayAngle - player.angle);
+        const wallH = (TILE * canvas.height) / corrected;
+        const wallTop = canvas.height / 2 - wallH / 2;
+
+        wallTopBuffer[x] = wallTop;
+        wallDistBuffer[x] = corrected;
+
+        const texX = Math.floor((hitX / TILE) * wallTexture.width);
+
+        ctx.drawImage(
+            wallTexture,
+            texX, 0, 1, wallTexture.height,
+            x, wallTop, 1, wallH
+        );
+
+        ctx.fillStyle = `rgba(0,0,0,${Math.min(0.6, corrected / 600)})`;
+        ctx.fillRect(x, wallTop, 1, wallH);
+
+        if (hitVertical) {
+            ctx.fillStyle = "rgba(0,0,0,0.18)";
+            ctx.fillRect(x, wallTop, 1, wallH);
+        }
+    }
+}
+
+// ========================================================
+// DRAW ENEMY WITH DEPTH TESTING
+// ========================================================
+function drawEnemy() {
+    if (!enemy.state) return;
+
+    const dx = enemy.x - player.x;
+    const dy = enemy.y - player.y;
+    const angle = Math.atan2(dy, dx) - player.angle;
+    const dist = Math.hypot(dx, dy);
+
+    if (Math.abs(angle) > Math.PI / 3) return;
+
+    const size = (TILE * canvas.height) / dist;
+    const screenX = canvas.width / 2 + Math.tan(angle) * canvas.width;
+
+    const sprite = enemySprites[enemy.state];
+    const frames = ENEMY_FRAMES[enemy.state];
+    const frameWidth = sprite.width / frames;
+
+    enemy.frameTimer++;
+    if (enemy.frameTimer > 8) {
+        enemy.frame = (enemy.frame + 1) % frames;
+        enemy.frameTimer = 0;
+    }
+
+    for (let ex = 0; ex < size; ex++) {
+        const x = Math.floor(screenX - size / 2 + ex);
+        if (x < 0 || x >= canvas.width) continue;
+
+        if (dist < wallDistBuffer[x]) {
+            const texX = Math.floor((ex / size) * frameWidth);
+            ctx.drawImage(
+                sprite,
+                texX + enemy.frame * frameWidth, 0, 1, sprite.height,
+                x,
+                canvas.height / 2 - size / 2,
+                1,
+                size
+            );
+        }
+    }
+}
+
+// ========================================================
+// GUN + LASER
+// ========================================================
+function drawGun() {
+    const w = 160, h = 90;
+    const x = canvas.width / 2 - w / 2;
+    const y = canvas.height - h;
+
+    ctx.fillStyle = "#777";
+    ctx.fillRect(x, y, w, h);
+
+    if (laserTimer > 0) {
+        ctx.fillStyle = "orange";
+        ctx.fillRect(x + w / 2 - 5, y - 10, 10, 10);
+    }
+}
+
+function drawLaser() {
+    if (laserTimer <= 0) return;
+    ctx.strokeStyle = "yellow";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, canvas.height - 90);
+    ctx.lineTo(canvas.width / 2, canvas.height / 2);
+    ctx.stroke();
+}
+
+// ========================================================
+// HUD + CROSSHAIR
+// ========================================================
+function drawHUD() {
+    ctx.fillStyle = "rgba(0,0,0,0.8)";
+    ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
+
+    ctx.fillStyle = "red";
+    ctx.fillRect(20, canvas.height - 60, player.hp * 2, 20);
+    ctx.strokeStyle = "white";
+    ctx.strokeRect(20, canvas.height - 60, 200, 20);
+
+    ctx.fillStyle = "yellow";
+    ctx.font = "20px Impact";
+    ctx.fillText("Ammo: " + player.ammo, 20, canvas.height - 20);
+}
+
+function crosshair() {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    ctx.strokeStyle = "white";
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy);
+    ctx.lineTo(cx + 8, cy);
+    ctx.moveTo(cx, cy - 8);
+    ctx.lineTo(cx, cy + 8);
+    ctx.stroke();
+}
+
+// ========================================================
+// MAIN LOOP
+// ========================================================
+resize();
+function loop() {
+    ctx.fillStyle = "#111";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    update();
+    castRays();
+    drawSky();
+    drawEnemy();
+    drawLaser();
+    drawGun();
+    drawHUD();
+    crosshair();
+
+    requestAnimationFrame(loop);
+}
+loop();
+
+</script>
+</body>
+</html>
