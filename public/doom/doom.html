@@ -13,9 +13,7 @@ canvas { display: block; }
 <canvas id="game"></canvas>
 
 <script>
-// ========================================================
 // CANVAS
-// ========================================================
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
@@ -27,9 +25,7 @@ const skyCtx = skyCanvas.getContext("2d");
 const wallTopBuffer = [];
 const wallDistBuffer = [];
 
-// ========================================================
 // RESIZE
-// ========================================================
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -48,9 +44,9 @@ function resize() {
 }
 window.addEventListener("resize", resize);
 
-// ========================================================
+
 // MAP
-// ========================================================
+
 const mapString = `
 111111111111111
 100000000000001
@@ -66,9 +62,9 @@ const mapW = map[0].length;
 const mapH = map.length;
 const TILE = 64;
 
-// ========================================================
+
 // TEXTURES
-// ========================================================
+
 const wallTexture = new Image();
 wallTexture.src = "https://naldzgraphics.net/wp-content/uploads/2014/08/18-wall-metal-texture.jpg";
 
@@ -77,9 +73,9 @@ skyTexture.src = "https://www.sketchuptextureclub.com/public/texture_m/9-concret
 
 wallTexture.onload = skyTexture.onload = resize;
 
-// ========================================================
+
 // PLAYER
-// ========================================================
+
 const player = {
     x: TILE * 1.5,
     y: TILE * 1.5,
@@ -90,9 +86,9 @@ const player = {
     ammo: 50
 };
 
-// ========================================================
+
 // ENEMY
-// ========================================================
+
 const enemy = {
     x: TILE * 5.5,
     y: TILE * 3.5,
@@ -103,9 +99,9 @@ const enemy = {
     alive: true
 };
 
-// ========================================================
+
 // ENEMY SPRITES (YOUR PISKEL SPRITES HERE)
-// ========================================================
+
 const enemySprites = {
     idle: new Image(),
     walkToward: new Image(),
@@ -129,16 +125,16 @@ const ENEMY_FRAMES = {
     dead: 6
 };
 
-// ========================================================
+
 // INPUT
-// ========================================================
+
 const keys = {};
 addEventListener("keydown", e => keys[e.key] = true);
 addEventListener("keyup", e => keys[e.key] = false);
 
-// ========================================================
+
 // SHOOTING
-// ========================================================
+
 let laserTimer = 0;
 addEventListener("mousedown", () => {
     if (player.ammo > 0) {
@@ -153,9 +149,9 @@ addEventListener("mousedown", () => {
     }
 });
 
-// ========================================================
+
 // COLLISION
-// ========================================================
+
 function canMove(x, y) {
     const mx = Math.floor(x / TILE);
     const my = Math.floor(y / TILE);
@@ -163,9 +159,9 @@ function canMove(x, y) {
     return map[my][mx] === 0;
 }
 
-// ========================================================
+
 // UPDATE
-// ========================================================
+
 function update() {
     let nx = player.x;
     let ny = player.y;
@@ -202,9 +198,9 @@ function update() {
     if (laserTimer > 0) laserTimer--;
 }
 
-// ========================================================
+
 // SKY
-// ========================================================
+
 function drawSky() {
     const skyW = skyCanvas.width;
     const baseScroll = (player.angle * 1.3 / (Math.PI * 2)) * skyW;
@@ -218,9 +214,9 @@ function drawSky() {
     }
 }
 
-// ========================================================
+
 // RAYCASTING
-// ========================================================
+
 function castRays() {
     const fov = Math.PI / 3;
     const half = fov / 2;
@@ -279,9 +275,9 @@ function castRays() {
     }
 }
 
-// ========================================================
+
 // DRAW ENEMY WITH DEPTH TESTING
-// ========================================================
+
 function drawEnemy() {
     if (!enemy.state) return;
 
@@ -323,9 +319,9 @@ function drawEnemy() {
     }
 }
 
-// ========================================================
+
 // GUN + LASER
-// ========================================================
+
 function drawGun() {
     const w = 160, h = 90;
     const x = canvas.width / 2 - w / 2;
@@ -350,9 +346,9 @@ function drawLaser() {
     ctx.stroke();
 }
 
-// ========================================================
+
 // HUD + CROSSHAIR
-// ========================================================
+
 function drawHUD() {
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
@@ -379,9 +375,9 @@ function crosshair() {
     ctx.stroke();
 }
 
-// ========================================================
+
 // MAIN LOOP
-// ========================================================
+
 resize();
 function loop() {
     ctx.fillStyle = "#111";
