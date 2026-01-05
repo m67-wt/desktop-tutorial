@@ -111,11 +111,21 @@ const enemySprites = {
 };
 
 
-enemySprites.idle.src      = "enemySprites.idle.src =https://raw.githubusercontent.com/m67-wt/desktop-tutorial/main/public/doom/assets/robit-idle.gif";
-enemySprites.walkToward.src = "https://github.com/m67-wt/desktop-tutorial/edit/main/public/doom/assets/robit-walking-front (1).gif";
-enemySprites.walkAway.src   = "https://github.com/m67-wt/desktop-tutorial/edit/main/public/doom/assets/robit-walking-back.gif";
-enemySprites.attack.src     = "https://github.com/m67-wt/desktop-tutorial/edit/main/public/doom/assets/robit-attack.gif";
-enemySprites.dead.src       = "";
+enemySprites.idle.src =
+"https://raw.githubusercontent.com/m67-wt/desktop-tutorial/main/public/doom/assets/robit-idle.gif";
+
+enemySprites.walkToward.src =
+"https://raw.githubusercontent.com/m67-wt/desktop-tutorial/main/public/doom/assets/robit-walking-front.gif";
+
+enemySprites.walkAway.src =
+"https://raw.githubusercontent.com/m67-wt/desktop-tutorial/main/public/doom/assets/robit-walking-back.gif";
+
+enemySprites.attack.src =
+"https://raw.githubusercontent.com/m67-wt/desktop-tutorial/main/public/doom/assets/robit-attack.gif";
+
+enemySprites.dead.src =
+"https://raw.githubusercontent.com/m67-wt/desktop-tutorial/main/public/doom/assets/robit-dead.gif";
+
 
 const ENEMY_FRAMES = {
     idle: 4,
@@ -280,6 +290,7 @@ function castRays() {
 
 function drawEnemy() {
     if (!enemy.state) return;
+if (!sprite.complete || sprite.width === 0) return;
 
     const dx = enemy.x - player.x;
     const dy = enemy.y - player.y;
@@ -399,6 +410,7 @@ loop();
 </script>
 </body>
 </html>
+
 
 
 
