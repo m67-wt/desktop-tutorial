@@ -290,7 +290,6 @@ function castRays() {
 
 function drawEnemy() {
     if (!enemy.state) return;
-if (!sprite.complete || sprite.width === 0) return;
 
     const dx = enemy.x - player.x;
     const dy = enemy.y - player.y;
@@ -410,6 +409,7 @@ loop();
 </script>
 </body>
 </html>
+
 
 
 
