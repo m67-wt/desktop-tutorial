@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Raycast Maze</title>
+<style>
+  body { margin: 0; overflow: hidden; background: black; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<script>
+/* ================== SETUP ================== */
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+addEventListener("resize", resize);
+resize();
+
+/* ================== MAP ================== */
+const TILE = 64;
+
+// 0 = empty
+// 1,2 = wall types
+const map = [
+  [2,2,2,2,2,2,2,2,2,2],
+  [2,0,0,0,0,0,0,0,0,2],
+  [2,0,1,1,1,0,1,1,0,2],
+  [2,0,0,0,1,0,0,0,0,2],
+  [2,0,1,0,1,0,1,0,0,2],
+  [2,0,0,0,0,0,1,0,0,2],
+  [2,2,2,2,2,2,2,2,2,2],
+];
+
+/* ================== TEXTURES ================== */
+const textures = {
+  "1_ns": new Image(),
+  "1_ew": new Image(),
+  "2_ns": new Image(),
+  "2_ew": new Image(),
+};
+
+textures["1_ns"].src = "assets/wall1_ns.png";
+textures["1_ew"].src = "assets/wall1_ew.png";
+textures["2_ns"].src = "assets/wall2_ns.png";
+textures["2_ew"].src = "assets/wall2_ew.png";
+
+/* ================== PLAYER ================== */
+const player = {
+  x: TILE * 1.5,
+  y: TILE * 1.5,
+  angle: 0,
+  move: 3,
+  rot: 0.04
+};
+
+/* ================== INPUT ================== */
+const keys = {};
+onkeydown = e => keys[e.key.toLowerCase()] = true;
+onkeyup   = e => keys[e.key.toLowerCase()] = false;
+
+/* ================== COLLISION ================== */
+function empty(x, y) {
+  const mx = Math.floor(x / TILE);
+  const my = Math.floor(y / TILE);
+  return map[my]?.[mx] === 0;
+}
+
+/* ================== UPDATE ================== */
+function update() {
+  let nx = player.x;
+  let ny = player.y;
+
+  if (keys["w"]) {
+    nx += Math.cos(player.angle) * player.move;
+    ny += Math.sin(player.angle) * player.move;
+  }
+  if (keys["s"]) {
+    nx -= Math.cos(player.angle) * player.move;
+    ny -= Math.sin(player.angle) * player.move;
+  }
+  if (keys["a"]) player.angle -= player.rot;
+  if (keys["d"]) player.angle += player.rot;
+
+  if (empty(nx, player.y)) player.x = nx;
+  if (empty(player.x, ny)) player.y = ny;
+}
+
+/* ================== RAYCAST WALLS ================== */
+function drawWalls() {
+  const fov = Math.PI / 3;
+
+  for (let x = 0; x < canvas.width; x++) {
+    const rayAngle = player.angle - fov / 2 + (x / canvas.width) * fov;
+    const sin = Math.sin(rayAngle);
+    const cos = Math.cos(rayAngle);
+
+    let rx = player.x;
+    let ry = player.y;
+    let dist = 0;
+    let wallId = 0;
+    let side = 0; // 0 = EW, 1 = NS
+
+    while (dist < 1000) {
+      rx += cos;
+      ry += sin;
+      dist++;
+
+      const mx = Math.floor(rx / TILE);
+      const my = Math.floor(ry / TILE);
+
+      if (map[my]?.[mx] > 0) {
+        const prevX = rx - cos;
+        const prevY = ry - sin;
+
+        if (Math.floor(prevX / TILE) !== mx) side = 0;
+        else side = 1;
+
+        wallId = map[my][mx];
+        break;
+      }
+    }
+
+    const corrected = dist * Math.cos(rayAngle - player.angle);
+    const wallHeight = (TILE * canvas.height) / corrected;
+    const y = canvas.height / 2 - wallHeight / 2;
+
+    const texKey = wallId + (side === 0 ? "_ew" : "_ns");
+    const tex = textures[texKey];
+    if (!tex || !tex.complete) continue;
+
+    const texX = Math.floor(
+      ((side === 0 ? ry : rx) % TILE) / TILE * tex.width
+    );
+
+    ctx.drawImage(
+      tex,
+      texX, 0, 1, tex.height,
+      x, y, 1, wallHeight
+    );
+
+    // distance shading
+    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.6, corrected / 600)})`;
+    ctx.fillRect(x, y, 1, wallHeight);
+  }
+}
+
+/* ================== LOOP ================== */
+function loop() {
+  update();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawWalls();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
