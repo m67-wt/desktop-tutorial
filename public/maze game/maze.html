@@ -1,13 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Raycast Maze Game</title>
 <style>
-  body { margin: 0; overflow: hidden; background: black; }
-  canvas { display: block; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+  }
+  canvas {
+    display: block;
+  }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 
 <script>
-/* ================== SETUP ================== */
+/* ================= CANVAS ================= */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
@@ -18,35 +29,29 @@ function resize() {
 addEventListener("resize", resize);
 resize();
 
-/* ================== MAP ================== */
+/* ================= MAP ================= */
+// 0 = empty
+// 1–5 = wall textures
 const TILE = 64;
 
-// 0 = empty
-// 1,2 = wall types
 const map = [
-  [2,2,2,2,2,2,2,2,2,2],
-  [2,0,0,0,0,0,0,0,0,2],
-  [2,0,1,1,1,0,1,1,0,2],
-  [2,0,0,0,1,0,0,0,0,2],
-  [2,0,1,0,1,0,1,0,0,2],
-  [2,0,0,0,0,0,1,0,0,2],
-  [2,2,2,2,2,2,2,2,2,2],
+  [5,5,5,5,5,5,5,5,5,5],
+  [5,0,0,0,0,0,0,0,0,5],
+  [5,0,1,1,1,0,2,2,0,5],
+  [5,0,0,0,1,0,0,0,0,5],
+  [5,0,3,0,1,0,4,0,0,5],
+  [5,0,0,0,0,0,4,0,0,5],
+  [5,5,5,5,5,5,5,5,5,5],
 ];
 
-/* ================== TEXTURES ================== */
-const textures = {
-  "1_ns": new Image(),
-  "1_ew": new Image(),
-  "2_ns": new Image(),
-  "2_ew": new Image(),
-};
+/* ================= TEXTURE ================= */
+// spritesheet: 5 textures, 64x64 each, laid horizontally
+const wallSheet = new Image();
+wallSheet.src = "./assets/wall_textures_1.png";
 
-textures["1_ns"].src = "assets/wall1_ns.png";
-textures["1_ew"].src = "assets/wall1_ew.png";
-textures["2_ns"].src = "assets/wall2_ns.png";
-textures["2_ew"].src = "assets/wall2_ew.png";
+const TEXTURE_SIZE = 64;
 
-/* ================== PLAYER ================== */
+/* ================= PLAYER ================= */
 const player = {
   x: TILE * 1.5,
   y: TILE * 1.5,
@@ -55,19 +60,19 @@ const player = {
   rot: 0.04
 };
 
-/* ================== INPUT ================== */
+/* ================= INPUT ================= */
 const keys = {};
 onkeydown = e => keys[e.key.toLowerCase()] = true;
 onkeyup   = e => keys[e.key.toLowerCase()] = false;
 
-/* ================== COLLISION ================== */
+/* ================= COLLISION ================= */
 function empty(x, y) {
   const mx = Math.floor(x / TILE);
   const my = Math.floor(y / TILE);
   return map[my]?.[mx] === 0;
 }
 
-/* ================== UPDATE ================== */
+/* ================= UPDATE ================= */
 function update() {
   let nx = player.x;
   let ny = player.y;
@@ -87,7 +92,7 @@ function update() {
   if (empty(player.x, ny)) player.y = ny;
 }
 
-/* ================== RAYCAST WALLS ================== */
+/* ================= RAYCAST ================= */
 function drawWalls() {
   const fov = Math.PI / 3;
 
@@ -100,7 +105,6 @@ function drawWalls() {
     let ry = player.y;
     let dist = 0;
     let wallId = 0;
-    let side = 0; // 0 = EW, 1 = NS
 
     while (dist < 1000) {
       rx += cos;
@@ -111,32 +115,25 @@ function drawWalls() {
       const my = Math.floor(ry / TILE);
 
       if (map[my]?.[mx] > 0) {
-        const prevX = rx - cos;
-        const prevY = ry - sin;
-
-        if (Math.floor(prevX / TILE) !== mx) side = 0;
-        else side = 1;
-
         wallId = map[my][mx];
         break;
       }
     }
 
+    if (!wallId) continue;
+
+    // remove fish-eye
     const corrected = dist * Math.cos(rayAngle - player.angle);
     const wallHeight = (TILE * canvas.height) / corrected;
     const y = canvas.height / 2 - wallHeight / 2;
 
-    const texKey = wallId + (side === 0 ? "_ew" : "_ns");
-    const tex = textures[texKey];
-    if (!tex || !tex.complete) continue;
-
-    const texX = Math.floor(
-      ((side === 0 ? ry : rx) % TILE) / TILE * tex.width
-    );
+    // texture column
+    const texX = Math.floor((rx + ry) % TILE / TILE * TEXTURE_SIZE);
+    const sheetX = (wallId - 1) * TEXTURE_SIZE + texX;
 
     ctx.drawImage(
-      tex,
-      texX, 0, 1, tex.height,
+      wallSheet,
+      sheetX, 0, 1, TEXTURE_SIZE,
       x, y, 1, wallHeight
     );
 
@@ -146,12 +143,15 @@ function drawWalls() {
   }
 }
 
-/* ================== LOOP ================== */
+/* ================= LOOP ================= */
 function loop() {
   update();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawWalls();
   requestAnimationFrame(loop);
 }
-loop();
+
+wallSheet.onload = loop;
 </script>
+</body>
+</html>
