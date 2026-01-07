@@ -24,7 +24,7 @@ const ctx = canvas.getContext("2d");
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  ctx.imageSmoothingEnabled = false; // crisp pixel art
+  ctx.imageSmoothingEnabled = false;
 }
 window.addEventListener("resize", resize);
 resize();
@@ -72,7 +72,7 @@ const player = {
 /* ================= INPUT ================= */
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-window.addEventListener("keyup",   e => keys[e.key.toLowerCase()] = false);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 /* ================= COLLISION ================= */
 function empty(x, y) {
@@ -112,10 +112,15 @@ function drawWalls() {
 
     let rx = player.x;
     let ry = player.y;
+    let prevRx = rx;
+    let prevRy = ry;
     let dist = 0;
     let wallId = 0;
 
     while (dist < 800) {
+      prevRx = rx;
+      prevRy = ry;
+
       rx += rayCos;
       ry += raySin;
       dist++;
@@ -135,18 +140,29 @@ function drawWalls() {
     const wallHeight = (TILE * canvas.height) / correctedDist;
     const yPos = (canvas.height - wallHeight) / 2;
 
-    /* ===== FIXED TEXTURE COORDINATE ===== */
-    const hitOffsetX = rx % TILE;
-    const hitOffsetY = ry % TILE;
-
+    /* ===== CORRECT WALL HIT DETECTION ===== */
     let hitX;
-    if (Math.abs(hitOffsetX - TILE / 2) > Math.abs(hitOffsetY - TILE / 2)) {
-      hitX = hitOffsetY; // vertical wall
+    let verticalHit = false;
+
+    if (Math.floor(prevRx / TILE) !== Math.floor(rx / TILE)) {
+      // Vertical wall
+      hitX = ry % TILE;
+      verticalHit = true;
     } else {
-      hitX = hitOffsetX; // horizontal wall
+      // Horizontal wall
+      hitX = rx % TILE;
     }
 
-    const texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+    let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+
+    /* ===== OPTIONAL TEXTURE FLIP ===== */
+    if (
+      (verticalHit && rayCos > 0) ||
+      (!verticalHit && raySin < 0)
+    ) {
+      texX = TEXTURE_SIZE - texX - 1;
+    }
+
     const texture = wallTextures[wallId];
 
     if (texture && texture.complete) {
@@ -160,7 +176,7 @@ function drawWalls() {
       ctx.fillRect(x, yPos, 1, wallHeight);
     }
 
-    // Depth shading
+    /* ===== DEPTH SHADING ===== */
     ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, correctedDist / 700)})`;
     ctx.fillRect(x, yPos, 1, wallHeight);
   }
