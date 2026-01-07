@@ -18,7 +18,7 @@ const ctx = canvas.getContext("2d");
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  ctx.imageSmoothingEnabled = false; 
+  ctx.imageSmoothingEnabled = false;
 }
 window.addEventListener("resize", resize);
 resize();
@@ -37,7 +37,7 @@ const map = [
 ];
 
 /* ================= TEXTURES ================= */
-const TEXTURE_SIZE = 500; // Updated to match your 500x500 files
+const TEXTURE_SIZE = 500;
 
 function loadTexture(src) {
   const img = new Image();
@@ -59,7 +59,7 @@ const player = {
   x: TILE * 1.5,
   y: TILE * 1.5,
   angle: 0,
-  move: 1.5,
+  move: 2,
   rot: 0.04
 };
 
@@ -96,7 +96,6 @@ function update() {
 }
 
 /* ================= RAYCAST ================= */
-
 function drawWalls() {
   const fov = Math.PI / 3;
 
@@ -107,20 +106,27 @@ function drawWalls() {
 
     let rx = player.x;
     let ry = player.y;
+    let prevRx = rx;
+    let prevRy = ry;
+
     let dist = 0;
     let wallId = 0;
+    let hitVertical = false;
 
-    // Ray marching
-    while (dist < 800) {
-      rx += rayCos;
-      ry += raySin;
-      dist++;
+    while (dist < 1000) {
+      prevRx = rx;
+      prevRy = ry;
+
+      rx += rayCos * 2;
+      ry += raySin * 2;
+      dist += 2;
 
       const mx = Math.floor(rx / TILE);
       const my = Math.floor(ry / TILE);
 
       if (map[my] && map[my][mx] > 0) {
         wallId = map[my][mx];
+        hitVertical = Math.floor(prevRx / TILE) !== Math.floor(rx / TILE);
         break;
       }
     }
@@ -131,19 +137,19 @@ function drawWalls() {
     const wallHeight = (TILE * canvas.height) / correctedDist;
     const yPos = (canvas.height - wallHeight) / 2;
 
-    // Calculate which part of the texture to show (0 to 500)
-    const hitOffsetX = rx % TILE;
-    const hitOffsetY = ry % TILE;
-    
     let hitX;
-    // Determine if we hit a vertical or horizontal face to choose the correct X offset
-    if (Math.abs(hitOffsetX - Math.round(rx/TILE)*TILE) < Math.abs(hitOffsetY - Math.round(ry/TILE)*TILE)) {
-        hitX = hitOffsetY;
+    if (hitVertical) {
+      hitX = ry % TILE;
     } else {
-        hitX = hitOffsetX;
+      hitX = rx % TILE;
     }
 
     let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+
+    // Texture mirroring
+    if (hitVertical && rayCos > 0) texX = TEXTURE_SIZE - texX - 1;
+    if (!hitVertical && raySin < 0) texX = TEXTURE_SIZE - texX - 1;
+
     texX = Math.max(0, Math.min(TEXTURE_SIZE - 1, texX));
 
     const texture = wallTextures[wallId];
@@ -151,15 +157,15 @@ function drawWalls() {
     if (texture && texture.complete) {
       ctx.drawImage(
         texture,
-        texX, 0, 1, TEXTURE_SIZE, // Source slice
-        x, yPos, 1, wallHeight    // Destination slice
+        texX, 0, 1, TEXTURE_SIZE,
+        x, yPos, 1, wallHeight
       );
     } else {
       ctx.fillStyle = "#777";
       ctx.fillRect(x, yPos, 1, wallHeight);
     }
 
-    // Depth Shading
+    // Depth shading
     ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, correctedDist / 700)})`;
     ctx.fillRect(x, yPos, 1, wallHeight);
   }
@@ -169,10 +175,10 @@ function drawWalls() {
 function loop() {
   update();
 
-  ctx.fillStyle = "#222"; // Ceiling
+  ctx.fillStyle = "#222";
   ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
 
-  ctx.fillStyle = "#444"; // Floor
+  ctx.fillStyle = "#444";
   ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
   drawWalls();
