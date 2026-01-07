@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html>
+<head>
 <style>
   body {
     margin: 0;
@@ -10,7 +13,9 @@
 </style>
 </head>
 <body>
+
 <canvas id="c"></canvas>
+
 <script>
 /* ================= CANVAS ================= */
 const canvas = document.getElementById("c");
@@ -19,12 +24,14 @@ const ctx = canvas.getContext("2d");
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  ctx.imageSmoothingEnabled = false; // crisp pixel art
 }
 window.addEventListener("resize", resize);
 resize();
 
 /* ================= MAP ================= */
 const TILE = 64;
+
 const map = [
   [4,4,4,4,4,4,4,4,4,4,4,4],
   [4,0,0,0,0,0,0,0,0,0,0,4],
@@ -41,17 +48,16 @@ const TEXTURE_SIZE = 100;
 function loadTexture(src) {
   const img = new Image();
   img.src = src;
-  // This helper will tell you in the F12 console if the path is still wrong
-  img.onerror = () => console.error("Could not find image at: " + src);
+  img.onerror = () => console.error("Missing texture:", src);
   return img;
 }
 
 const wallTextures = [
   null,
- loadTexture("assets/wall textures-1.png"),
-  loadTexture("public/maze game/assets/wall textures-2.png"),
-  loadTexture("public/maze game/assets/wall textures-3.png"),
-  loadTexture("public/maze game/assets/wall textures-4.png")
+  loadTexture("assets/wall textures-1.png"),
+  loadTexture("assets/wall textures-2.png"),
+  loadTexture("assets/wall textures-3.png"),
+  loadTexture("assets/wall textures-4.png")
 ];
 
 /* ================= PLAYER ================= */
@@ -65,8 +71,8 @@ const player = {
 
 /* ================= INPUT ================= */
 const keys = {};
-window.onkeydown = e => keys[e.key.toLowerCase()] = true;
-window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup",   e => keys[e.key.toLowerCase()] = false);
 
 /* ================= COLLISION ================= */
 function empty(x, y) {
@@ -96,7 +102,6 @@ function update() {
 }
 
 /* ================= RAYCAST ================= */
-
 function drawWalls() {
   const fov = Math.PI / 3;
 
@@ -110,7 +115,6 @@ function drawWalls() {
     let dist = 0;
     let wallId = 0;
 
-    // Ray stepping
     while (dist < 800) {
       rx += rayCos;
       ry += raySin;
@@ -125,53 +129,61 @@ function drawWalls() {
       }
     }
 
-    if (wallId > 0) {
-      const correctedDist = dist * Math.cos(rayAngle - player.angle);
-      const wallHeight = (TILE * canvas.height) / correctedDist;
-      const yPos = (canvas.height / 2) - (wallHeight / 2);
+    if (!wallId) continue;
 
-      // Texture calculation
-      const hitX = (Math.abs(rx % TILE) > Math.abs(ry % TILE)) ? ry % TILE : rx % TILE;
-      const texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
-      const texture = wallTextures[wallId];
+    const correctedDist = dist * Math.cos(rayAngle - player.angle);
+    const wallHeight = (TILE * canvas.height) / correctedDist;
+    const yPos = (canvas.height - wallHeight) / 2;
 
-      // Draw texture if ready, else draw gray wall
-      if (texture && texture.complete && texture.width > 0) {
-        ctx.drawImage(texture, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, wallHeight);
-      } else {
-        ctx.fillStyle = "#666";
-        ctx.fillRect(x, yPos, 1, wallHeight);
-      }
+    /* ===== FIXED TEXTURE COORDINATE ===== */
+    const hitOffsetX = rx % TILE;
+    const hitOffsetY = ry % TILE;
 
-      // Depth shading (darkens further walls)
-      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, correctedDist / 700)})`;
+    let hitX;
+    if (Math.abs(hitOffsetX - TILE / 2) > Math.abs(hitOffsetY - TILE / 2)) {
+      hitX = hitOffsetY; // vertical wall
+    } else {
+      hitX = hitOffsetX; // horizontal wall
+    }
+
+    const texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+    const texture = wallTextures[wallId];
+
+    if (texture && texture.complete) {
+      ctx.drawImage(
+        texture,
+        texX, 0, 1, TEXTURE_SIZE,
+        x, yPos, 1, wallHeight
+      );
+    } else {
+      ctx.fillStyle = "#777";
       ctx.fillRect(x, yPos, 1, wallHeight);
     }
+
+    // Depth shading
+    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, correctedDist / 700)})`;
+    ctx.fillRect(x, yPos, 1, wallHeight);
   }
 }
 
 /* ================= LOOP ================= */
 function loop() {
   update();
-  
-  // Clear screen & Draw Ceiling/Floor
-  ctx.fillStyle = "#222"; // Ceiling
+
+  // Ceiling
+  ctx.fillStyle = "#222";
   ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
-  ctx.fillStyle = "#444"; // Floor
+
+  // Floor
+  ctx.fillStyle = "#444";
   ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
   drawWalls();
   requestAnimationFrame(loop);
 }
 
-// Start immediately
 loop();
 </script>
 
-
-
-
-
-
-
-
+</body>
+</html>
