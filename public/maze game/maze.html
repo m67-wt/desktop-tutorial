@@ -16,54 +16,48 @@
 </head>
 <body>
 <canvas id="c"></canvas>
-
 <script>
 /* ================= CANVAS ================= */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
 function resize() {
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 }
-addEventListener("resize", resize);
+window.addEventListener("resize", resize);
 resize();
 
 /* ================= MAP ================= */
-// 0 = empty
-// 1–4 = wall textures
-// 5 = reserved (keys / doors)
 const TILE = 64;
-
 const map = [
-  [4,4,4,4,4,4,4,4,4,4],
-  [4,0,0,0,0,0,0,0,0,4],
-  [4,0,1,1,1,0,2,2,0,4],
-  [4,0,0,0,1,0,0,0,0,4],
-  [4,0,3,0,1,0,4,0,0,4],
-  [4,0,0,0,0,0,4,0,0,4],
-  [4,4,4,4,4,4,4,4,4,4],
+  [4,4,4,4,4,4,4,4,4,4,4,4],
+  [4,0,0,0,0,0,0,0,0,0,0,4],
+  [4,0,1,1,1,0,2,2,0,0,0,4],
+  [4,0,0,0,1,0,0,0,0,3,0,4],
+  [4,0,3,0,1,0,4,0,0,3,0,4],
+  [4,0,0,0,0,0,4,0,0,0,0,4],
+  [4,4,4,4,4,4,4,4,4,4,4,4],
 ];
 
 /* ================= TEXTURES ================= */
 const TEXTURE_SIZE = 100;
-
-// index 0 unused so map values match texture index
-const wallTextures = [
-  null,
-  loadTexture("./assests/wall textures-1.png.png"),
-  loadTexture("./assests/wall textures-2.png.png"),
-  loadTexture("./assests/wall textures-3.png.png"),
-  loadTexture("./assests/wall textures-4.png.png")
-];
-
-];
 
 function loadTexture(src) {
   const img = new Image();
   img.src = src;
   return img;
 }
+
+// IMPORTANT: Check your GitHub folder name (assets vs assests) 
+// and ensure the file names match exactly!
+const wallTextures = [
+  null,
+  loadTexture("assets/wall textures-1.png"),
+  loadTexture("assets/wall textures-2.png"),
+  loadTexture("assets/wall textures-3.png"),
+  loadTexture("assets/wall textures-4.png")
+];
 
 /* ================= PLAYER ================= */
 const player = {
@@ -76,14 +70,14 @@ const player = {
 
 /* ================= INPUT ================= */
 const keys = {};
-onkeydown = e => keys[e.key.toLowerCase()] = true;
-onkeyup   = e => keys[e.key.toLowerCase()] = false;
+window.onkeydown = e => keys[e.key.toLowerCase()] = true;
+window.onkeyup = e => keys[e.key.toLowerCase()] = false;
 
 /* ================= COLLISION ================= */
 function empty(x, y) {
   const mx = Math.floor(x / TILE);
   const my = Math.floor(y / TILE);
-  return map[my]?.[mx] === 0;
+  return map[my] && map[my][mx] === 0;
 }
 
 /* ================= UPDATE ================= */
@@ -107,80 +101,79 @@ function update() {
 }
 
 /* ================= RAYCAST ================= */
+
 function drawWalls() {
   const fov = Math.PI / 3;
 
   for (let x = 0; x < canvas.width; x++) {
     const rayAngle = player.angle - fov / 2 + (x / canvas.width) * fov;
-    const sin = Math.sin(rayAngle);
-    const cos = Math.cos(rayAngle);
+    const rayCos = Math.cos(rayAngle);
+    const raySin = Math.sin(rayAngle);
 
     let rx = player.x;
     let ry = player.y;
     let dist = 0;
     let wallId = 0;
 
-    while (dist < 1000) {
-      rx += cos;
-      ry += sin;
+    // Ray stepping
+    while (dist < 800) {
+      rx += rayCos;
+      ry += raySin;
       dist++;
 
       const mx = Math.floor(rx / TILE);
       const my = Math.floor(ry / TILE);
 
-      if (map[my]?.[mx] > 0) {
+      if (map[my] && map[my][mx] > 0) {
         wallId = map[my][mx];
         break;
       }
     }
 
-    if (!wallId || wallId > 4) continue;
+    if (wallId > 0) {
+      const correctedDist = dist * Math.cos(rayAngle - player.angle);
+      const wallHeight = (TILE * canvas.height) / correctedDist;
+      const yPos = (canvas.height / 2) - (wallHeight / 2);
 
-    // remove fish-eye
-    const corrected = dist * Math.cos(rayAngle - player.angle);
-    const wallHeight = (TILE * canvas.height) / corrected;
-    const y = canvas.height / 2 - wallHeight / 2;
+      // Texture calculation
+      const hitX = (Math.abs(rx % TILE) > Math.abs(ry % TILE)) ? ry % TILE : rx % TILE;
+      const texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+      const texture = wallTextures[wallId];
 
-    // determine hit position for texture X
-    let hitX;
-    if (Math.abs(rx % TILE) > Math.abs(ry % TILE)) {
-      hitX = ry % TILE;
-    } else {
-      hitX = rx % TILE;
+      // Draw texture if ready, else draw gray wall
+      if (texture && texture.complete && texture.width > 0) {
+        ctx.drawImage(texture, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, wallHeight);
+      } else {
+        ctx.fillStyle = "#666";
+        ctx.fillRect(x, yPos, 1, wallHeight);
+      }
+
+      // Depth shading (darkens further walls)
+      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, correctedDist / 700)})`;
+      ctx.fillRect(x, yPos, 1, wallHeight);
     }
-
-    const texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
-
-    const texture = wallTextures[wallId];
-    if (!texture) continue;
-
-    ctx.drawImage(
-      texture,
-      texX, 0, 1, TEXTURE_SIZE,
-      x, y, 1, wallHeight
-    );
-
-    // distance shading
-    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.6, corrected / 600)})`;
-    ctx.fillRect(x, y, 1, wallHeight);
   }
 }
 
 /* ================= LOOP ================= */
 function loop() {
   update();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Clear screen & Draw Ceiling/Floor
+  ctx.fillStyle = "#222"; // Ceiling
+  ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+  ctx.fillStyle = "#444"; // Floor
+  ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+
   drawWalls();
   requestAnimationFrame(loop);
 }
 
-/* ================= START ================= */
-Promise.all(
-  wallTextures.filter(Boolean).map(
-    img => new Promise(res => img.onload = res)
-  )
-).then(loop);
+// Start immediately
+loop();
 </script>
+
 </body>
 </html>
+
 
