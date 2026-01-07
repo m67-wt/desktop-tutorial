@@ -54,11 +54,11 @@ const wallTextures = [
 
 /* ================= PLAYER ================= */
 const player = {
-  x: TILE * 1.5,
-  y: TILE * 1.5,
+  x: TILE * 5,    // Started further in the map
+  y: TILE * 3, 
   angle: 0,
-  move: 1.5,
-  rot: 0.04
+  move: 2.5,      // Slightly faster movement
+  rot: 0.05
 };
 
 /* ================= INPUT ================= */
@@ -137,15 +137,16 @@ function drawWalls() {
         side = 1;
       }
       if (map[mapY] && map[mapY][mapX] > 0) hit = true;
-      if (sideDistX > 100 && sideDistY > 100) break; // Safety break
+      if (sideDistX > 100 && sideDistY > 100) break; 
     }
 
     let wallDist;
     if (side === 0) wallDist = (sideDistX - deltaDistX);
     else           wallDist = (sideDistY - deltaDistY);
 
-    const wallHeight = (TILE * canvas.height) / (wallDist * Math.cos(rayAngle - player.angle));
-    const yPos = (canvas.height - wallHeight) / 0.5;
+    // Wall Height Scale: Change (TILE * 0.5) to (TILE) if you want full height walls again
+    const wallHeight = ((TILE * 0.6) * canvas.height) / (wallDist * Math.cos(rayAngle - player.angle));
+    const yPos = (canvas.height - wallHeight) / 2;
 
     let wallX; 
     if (side === 0) wallX = (player.y / TILE) + wallDist * rayDirY;
@@ -166,12 +167,14 @@ function drawWalls() {
       ctx.fillRect(x, yPos, 1, wallHeight);
     }
 
-    // Shading/Fog
+    // Shading side walls
     if (side === 1) {
-       ctx.fillStyle = `rgba(0,0,0,0.2)`;
+       ctx.fillStyle = `rgba(0,0,0,0.15)`;
        ctx.fillRect(x, yPos, 1, wallHeight);
     }
-    const fog = Math.min(0.8, wallDist / 15);
+
+    // Distance Fog (Higher number = see further)
+    const fog = Math.min(0.9, wallDist / 25);
     ctx.fillStyle = `rgba(0,0,0,${fog})`;
     ctx.fillRect(x, yPos, 1, wallHeight);
   }
@@ -181,11 +184,12 @@ function drawWalls() {
 function loop() {
   update();
 
-  // Sky
-  ctx.fillStyle = "#222";
+  // Sky - Dark Grey
+  ctx.fillStyle = "#1a1a1a";
   ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
-  // Floor
-  ctx.fillStyle = "#444";
+
+  // Floor - Lighter Grey
+  ctx.fillStyle = "#333";
   ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
   drawWalls();
@@ -196,4 +200,3 @@ loop();
 </script>
 </body>
 </html>
-
