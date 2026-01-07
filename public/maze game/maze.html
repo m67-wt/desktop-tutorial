@@ -135,36 +135,101 @@ function drawWalls() {
     const wallHeight = (TILE * canvas.height) / correctedDist;
     const yPos = (canvas.height - wallHeight) / 2;
 
-    /* ===== ORIGINAL TEXTURE COORDINATE ===== */
-    const hitOffsetX = rx % TILE;
-    const hitOffsetY = ry % TILE;
+/* ================= TEXTURES ================= */
+// 1. Updated to match your 500x500 files
+const TEXTURE_SIZE = 500; 
 
-    let hitX;
-    if (Math.abs(hitOffsetX - TILE / 2) > Math.abs(hitOffsetY - TILE / 2)) {
-      hitX = hitOffsetY;
-    } else {
-      hitX = hitOffsetX;
+function loadTexture(src) {
+  const img = new Image();
+  img.src = src;
+  img.onerror = () => console.error("Missing texture:", src);
+  return img;
+}
+
+const wallTextures = [
+  null,
+  loadTexture("assets/wall textures-1.png"),
+  loadTexture("assets/wall textures-2.png"),
+  loadTexture("assets/wall textures-3.png"),
+  loadTexture("assets/wall textures-4.png")
+];
+
+/* ... (rest of the code remains same until drawWalls) ... */
+
+function drawWalls() {
+  const fov = Math.PI / 3;
+
+  for (let x = 0; x < canvas.width; x++) {
+    const rayAngle = player.angle - fov / 2 + (x / canvas.width) * fov;
+    const rayCos = Math.cos(rayAngle);
+    const raySin = Math.sin(rayAngle);
+
+    let rx = player.x;
+    let ry = player.y;
+    let dist = 0;
+    let wallId = 0;
+
+    // Standard Ray Marching
+    while (dist < 800) {
+      rx += rayCos;
+      ry += raySin;
+      dist++;
+
+      const mx = Math.floor(rx / TILE);
+      const my = Math.floor(ry / TILE);
+
+      if (map[my] && map[my][mx] > 0) {
+        wallId = map[my][mx];
+        break;
+      }
     }
 
-    const texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+    if (!wallId) continue;
+
+    const correctedDist = dist * Math.cos(rayAngle - player.angle);
+    const wallHeight = (TILE * canvas.height) / correctedDist;
+    const yPos = (canvas.height - wallHeight) / 2;
+
+    /* ===== IMPROVED TEXTURE COORDINATE MAPPING ===== */
+    
+    // We determine if we hit a horizontal or vertical wall 
+    // by checking the remainder of the hit position
+    const hitOffsetX = rx % TILE;
+    const hitOffsetY = ry % TILE;
+    
+    let hitX;
+    // If the fractional part of Y is very close to the edge, it's a horizontal wall
+    if (hitOffsetX < 0.1 || hitOffsetX > TILE - 0.1) {
+        hitX = hitOffsetY;
+    } else {
+        hitX = hitOffsetX;
+    }
+
+    // Map the 0-64 tile coordinate to 0-500 texture coordinate
+    // Use Math.min to ensure we don't exceed the texture width
+    let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+    texX = Math.max(0, Math.min(TEXTURE_SIZE - 1, texX));
+
     const texture = wallTextures[wallId];
 
     if (texture && texture.complete) {
+      // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
       ctx.drawImage(
         texture,
-        texX, 0, 1, TEXTURE_SIZE,
-        x, yPos, 1, wallHeight
+        texX, 0, 1, TEXTURE_SIZE,  // Source: 1-pixel wide slice of the 500px texture
+        x, yPos, 1, wallHeight     // Destination: 1-pixel wide slice on screen
       );
     } else {
       ctx.fillStyle = "#777";
       ctx.fillRect(x, yPos, 1, wallHeight);
     }
 
+    // Shadowing effect based on distance
     ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, correctedDist / 700)})`;
     ctx.fillRect(x, yPos, 1, wallHeight);
   }
 }
-
+    
 /* ================= LOOP ================= */
 function loop() {
   update();
@@ -184,3 +249,4 @@ loop();
 
 </body>
 </html>
+
