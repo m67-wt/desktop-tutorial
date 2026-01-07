@@ -44,14 +44,14 @@ const TEXTURE_SIZE = 100;
 function loadTexture(src) {
   const img = new Image();
   img.src = src;
+  // This helper will tell you in the F12 console if the path is still wrong
+  img.onerror = () => console.error("Could not find image at: " + src);
   return img;
 }
 
-// IMPORTANT: Check your GitHub folder name (assets vs assests) 
-// and ensure the file names match exactly!
 const wallTextures = [
   null,
-  loadTexture("public/maze game/assets/wall textures-1.png),
+  loadTexture("public/maze game/assets/wall textures-1.png"),
   loadTexture("public/maze game/assets/wall textures-2.png"),
   loadTexture("public/maze game/assets/wall textures-3.png"),
   loadTexture("public/maze game/assets/wall textures-4.png")
@@ -170,6 +170,7 @@ function loop() {
 // Start immediately
 loop();
 </script>
+
 
 
 
