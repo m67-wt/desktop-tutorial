@@ -135,35 +135,23 @@ function drawWalls() {
     const wallHeight = (TILE * canvas.height) / correctedDist;
     const yPos = (canvas.height - wallHeight) / 2;
 
-    /* ===== ORIGINAL TEXTURE COORDINATE ===== */
+   /* ===== FIXED TEXTURE COORDINATE ===== */
     const hitOffsetX = rx % TILE;
     const hitOffsetY = ry % TILE;
-
+    
+    // Determine if we hit a horizontal wall (top/bottom) or vertical (sides)
+    // We check which offset is closer to a grid boundary (0 or TILE)
     let hitX;
-    if (Math.abs(hitOffsetX - TILE / 2) > Math.abs(hitOffsetY - TILE / 2)) {
-      hitX = hitOffsetY;
+    const boundaryThreshold = 1; // Small epsilon to account for step size
+
+    if (hitOffsetX < boundaryThreshold || hitOffsetX > TILE - boundaryThreshold) {
+      hitX = hitOffsetY; // Hit vertical side, use Y for texture X
     } else {
-      hitX = hitOffsetX;
+      hitX = hitOffsetX; // Hit horizontal side, use X for texture X
     }
 
+    // Map hitX (0-64) to texture space (0-100)
     const texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
-    const texture = wallTextures[wallId];
-
-    if (texture && texture.complete) {
-      ctx.drawImage(
-        texture,
-        texX, 0, 1, TEXTURE_SIZE,
-        x, yPos, 1, wallHeight
-      );
-    } else {
-      ctx.fillStyle = "#777";
-      ctx.fillRect(x, yPos, 1, wallHeight);
-    }
-
-    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, correctedDist / 700)})`;
-    ctx.fillRect(x, yPos, 1, wallHeight);
-  }
-}
 
 /* ================= LOOP ================= */
 function loop() {
@@ -175,12 +163,110 @@ function loop() {
   ctx.fillStyle = "#444";
   ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
-  drawWalls();
-  requestAnimationFrame(loop);
-}
+function drawWalls() {
+  const fov = Math.PI / 3;
 
-loop();
+  for (let x = 0; x < canvas.width; x++) {
+    const rayAngle = player.angle - fov / 2 + (x / canvas.width) * fov;
+    
+    // Direction of the ray
+    const rayDirX = Math.cos(rayAngle);
+    const rayDirY = Math.sin(rayAngle);
+
+    // Current position in grid coordinates
+    let mapX = Math.floor(player.x / TILE);
+    let mapY = Math.floor(player.y / TILE);
+
+    // Distance the ray has to travel to go from 1 grid line to the next
+    const deltaDistX = Math.abs(1 / rayDirX);
+    const deltaDistY = Math.abs(1 / rayDirY);
+
+    let sideDistX, sideDistY;
+    let stepX, stepY;
+
+    // Calculate step and initial sideDist
+    if (rayDirX < 0) {
+      stepX = -1;
+      sideDistX = (player.x / TILE - mapX) * deltaDistX;
+    } else {
+      stepX = 1;
+      sideDistX = (mapX + 1.0 - player.x / TILE) * deltaDistX;
+    }
+    if (rayDirY < 0) {
+      stepY = -1;
+      sideDistY = (player.y / TILE - mapY) * deltaDistY;
+    } else {
+      stepY = 1;
+      sideDistY = (mapY + 1.0 - player.y / TILE) * deltaDistY;
+    }
+
+    let hit = false;
+    let side = 0; // 0 for vertical wall, 1 for horizontal
+
+    // DDA Jump from grid line to grid line
+    while (!hit) {
+      if (sideDistX < sideDistY) {
+        sideDistX += deltaDistX;
+        mapX += stepX;
+        side = 0;
+      } else {
+        sideDistY += deltaDistY;
+        mapY += stepY;
+        side = 1;
+      }
+      if (map[mapY] && map[mapY][mapX] > 0) hit = true;
+    }
+
+    // Calculate distance projected on camera direction (prevents fisheye)
+    let wallDist;
+    if (side === 0) wallDist = (sideDistX - deltaDistX);
+    else           wallDist = (sideDistY - deltaDistY);
+
+    const wallHeight = (TILE * canvas.height) / (wallDist * Math.cos(rayAngle - player.angle));
+    const yPos = (canvas.height - wallHeight) / 2;
+
+    // FIND THE EXACT TEXTURE X
+    // Where exactly did the ray hit the wall? (0.0 to 1.0)
+    let wallX; 
+    if (side === 0) wallX = (player.y / TILE) + wallDist * rayDirY;
+    else           wallX = (player.x / TILE) + wallDist * rayDirX;
+    wallX -= Math.floor(wallX);
+
+    // Map to your 100px texture
+    let texX = Math.floor(wallX * TEXTURE_SIZE);
+    
+    // Flip texture so it doesn't look mirrored on some walls
+    if(side == 0 && rayDirX > 0) texX = TEXTURE_SIZE - texX - 1;
+    if(side == 1 && rayDirY < 0) texX = TEXTURE_SIZE - texX - 1;
+
+    const wallId = map[mapY][mapX];
+    const texture = wallTextures[wallId];
+
+    if (texture && texture.complete) {
+      ctx.drawImage(
+        texture,
+        texX, 0, 1, TEXTURE_SIZE, // Source (1px wide slice)
+        x, yPos, 1, wallHeight    // Destination
+      );
+    } else {
+      ctx.fillStyle = "#777";
+      ctx.fillRect(x, yPos, 1, wallHeight);
+    }
+
+    // Shadowing: Darken "side" walls to add depth
+    if (side === 1) {
+       ctx.fillStyle = `rgba(0,0,0,0.2)`;
+       ctx.fillRect(x, yPos, 1, wallHeight);
+    }
+    
+    // Distance Fog
+    const fog = Math.min(0.8, wallDist / 15); // Adjust 15 to change fog distance
+    ctx.fillStyle = `rgba(0,0,0,${fog})`;
+    ctx.fillRect(x, yPos, 1, wallHeight);
+  }
+}
 </script>
 
 </body>
 </html>
+
