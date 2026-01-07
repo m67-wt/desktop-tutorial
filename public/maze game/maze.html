@@ -145,7 +145,7 @@ function drawWalls() {
     else           wallDist = (sideDistY - deltaDistY);
 
     const wallHeight = (TILE * canvas.height) / (wallDist * Math.cos(rayAngle - player.angle));
-    const yPos = (canvas.height - wallHeight) / 2;
+    const yPos = (canvas.height - wallHeight) / 0.5;
 
     let wallX; 
     if (side === 0) wallX = (player.y / TILE) + wallDist * rayDirY;
@@ -196,3 +196,4 @@ loop();
 </script>
 </body>
 </html>
+
