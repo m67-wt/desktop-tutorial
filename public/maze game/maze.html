@@ -141,17 +141,31 @@ function drawWalls() {
     const yPos = (canvas.height - wallHeight) / 2;
 
     /* ===== CORRECT WALL HIT DETECTION ===== */
-    let hitX;
-    let verticalHit = false;
+let hitX;
+let verticalHit = false;
 
-    if (Math.floor(prevRx / TILE) !== Math.floor(rx / TILE)) {
-      // Vertical wall
-      hitX = ry % TILE;
-      verticalHit = true;
-    } else {
-      // Horizontal wall
-      hitX = rx % TILE;
-    }
+const mx = Math.floor(rx / TILE);
+const my = Math.floor(ry / TILE);
+
+// Distance back to wall edge
+const dx = rx - prevRx;
+const dy = ry - prevRy;
+
+if (Math.abs(dx) > Math.abs(dy)) {
+  // Vertical wall hit
+  verticalHit = true;
+  const wallX = dx > 0 ? mx * TILE : (mx + 1) * TILE;
+  hitX = ry + (wallX - rx) * (raySin / rayCos);
+  hitX %= TILE;
+} else {
+  // Horizontal wall hit
+  const wallY = dy > 0 ? my * TILE : (my + 1) * TILE;
+  hitX = rx + (wallY - ry) * (rayCos / raySin);
+  hitX %= TILE;
+}
+
+if (hitX < 0) hitX += TILE;
+
 
     let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
 
@@ -203,3 +217,4 @@ loop();
 
 </body>
 </html>
+
