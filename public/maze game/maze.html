@@ -51,13 +51,10 @@ const wallTextures = [
   loadTexture("assets/wall textures-4.png")
 ];
 
-/* ================= WEAPON SYSTEM (PRE-LOADED) ================= */
+/* ================= WEAPON SYSTEM ================= */
 const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2, rot: 0.04 };
 
-// We create 3 separate image objects so they stay in memory
 const imgIdle = new Image(); imgIdle.src = "assets/gun idle.gif";
-const imgFire = new Image(); imgFire.src = "assets/gunfire.gif";
-const imgReload = new Image(); imgReload.src = "assets/gun reload.gif";
 
 const weapon = {
   ammo: 25,
@@ -81,9 +78,10 @@ function shoot() {
   weapon.state = "firing";
   weapon.ammo--;
   
-  // Force restart the GIF by re-assigning the SRC with a timestamp
-  imgFire.src = "assets/gunfire.gif?t=" + Date.now();
-  weapon.currentImg = imgFire;
+  // Create a new image object to force the GIF to start from frame 1
+  const animImg = new Image();
+  animImg.src = "assets/gunfire.gif?t=" + Date.now();
+  weapon.currentImg = animImg;
   
   setTimeout(() => {
     weapon.state = "idle";
@@ -95,9 +93,9 @@ function reload() {
   if (weapon.ammo === weapon.maxAmmo) return;
   weapon.state = "reloading";
   
-  // Force restart the reload GIF
-  imgReload.src = "assets/gun reload.gif?t=" + Date.now();
-  weapon.currentImg = imgReload;
+  const animImg = new Image();
+  animImg.src = "assets/gun reload.gif?t=" + Date.now();
+  weapon.currentImg = animImg;
   
   setTimeout(() => {
     weapon.ammo = weapon.maxAmmo;
@@ -125,18 +123,15 @@ function update() {
 
 /* ================= DRAWING ================= */
 function drawUI() {
-  // Hotbar Background
   const barY = canvas.height - 100;
   ctx.fillStyle = "#333"; ctx.fillRect(0, barY, canvas.width, 100);
   ctx.strokeStyle = "#888"; ctx.lineWidth = 4; ctx.strokeRect(0, barY, canvas.width, 100);
   ctx.fillStyle = "yellow"; ctx.font = "bold 35px Arial";
   ctx.fillText("AMMO: " + weapon.ammo, 50, barY + 65);
 
-  // Crosshair
   ctx.strokeStyle = "rgba(0, 255, 0, 0.7)"; ctx.lineWidth = 2;
   ctx.strokeRect(canvas.width/2-5, canvas.height/2-5, 10, 10);
 
-  // Render Weapon
   if (weapon.currentImg.complete) {
     const scale = 0.8;
     const h = canvas.height * scale;
