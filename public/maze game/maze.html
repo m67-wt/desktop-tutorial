@@ -66,20 +66,20 @@ const player = {
 const weapon = {
   ammo: 25,
   maxAmmo: 25,
-  state: "idle", // idle, firing, reloading
+  state: "idle",
   img: new Image(),
-  // Animation paths
-  idleSrc: "assets/gun idle.gif",
-  fireSrc: "assets/gunfire.gif",
-  reloadSrc: "assets/gun reload.gif"
+  // UPDATE THESE PATHS TO YOUR FILENAMES
+  idlePath: "assets/gun idle.gif",
+  firePath: "assets/gunfire.gif",
+  reloadPath: "assets/gun reload.gif"
 };
-weapon.img.src = weapon.idleSrc;
+// Initialize with idle animation
+weapon.img.src = weapon.idlePath;
 
 /* ================= INPUT ================= */
 const keys = {};
 window.addEventListener("keydown", e => {
     keys[e.key.toLowerCase()] = true;
-    // Shooting (Space) and Reloading (R)
     if (e.key === " " && weapon.state === "idle") shoot();
     if (e.key.toLowerCase() === "r" && weapon.state === "idle") reload();
 });
@@ -90,23 +90,25 @@ function shoot() {
   if (weapon.ammo <= 0) return;
   weapon.state = "firing";
   weapon.ammo--;
-  // Reset GIF by adding timestamp
-  weapon.img.src = weapon.fireSrc + "?t=" + Date.now();
+  // Cache-busting (?t=) ensures the GIF starts from the first frame
+  weapon.img.src = weapon.firePath + "?t=" + Date.now();
+  
   setTimeout(() => {
     weapon.state = "idle";
-    weapon.img.src = weapon.idleSrc;
-  }, 600); 
+    weapon.img.src = weapon.idlePath;
+  }, 600); // Adjust this (ms) to match your gunfire gif length
 }
 
 function reload() {
   if (weapon.ammo === weapon.maxAmmo) return;
   weapon.state = "reloading";
-  weapon.img.src = weapon.reloadSrc + "?t=" + Date.now();
+  weapon.img.src = weapon.reloadPath + "?t=" + Date.now();
+  
   setTimeout(() => {
     weapon.ammo = weapon.maxAmmo;
     weapon.state = "idle";
-    weapon.img.src = weapon.idleSrc;
-  }, 1200);
+    weapon.img.src = weapon.idlePath;
+  }, 1200); // Adjust this (ms) to match your reload gif length
 }
 
 /* ================= COLLISION ================= */
@@ -139,7 +141,7 @@ function update() {
 /* ================= UI DRAWING ================= */
 function drawUI() {
   // Crosshair
-  ctx.strokeStyle = "lime";
+  ctx.strokeStyle = "rgba(0, 255, 0, 0.7)";
   ctx.lineWidth = 2;
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;
@@ -148,15 +150,16 @@ function drawUI() {
   ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
   ctx.stroke();
 
-  // Shotgun with Tilt
+  // Gun Logic with Aim-Tilt
   if (weapon.img.complete) {
-    const h = canvas.height * 0.7; // Scale gun relative to screen height
+    const scale = 0.75;
+    const h = canvas.height * scale;
     const w = h * (weapon.img.width / weapon.img.height);
     
     ctx.save();
-    // Move to bottom center-right
+    // Position gun at bottom right-ish
     ctx.translate(canvas.width * 0.55, canvas.height - 100);
-    // Rotate slightly inward to point at crosshair
+    // Tilt inward toward the crosshair
     ctx.rotate(-0.06); 
     ctx.drawImage(weapon.img, -w / 2, -h, w, h);
     ctx.restore();
@@ -170,9 +173,9 @@ function drawUI() {
   ctx.lineWidth = 4;
   ctx.strokeRect(0, barY, canvas.width, 100);
 
-  // Ammo Text
+  // Ammo Display
   ctx.fillStyle = "yellow";
-  ctx.font = "bold 40px Arial";
+  ctx.font = "bold 35px Arial";
   ctx.fillText("AMMO: " + weapon.ammo, 50, barY + 65);
 }
 
@@ -255,7 +258,7 @@ function loop() {
   ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
   drawWalls();
-  drawUI(); // Added UI call here
+  drawUI(); 
   requestAnimationFrame(loop);
 }
 
