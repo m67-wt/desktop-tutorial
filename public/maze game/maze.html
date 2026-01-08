@@ -68,12 +68,12 @@ const weapon = {
   maxAmmo: 25,
   state: "idle",
   img: new Image(),
-  // UPDATE THESE PATHS TO YOUR FILENAMES
+  // These link to your assets folder on GitHub
   idlePath: "assets/gun idle.gif",
   firePath: "assets/gunfire.gif",
   reloadPath: "assets/gun reload.gif"
 };
-// Initialize with idle animation
+// Set initial animation
 weapon.img.src = weapon.idlePath;
 
 /* ================= INPUT ================= */
@@ -90,13 +90,13 @@ function shoot() {
   if (weapon.ammo <= 0) return;
   weapon.state = "firing";
   weapon.ammo--;
-  // Cache-busting (?t=) ensures the GIF starts from the first frame
+  // Reset the GIF frame by adding a unique timestamp
   weapon.img.src = weapon.firePath + "?t=" + Date.now();
   
   setTimeout(() => {
     weapon.state = "idle";
     weapon.img.src = weapon.idlePath;
-  }, 600); // Adjust this (ms) to match your gunfire gif length
+  }, 600); // Adjust (600) to your firing GIF length
 }
 
 function reload() {
@@ -108,7 +108,7 @@ function reload() {
     weapon.ammo = weapon.maxAmmo;
     weapon.state = "idle";
     weapon.img.src = weapon.idlePath;
-  }, 1200); // Adjust this (ms) to match your reload gif length
+  }, 1200); // Adjust (1200) to your reload GIF length
 }
 
 /* ================= COLLISION ================= */
@@ -140,7 +140,19 @@ function update() {
 
 /* ================= UI DRAWING ================= */
 function drawUI() {
-  // Crosshair
+  // 1. Hotbar (Drawn first so it's behind the tilted gun)
+  const barY = canvas.height - 100;
+  ctx.fillStyle = "#333";
+  ctx.fillRect(0, barY, canvas.width, 100);
+  ctx.strokeStyle = "#888";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(0, barY, canvas.width, 100);
+
+  ctx.fillStyle = "yellow";
+  ctx.font = "bold 35px Arial";
+  ctx.fillText("AMMO: " + weapon.ammo, 50, barY + 65);
+
+  // 2. Crosshair
   ctx.strokeStyle = "rgba(0, 255, 0, 0.7)";
   ctx.lineWidth = 2;
   const cx = canvas.width / 2;
@@ -150,33 +162,19 @@ function drawUI() {
   ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
   ctx.stroke();
 
-  // Gun Logic with Aim-Tilt
+  // 3. Tilted Gun
   if (weapon.img.complete) {
-    const scale = 0.75;
+    const scale = 0.8; 
     const h = canvas.height * scale;
     const w = h * (weapon.img.width / weapon.img.height);
     
     ctx.save();
-    // Position gun at bottom right-ish
-    ctx.translate(canvas.width * 0.55, canvas.height - 100);
-    // Tilt inward toward the crosshair
+    // Position gun at bottom right, pointing toward center
+    ctx.translate(canvas.width * 0.58, canvas.height - 80);
     ctx.rotate(-0.06); 
     ctx.drawImage(weapon.img, -w / 2, -h, w, h);
     ctx.restore();
   }
-
-  // Hotbar
-  const barY = canvas.height - 100;
-  ctx.fillStyle = "#333";
-  ctx.fillRect(0, barY, canvas.width, 100);
-  ctx.strokeStyle = "#888";
-  ctx.lineWidth = 4;
-  ctx.strokeRect(0, barY, canvas.width, 100);
-
-  // Ammo Display
-  ctx.fillStyle = "yellow";
-  ctx.font = "bold 35px Arial";
-  ctx.fillText("AMMO: " + weapon.ammo, 50, barY + 65);
 }
 
 /* ================= RAYCAST ================= */
