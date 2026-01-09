@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Raycaster - Single Shot</title>
+    <title>Raycaster - Fire & Reload</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; }
         canvas { display: block; }
     </style>
 </head>
 <body>
-
 <canvas id="c"></canvas>
-
 <script>
-/* ================= CANVAS SETUP ================= */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
@@ -24,7 +21,6 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/* ================= WORLD MAP ================= */
 const TILE = 64;
 const map = [
     [4,4,4,4,4,4,4,4,4,4,4,4],
@@ -36,7 +32,6 @@ const map = [
     [4,4,4,4,4,4,4,4,4,4,4,4],
 ];
 
-/* ================= ASSET LOADING ================= */
 function loadImg(src) {
     const img = new Image();
     img.src = src;
@@ -52,28 +47,19 @@ const wallTextures = [
     loadImg("assets/wall textures-4.png")
 ];
 
-const weaponSheet = loadImg("assets/gun_reload.png");
-
-/* ================= WEAPON & PLAYER CONFIG ================= */
-const weapon = {
-    ammo: 1,       // Starts with 1 bullet loaded
-    maxAmmo: 1,    // Max capacity is 1
-    state: "idle",
-    frame: 0,
-    lastFrameUpdate: 0,
-    animSpeed: 95  // Slowed down by 25% (Original ~70ms * 1.35)
-};
+const reloadSheet = loadImg("assets/gun_reload.png");
+const fireSheet = loadImg("assets/gunfire.png");
 
 const ANIMS = {
-    idle: [0],
-    fire: [1, 2, 3, 4, 5], 
-    reload: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    idle:   { frames: [0], sheet: reloadSheet, count: 19, speed: 100 },
+    fire:   { frames: [0,1,2,3,4,5,6], sheet: fireSheet, count: 7, speed: 100 }, // 10 FPS
+    reload: { frames: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18], sheet: reloadSheet, count: 19, speed: 95 }
 };
 
+const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 100 };
 const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 3.5, rot: 0.05 };
 const keys = {};
 
-/* ================= INPUTS ================= */
 window.addEventListener("keydown", e => {
     keys[e.key.toLowerCase()] = true;
     if (e.key === " ") handleAction();
@@ -82,28 +68,23 @@ window.addEventListener("keydown", e => {
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 window.addEventListener("mousedown", () => handleAction());
 
-/* ================= LOGIC ================= */
 function isWall(x, y) {
     const mx = Math.floor(x / TILE);
     const my = Math.floor(y / TILE);
     return map[my] && map[my][mx] > 0;
 }
 
-// Logic to decide whether to shoot or reload on click
 function handleAction() {
     if (weapon.state !== "idle") return;
-
-    if (weapon.ammo > 0) {
-        shoot();
-    } else {
-        reload();
-    }
+    if (weapon.ammo > 0) shoot();
+    else reload();
 }
 
 function shoot() {
-    weapon.ammo = 0; // Empty the chamber
+    weapon.ammo = 0;
     weapon.state = "fire";
     weapon.frame = 0;
+    weapon.animSpeed = ANIMS.fire.speed;
     weapon.lastFrameUpdate = performance.now();
 }
 
@@ -111,12 +92,12 @@ function reload() {
     if (weapon.state === "idle" && weapon.ammo === 0) {
         weapon.state = "reload";
         weapon.frame = 0;
+        weapon.animSpeed = ANIMS.reload.speed;
         weapon.lastFrameUpdate = performance.now();
     }
 }
 
 function update() {
-    // Movement
     let moveStep = 0;
     if (keys["w"]) moveStep = player.move;
     if (keys["s"]) moveStep = -player.move;
@@ -125,11 +106,9 @@ function update() {
 
     let nx = player.x + Math.cos(player.angle) * moveStep;
     let ny = player.y + Math.sin(player.angle) * moveStep;
-
     if (!isWall(nx, player.y)) player.x = nx;
     if (!isWall(player.x, ny)) player.y = ny;
 
-    // Animation Timing
     const now = performance.now();
     const currentAnim = ANIMS[weapon.state];
     
@@ -137,17 +116,21 @@ function update() {
         if (now - weapon.lastFrameUpdate > weapon.animSpeed) {
             weapon.frame++;
             weapon.lastFrameUpdate = now;
-            
-            if (weapon.frame >= currentAnim.length) {
-                if (weapon.state === "reload") weapon.ammo = 1; // Bullet loaded
-                weapon.state = "idle";
-                weapon.frame = 0;
+            if (weapon.frame >= currentAnim.frames.length) {
+                if (weapon.state === "fire") {
+                    weapon.state = "reload"; // Auto-reload after firing
+                    weapon.frame = 0;
+                    weapon.animSpeed = ANIMS.reload.speed;
+                } else {
+                    weapon.ammo = 1;
+                    weapon.state = "idle";
+                    weapon.frame = 0;
+                }
             }
         }
     }
 }
 
-/* ================= DRAWING ================= */
 function drawWalls() {
     const fov = Math.PI / 3;
     for (let x = 0; x < canvas.width; x++) {
@@ -159,14 +142,12 @@ function drawWalls() {
             let px = rx;
             rx += rayCos * 2; ry += raySin * 2; dist += 2;
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
-            
             if (map[my] && map[my][mx] > 0) {
                 const wallId = map[my][mx];
                 hitV = Math.floor(px / TILE) !== mx;
                 const corrected = dist * Math.cos(rayAngle - player.angle);
                 const h = (TILE * canvas.height) / corrected;
                 const yPos = (canvas.height - h) / 2;
-
                 const texture = wallTextures[wallId];
                 if (texture && texture.complete) {
                     let hitX = hitV ? ry % TILE : rx % TILE;
@@ -182,30 +163,22 @@ function drawWalls() {
 }
 
 function drawUI() {
-    // Gun Rendering
-    if (weaponSheet.complete && weaponSheet.width > 0) {
-        const frameW = weaponSheet.width / 19;
-        const frameH = weaponSheet.height;
-        const currentAnim = ANIMS[weapon.state];
-        const frameIdx = currentAnim[weapon.frame];
-
+    const currentAnim = ANIMS[weapon.state];
+    const sheet = currentAnim.sheet;
+    if (sheet.complete && sheet.width > 0) {
+        const frameW = sheet.width / currentAnim.count;
+        const frameH = sheet.height;
+        const frameIdx = currentAnim.frames[weapon.frame];
         const displayH = canvas.height * 0.8;
         const displayW = displayH * (frameW / frameH);
-
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height);
-        ctx.drawImage(
-            weaponSheet,
-            frameIdx * frameW, 0, frameW, frameH,
-            -displayW / 2, -displayH, displayW, displayH
-        );
+        ctx.drawImage(sheet, frameIdx * frameW, 0, frameW, frameH, -displayW / 2, -displayH, displayW, displayH);
         ctx.restore();
     }
-
-    // Ammo Status
     ctx.fillStyle = "yellow";
     ctx.font = "bold 24px monospace";
-    ctx.fillText(weapon.ammo > 0 ? "LOADED" : "EMPTY (CLICK TO RELOAD)", 30, canvas.height - 35);
+    ctx.fillText(weapon.state === "idle" ? (weapon.ammo > 0 ? "READY" : "RELOAD") : weapon.state.toUpperCase(), 30, canvas.height - 35);
 }
 
 function loop() {
