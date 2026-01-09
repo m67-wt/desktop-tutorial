@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Raycaster JS</title>
+    <title>Raycaster - Single Shot</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; }
         canvas { display: block; }
@@ -19,7 +19,7 @@ const ctx = canvas.getContext("2d");
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    ctx.imageSmoothingEnabled = false; // Keeps pixel art crisp
+    ctx.imageSmoothingEnabled = false;
 }
 window.addEventListener("resize", resize);
 resize();
@@ -43,7 +43,6 @@ function loadImg(src) {
     return img;
 }
 
-// RESTORED: Wall textures
 const TEXTURE_SIZE = 500;
 const wallTextures = [
     null,
@@ -57,39 +56,31 @@ const weaponSheet = loadImg("assets/gun_reload.png");
 
 /* ================= WEAPON & PLAYER CONFIG ================= */
 const weapon = {
-    ammo: 25,
-    maxAmmo: 25,
+    ammo: 1,       // Starts with 1 bullet loaded
+    maxAmmo: 1,    // Max capacity is 1
     state: "idle",
     frame: 0,
     lastFrameUpdate: 0,
-    animSpeed: 70 // Speed in milliseconds
+    animSpeed: 95  // Slowed down by 25% (Original ~70ms * 1.35)
 };
 
-// Map your 19 frames from the single row
 const ANIMS = {
     idle: [0],
     fire: [1, 2, 3, 4, 5], 
     reload: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
 };
 
-const player = {
-    x: TILE * 1.5,
-    y: TILE * 1.5,
-    angle: 0,
-    move: 3.5,
-    rot: 0.05
-};
-
+const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 3.5, rot: 0.05 };
 const keys = {};
 
 /* ================= INPUTS ================= */
 window.addEventListener("keydown", e => {
     keys[e.key.toLowerCase()] = true;
-    if (e.key === " ") shoot();
+    if (e.key === " ") handleAction();
     if (e.key.toLowerCase() === "r") reload();
 });
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-window.addEventListener("mousedown", () => shoot());
+window.addEventListener("mousedown", () => handleAction());
 
 /* ================= LOGIC ================= */
 function isWall(x, y) {
@@ -98,17 +89,26 @@ function isWall(x, y) {
     return map[my] && map[my][mx] > 0;
 }
 
-function shoot() {
-    if (weapon.state === "idle" && weapon.ammo > 0) {
-        weapon.ammo--;
-        weapon.state = "fire";
-        weapon.frame = 0;
-        weapon.lastFrameUpdate = performance.now();
+// Logic to decide whether to shoot or reload on click
+function handleAction() {
+    if (weapon.state !== "idle") return;
+
+    if (weapon.ammo > 0) {
+        shoot();
+    } else {
+        reload();
     }
 }
 
+function shoot() {
+    weapon.ammo = 0; // Empty the chamber
+    weapon.state = "fire";
+    weapon.frame = 0;
+    weapon.lastFrameUpdate = performance.now();
+}
+
 function reload() {
-    if (weapon.state === "idle" && weapon.ammo < weapon.maxAmmo) {
+    if (weapon.state === "idle" && weapon.ammo === 0) {
         weapon.state = "reload";
         weapon.frame = 0;
         weapon.lastFrameUpdate = performance.now();
@@ -116,7 +116,7 @@ function reload() {
 }
 
 function update() {
-    // Movement Logic
+    // Movement
     let moveStep = 0;
     if (keys["w"]) moveStep = player.move;
     if (keys["s"]) moveStep = -player.move;
@@ -126,11 +126,10 @@ function update() {
     let nx = player.x + Math.cos(player.angle) * moveStep;
     let ny = player.y + Math.sin(player.angle) * moveStep;
 
-    // Slide against walls
     if (!isWall(nx, player.y)) player.x = nx;
     if (!isWall(player.x, ny)) player.y = ny;
 
-    // Weapon Animation Timing
+    // Animation Timing
     const now = performance.now();
     const currentAnim = ANIMS[weapon.state];
     
@@ -140,7 +139,7 @@ function update() {
             weapon.lastFrameUpdate = now;
             
             if (weapon.frame >= currentAnim.length) {
-                if (weapon.state === "reload") weapon.ammo = weapon.maxAmmo;
+                if (weapon.state === "reload") weapon.ammo = 1; // Bullet loaded
                 weapon.state = "idle";
                 weapon.frame = 0;
             }
@@ -153,10 +152,9 @@ function drawWalls() {
     const fov = Math.PI / 3;
     for (let x = 0; x < canvas.width; x++) {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
-        const rayCos = Math.cos(rayAngle);
-        const raySin = Math.sin(rayAngle);
-
+        const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
         let rx = player.x, ry = player.y, dist = 0, hitV = false;
+
         while (dist < 800) {
             let px = rx;
             rx += rayCos * 2; ry += raySin * 2; dist += 2;
@@ -165,20 +163,16 @@ function drawWalls() {
             if (map[my] && map[my][mx] > 0) {
                 const wallId = map[my][mx];
                 hitV = Math.floor(px / TILE) !== mx;
-                
                 const corrected = dist * Math.cos(rayAngle - player.angle);
                 const h = (TILE * canvas.height) / corrected;
                 const yPos = (canvas.height - h) / 2;
 
-                // RESTORED: Texture mapping logic
                 const texture = wallTextures[wallId];
                 if (texture && texture.complete) {
                     let hitX = hitV ? ry % TILE : rx % TILE;
                     let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
                     ctx.drawImage(texture, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
                 }
-
-                // Depth Shading
                 ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corrected/600)})`;
                 ctx.fillRect(x, yPos, 1, h);
                 break;
@@ -188,10 +182,6 @@ function drawWalls() {
 }
 
 function drawUI() {
-    // Crosshair
-    ctx.strokeStyle = "rgba(0,255,0,0.5)";
-    ctx.strokeRect(canvas.width/2-4, canvas.height/2-4, 8, 8);
-
     // Gun Rendering
     if (weaponSheet.complete && weaponSheet.width > 0) {
         const frameW = weaponSheet.width / 19;
@@ -212,24 +202,18 @@ function drawUI() {
         ctx.restore();
     }
 
-    // Ammo HUD
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
-    ctx.fillRect(20, canvas.height - 70, 180, 50);
+    // Ammo Status
     ctx.fillStyle = "yellow";
     ctx.font = "bold 24px monospace";
-    ctx.fillText("AMMO: " + weapon.ammo, 35, canvas.height - 35);
+    ctx.fillText(weapon.ammo > 0 ? "LOADED" : "EMPTY (CLICK TO RELOAD)", 30, canvas.height - 35);
 }
 
 function loop() {
     update();
-    
-    // Draw Ceiling & Floor
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, canvas.height/2);
     ctx.fillStyle = "#333"; ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
-    
     drawWalls();
     drawUI();
-    
     requestAnimationFrame(loop);
 }
 loop();
