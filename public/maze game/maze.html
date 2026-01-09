@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<style>
-  body { margin: 0; overflow: hidden; background: black; }
-  canvas { display: block; }
-</style>
+    <style>
+        body { margin: 0; overflow: hidden; background: black; }
+        canvas { display: block; }
+    </style>
 </head>
 <body>
 
@@ -16,9 +16,9 @@ const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
 function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  ctx.imageSmoothingEnabled = false;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    ctx.imageSmoothingEnabled = false;
 }
 window.addEventListener("resize", resize);
 resize();
@@ -26,229 +26,195 @@ resize();
 /* ================= MAP ================= */
 const TILE = 64;
 const map = [
-  [4,4,4,4,4,4,4,4,4,4,4,4],
-  [4,0,0,0,0,0,0,0,0,0,0,4],
-  [4,0,1,1,1,0,2,2,0,0,0,4],
-  [4,0,0,0,1,0,0,0,0,3,0,4],
-  [4,0,3,0,1,0,4,0,0,3,0,4],
-  [4,0,0,0,0,0,4,0,0,0,0,4],
-  [4,4,4,4,4,4,4,4,4,4,4,4],
+    [4,4,4,4,4,4,4,4,4,4,4,4],
+    [4,0,0,0,0,0,0,0,0,0,0,4],
+    [4,0,1,1,1,0,2,2,0,0,0,4],
+    [4,0,0,0,1,0,0,0,0,3,0,4],
+    [4,0,3,0,1,0,4,0,0,3,0,4],
+    [4,0,0,0,0,0,4,0,0,0,0,4],
+    [4,4,4,4,4,4,4,4,4,4,4,4],
 ];
 
 /* ================= TEXTURES ================= */
 const TEXTURE_SIZE = 500;
 function loadTexture(src) {
-  const img = new Image();
-  img.src = src;
-  return img;
+    const img = new Image();
+    img.src = src;
+    return img;
 }
 
 const wallTextures = [
-  null,
-  loadTexture("assets/wall textures-1.png"),
-  loadTexture("assets/wall textures-2.png"),
-  loadTexture("assets/wall textures-3.png"),
-  loadTexture("assets/wall textures-4.png")
+    null,
+    loadTexture("assets/wall textures-1.png"),
+    loadTexture("assets/wall textures-2.png"),
+    loadTexture("assets/wall textures-3.png"),
+    loadTexture("assets/wall textures-4.png")
 ];
 
-/* ================= PLAYER ================= */
-const player = {
-  x: TILE * 1.5,
-  y: TILE * 1.5,
-  angle: 0,
-  move: 2,
-  rot: 0.04
-};
+/* ================= SPRITE SHEET CONFIG ================= */
+const weaponSheet = new Image();
+weaponSheet.src = "assets/weapon_spritesheet.png"; // Rename this to your file name
 
-/* ================= WEAPON SPRITES ================= */
-const idleImg = new Image();
-idleImg.src = "assets/gun_idle.png";
-
-const reloadSheet = new Image();
-reloadSheet.src = "assets/gun_reload.png";
-
+const SPRITE_SIZE = 64; 
 const weapon = {
-  ammo: 25,
-  maxAmmo: 25,
-  state: "idle",
-
-  // sprite animation
-  frame: 0,
-  frameTime: 0,
-  fps: 30,
-
-  frameWidth: 64,
-  frameHeight: 64,
-  reloadFrames: 19
+    ammo: 25,
+    maxAmmo: 25,
+    state: "idle",
+    frame: 0,
+    lastFrameUpdate: 0,
+    animSpeed: 80, // Milliseconds per frame
 };
 
-/* ================= INPUT ================= */
-const keys = {};
-window.addEventListener("keydown", e => {
-  keys[e.key.toLowerCase()] = true;
-  if (e.key === "r") startReload();
-});
-window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-window.addEventListener("mousedown", shoot);
+// Define frame ranges based on your 19-column sheet
+const ANIMS = {
+    idle: [0],
+    fire: [1, 2, 3, 4, 5],
+    reload: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+};
 
 /* ================= WEAPON LOGIC ================= */
-function shoot() {
-  if (weapon.state !== "idle") return;
-  if (weapon.ammo <= 0) return;
-  weapon.ammo--;
+function playWeaponAnimation(type) {
+    weapon.state = type;
+    weapon.frame = 0;
+    weapon.lastFrameUpdate = performance.now();
 }
 
-function startReload() {
-  if (weapon.state !== "idle") return;
-  if (weapon.ammo === weapon.maxAmmo) return;
+function updateAnimation() {
+    const now = performance.now();
+    const currentAnim = ANIMS[weapon.state];
 
-  weapon.state = "reload";
-  weapon.frame = 0;
-  weapon.frameTime = 0;
-}
+    if (now - weapon.lastFrameUpdate > weapon.animSpeed) {
+        weapon.frame++;
+        weapon.lastFrameUpdate = now;
 
-function updateWeapon(dt) {
-  if (weapon.state === "reload") {
-    weapon.frameTime += dt;
-
-    if (weapon.frameTime > 1000 / weapon.fps) {
-      weapon.frameTime = 0;
-      weapon.frame++;
-
-      if (weapon.frame >= weapon.reloadFrames) {
-        weapon.state = "idle";
-        weapon.ammo = weapon.maxAmmo;
-        weapon.frame = 0;
-      }
+        // If animation ends, return to idle
+        if (weapon.frame >= currentAnim.length) {
+            if (weapon.state === "reload") weapon.ammo = weapon.maxAmmo;
+            weapon.state = "idle";
+            weapon.frame = 0;
+        }
     }
-  }
 }
+
+function shoot() {
+    if (weapon.state !== "idle" || weapon.ammo <= 0) return;
+    weapon.ammo--;
+    playWeaponAnimation("fire");
+}
+
+function reload() {
+    if (weapon.state !== "idle" || weapon.ammo === weapon.maxAmmo) return;
+    playWeaponAnimation("reload");
+}
+
+/* ================= PLAYER & INPUT ================= */
+const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2, rot: 0.04 };
+const keys = {};
+window.addEventListener("keydown", e => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key === " " ) shoot();
+    if (e.key.toLowerCase() === "r") reload();
+});
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+window.addEventListener("mousedown", () => shoot());
 
 /* ================= ENGINE ================= */
 function empty(x, y) {
-  const mx = Math.floor(x / TILE);
-  const my = Math.floor(y / TILE);
-  return map[my] && map[my][mx] === 0;
+    const mx = Math.floor(x / TILE);
+    const my = Math.floor(y / TILE);
+    return map[my] && map[my][mx] === 0;
 }
 
-function update(dt) {
-  let nx = player.x, ny = player.y;
-  if (keys["w"]) {
-    nx += Math.cos(player.angle) * player.move;
-    ny += Math.sin(player.angle) * player.move;
-  }
-  if (keys["s"]) {
-    nx -= Math.cos(player.angle) * player.move;
-    ny -= Math.sin(player.angle) * player.move;
-  }
-  if (keys["a"]) player.angle -= player.rot;
-  if (keys["d"]) player.angle += player.rot;
+function update() {
+    let nx = player.x, ny = player.y;
+    if (keys["w"]) { nx += Math.cos(player.angle) * player.move; ny += Math.sin(player.angle) * player.move; }
+    if (keys["s"]) { nx -= Math.cos(player.angle) * player.move; ny -= Math.sin(player.angle) * player.move; }
+    if (keys["a"]) player.angle -= player.rot;
+    if (keys["d"]) player.angle += player.rot;
 
-  if (empty(nx, player.y)) player.x = nx;
-  if (empty(player.x, ny)) player.y = ny;
-
-  updateWeapon(dt);
+    if (empty(nx, player.y)) player.x = nx;
+    if (empty(player.x, ny)) player.y = ny;
+    
+    updateAnimation();
 }
 
 /* ================= DRAWING ================= */
-function drawWeapon() {
-  const scale = 5;
-  const w = weapon.frameWidth * scale;
-  const h = weapon.frameHeight * scale;
-
-  ctx.save();
-  ctx.translate(canvas.width * 0.6, canvas.height - 40);
-  ctx.rotate(-0.05);
-
-  if (weapon.state === "reload") {
-    ctx.drawImage(
-      reloadSheet,
-      weapon.frame * weapon.frameWidth,
-      0,
-      weapon.frameWidth,
-      weapon.frameHeight,
-      -w / 2,
-      -h,
-      w,
-      h
-    );
-  } else {
-    ctx.drawImage(idleImg, -w / 2, -h, w, h);
-  }
-
-  ctx.restore();
-}
-
 function drawUI() {
-  ctx.fillStyle = "yellow";
-  ctx.font = "bold 30px Arial";
-  ctx.fillText("AMMO: " + weapon.ammo, 30, canvas.height - 30);
+    const barY = canvas.height - 100;
+    ctx.fillStyle = "#333";
+    ctx.fillRect(0, barY, canvas.width, 100);
+    
+    ctx.fillStyle = "yellow";
+    ctx.font = "bold 35px Arial";
+    ctx.fillText("AMMO: " + weapon.ammo, 50, barY + 65);
 
-  ctx.strokeStyle = "lime";
-  ctx.strokeRect(canvas.width/2-5, canvas.height/2-5, 10, 10);
+    // Crosshair
+    ctx.strokeStyle = "rgba(0,255,0,0.7)";
+    ctx.strokeRect(canvas.width/2-5, canvas.height/2-5, 10, 10);
+
+    // Draw Sprite from Sheet
+    if (weaponSheet.complete) {
+        const currentAnim = ANIMS[weapon.state];
+        const frameIndex = currentAnim[weapon.frame];
+        
+        const displayH = canvas.height * 0.8;
+        const displayW = displayH; // Since sprites are 64x64 square
+
+        ctx.save();
+        ctx.translate(canvas.width * 0.5, canvas.height - 80);
+        // DrawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+        ctx.drawImage(
+            weaponSheet, 
+            frameIndex * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE, // Source (Sprite Sheet)
+            -displayW / 2, -displayH, displayW, displayH          // Destination (Canvas)
+        );
+        ctx.restore();
+    }
 }
 
-/* ================= WALL RENDER ================= */
 function drawWalls() {
-  const fov = Math.PI / 3;
+    const fov = Math.PI / 3;
+    for (let x = 0; x < canvas.width; x++) {
+        const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
+        const rayCos = Math.cos(rayAngle);
+        const raySin = Math.sin(rayAngle);
+        let rx = player.x, ry = player.y, dist = 0, wallId = 0, hitV = false;
 
-  for (let x = 0; x < canvas.width; x++) {
-    const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
-    const rayCos = Math.cos(rayAngle);
-    const raySin = Math.sin(rayAngle);
-
-    let rx = player.x, ry = player.y;
-    let dist = 0, wallId = 0, hitV = false;
-
-    while (dist < 1000) {
-      let px = rx;
-      rx += rayCos * 2;
-      ry += raySin * 2;
-      dist += 2;
-
-      const mx = Math.floor(rx / TILE);
-      const my = Math.floor(ry / TILE);
-      if (map[my] && map[my][mx] > 0) {
-        wallId = map[my][mx];
-        hitV = Math.floor(px / TILE) !== mx;
-        break;
-      }
+        while (dist < 1000) {
+            let px = rx;
+            rx += rayCos * 2; ry += raySin * 2; dist += 2;
+            const mx = Math.floor(rx / TILE); const my = Math.floor(ry / TILE);
+            if (map[my] && map[my][mx] > 0) {
+                wallId = map[my][mx];
+                hitV = Math.floor(px / TILE) !== mx;
+                break;
+            }
+        }
+        const correctedDist = dist * Math.cos(rayAngle - player.angle);
+        const wallHeight = (TILE * canvas.height) / correctedDist;
+        const yPos = (canvas.height - wallHeight) / 2;
+        let hitX = hitV ? ry % TILE : rx % TILE;
+        let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+        const texture = wallTextures[wallId];
+        if (texture && texture.complete) {
+            ctx.drawImage(texture, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, wallHeight);
+        }
+        ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, correctedDist/700)})`;
+        ctx.fillRect(x, yPos, 1, wallHeight);
     }
-
-    if (!wallId) continue;
-
-    const correctedDist = dist * Math.cos(rayAngle - player.angle);
-    const wallHeight = (TILE * canvas.height) / correctedDist;
-    const yPos = (canvas.height - wallHeight) / 2;
-
-    const texture = wallTextures[wallId];
-    if (texture && texture.complete) {
-      ctx.drawImage(texture, 0, 0, 1, TEXTURE_SIZE, x, yPos, 1, wallHeight);
-    }
-  }
 }
 
-/* ================= MAIN LOOP ================= */
-let last = performance.now();
-function loop(now) {
-  const dt = now - last;
-  last = now;
-
-  update(dt);
-
-  ctx.fillStyle = "#222";
-  ctx.fillRect(0, 0, canvas.width, canvas.height/2);
-  ctx.fillStyle = "#444";
-  ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
-
-  drawWalls();
-  drawWeapon();
-  drawUI();
-
-  requestAnimationFrame(loop);
+function loop() {
+    update();
+    ctx.fillStyle = "#222";
+    ctx.fillRect(0, 0, canvas.width, canvas.height/2);
+    ctx.fillStyle = "#444";
+    ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
+    drawWalls();
+    drawUI();
+    requestAnimationFrame(loop);
 }
-requestAnimationFrame(loop);
+loop();
 </script>
-
 </body>
 </html>
