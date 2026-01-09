@@ -7,11 +7,8 @@
     </style>
 </head>
 <body>
-
 <canvas id="c"></canvas>
-
 <script>
-/* ================= CANVAS SETUP ================= */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
@@ -23,7 +20,7 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/* ================= WORLD MAP ================= */
+/* ================= WORLD ================= */
 const TILE = 64;
 const map = [
     [4,4,4,4,4,4,4,4,4,4,4,4],
@@ -35,7 +32,7 @@ const map = [
     [4,4,4,4,4,4,4,4,4,4,4,4],
 ];
 
-/* ================= ASSET LOADING ================= */
+/* ================= ASSETS ================= */
 function loadImg(src) {
     const img = new Image();
     img.src = src;
@@ -52,17 +49,17 @@ const wallTextures = [
 
 const weaponSheet = loadImg("assets/gun_reload.png");
 
-/* ================= WEAPON & PLAYER CONFIG ================= */
-const SPRITE_SIZE = 64; 
+/* ================= WEAPON CONFIG ================= */
 const weapon = {
     ammo: 25,
     maxAmmo: 25,
     state: "idle",
     frame: 0,
     lastFrameUpdate: 0,
-    animSpeed: 70
+    animSpeed: 80 
 };
 
+// Map your 19 frames
 const ANIMS = {
     idle: [0],
     fire: [1, 2, 3, 4, 5], 
@@ -72,7 +69,6 @@ const ANIMS = {
 const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 3, rot: 0.05 };
 const keys = {};
 
-/* ================= INPUTS ================= */
 window.addEventListener("keydown", e => {
     keys[e.key.toLowerCase()] = true;
     if (e.key === " ") shoot();
@@ -81,13 +77,7 @@ window.addEventListener("keydown", e => {
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 window.addEventListener("mousedown", () => shoot());
 
-/* ================= GAME LOGIC ================= */
-function isWall(x, y) {
-    const mx = Math.floor(x / TILE);
-    const my = Math.floor(y / TILE);
-    return map[my] && map[my][mx] > 0;
-}
-
+/* ================= LOGIC ================= */
 function shoot() {
     if (weapon.state !== "idle" || weapon.ammo <= 0) return;
     weapon.ammo--;
@@ -102,7 +92,6 @@ function reload() {
 }
 
 function update() {
-    // Movement
     let moveStep = 0;
     if (keys["w"]) moveStep = player.move;
     if (keys["s"]) moveStep = -player.move;
@@ -112,10 +101,10 @@ function update() {
     let nx = player.x + Math.cos(player.angle) * moveStep;
     let ny = player.y + Math.sin(player.angle) * moveStep;
 
+    const isWall = (tx, ty) => map[Math.floor(ty/TILE)] && map[Math.floor(ty/TILE)][Math.floor(tx/TILE)] > 0;
     if (!isWall(nx, player.y)) player.x = nx;
     if (!isWall(player.x, ny)) player.y = ny;
 
-    // Animation Timing
     const now = performance.now();
     const currentAnim = ANIMS[weapon.state];
     if (now - weapon.lastFrameUpdate > weapon.animSpeed) {
@@ -131,44 +120,41 @@ function update() {
 
 /* ================= DRAWING ================= */
 function drawUI() {
-    // 1. CROSSHAIR
+    // Crosshair
     ctx.strokeStyle = "lime";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(canvas.width/2 - 5, canvas.height/2 - 5, 10, 10);
+    ctx.strokeRect(canvas.width/2-5, canvas.height/2-5, 10, 10);
 
-    // 2. WEAPON RENDERING
-    const currentAnim = ANIMS[weapon.state];
-    const frameIdx = currentAnim[weapon.frame];
-    const displayH = canvas.height * 0.8;
-    const displayW = displayH; 
-
-    
     if (weaponSheet.complete && weaponSheet.width > 0) {
+        // AUTO-DETECT FRAME WIDTH
+        // If sheet is 1216px wide, 1216 / 19 = 64
+        const frameW = weaponSheet.width / 19;
+        const frameH = weaponSheet.height; 
+        
+        const currentAnim = ANIMS[weapon.state];
+        const frameIdx = currentAnim[weapon.frame];
+
+        // Scale gun to look good on any screen size
+        const displayH = canvas.height * 0.7; 
+        const displayW = displayH * (frameW / frameH);
+
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height);
         ctx.drawImage(
             weaponSheet,
-            frameIdx * SPRITE_SIZE, 0, // Source X, Y
-            SPRITE_SIZE, SPRITE_SIZE,    // Source W, H
-            -displayW / 2, -displayH,    // Destination X, Y
-            displayW, displayH           // Destination W, H
+            frameIdx * frameW, 0, frameW, frameH, // Source
+            -displayW / 2, -displayH, displayW, displayH // Destination
         );
         ctx.restore();
     } else {
-        // FALLBACK: If image fails to load, draw a Red Placeholder
-        ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-        ctx.fillRect(canvas.width/2 - 50, canvas.height - 150, 100, 150);
-        ctx.fillStyle = "white";
-        ctx.font = "12px Arial";
-        ctx.fillText("IMG MISSING", canvas.width/2 - 40, canvas.height - 80);
+        // If image is still loading or broken
+        ctx.fillStyle = "red";
+        ctx.fillRect(canvas.width/2-25, canvas.height-50, 50, 50);
     }
 
-    // 3. HUD (AMMO)
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
-    ctx.fillRect(10, canvas.height - 60, 180, 50);
+    // Ammo HUD
     ctx.fillStyle = "yellow";
-    ctx.font = "bold 25px monospace";
-    ctx.fillText("AMMO: " + weapon.ammo, 25, canvas.height - 25);
+    ctx.font = "20px monospace";
+    ctx.fillText("AMMO: " + weapon.ammo, 20, canvas.height - 20);
 }
 
 function drawWalls() {
@@ -184,20 +170,7 @@ function drawWalls() {
             if (map[my] && map[my][mx] > 0) {
                 let corrected = dist * Math.cos(rayAngle - player.angle);
                 let h = (TILE * canvas.height) / corrected;
-                
-                // Draw Wall
-                let texture = wallTextures[map[my][mx]];
-                if (texture && texture.complete) {
-                    let hitX = (Math.floor(rx/TILE) !== Math.floor((rx-Math.cos(rayAngle)*2)/TILE)) ? ry % TILE : rx % TILE;
-                    let texX = Math.floor((hitX / TILE) * 500);
-                    ctx.drawImage(texture, texX, 0, 1, 500, x, (canvas.height-h)/2, 1, h);
-                } else {
-                    ctx.fillStyle = "#888";
-                    ctx.fillRect(x, (canvas.height-h)/2, 1, h);
-                }
-                
-                // Shadow
-                ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corrected/600)})`;
+                ctx.fillStyle = "#555";
                 ctx.fillRect(x, (canvas.height-h)/2, 1, h);
                 break;
             }
@@ -208,7 +181,7 @@ function drawWalls() {
 function loop() {
     update();
     ctx.fillStyle = "#111"; ctx.fillRect(0,0,canvas.width, canvas.height/2);
-    ctx.fillStyle = "#333"; ctx.fillRect(0,canvas.height/2,canvas.width, canvas.height/2);
+    ctx.fillStyle = "#222"; ctx.fillRect(0,canvas.height/2,canvas.width, canvas.height/2);
     drawWalls();
     drawUI();
     requestAnimationFrame(loop);
