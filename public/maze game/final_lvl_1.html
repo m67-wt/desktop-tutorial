@@ -85,7 +85,7 @@ function myShoot(){
 }
 </script>
 
-<body id="myBody" style="background-color:black; color:yellow; background-repeat:repeat; background-size: 80%" background="myBackground01.jpg" onkeydown="{
+<body id="myBody" style="background-color:black; color:yellow; background-repeat:repeat; background-size: 80%" background="assets/myBackground01.jpg" onkeydown="{
    let key = event.key.toLowerCase()
    let p = document.getElementById('myImg01')
    if (key == 'w') { p.style.top = parseInt(p.style.top) - 10 + 'px' }
@@ -96,7 +96,7 @@ function myShoot(){
    myCheckHit()
 }">
 
-<h1 align=center>T4A06 Bullet & Floor by Fred</h1>
+<h1 align=center>T4A06 Game by Fred</h1>
 
 <input id="myText01" type=text value="" size=50 placeholder="Feedback here"><br>
 
@@ -105,19 +105,21 @@ function myShoot(){
   myClock = setInterval(function(){
       myGlobalX -= 5
       document.getElementById('myBody').style.backgroundPosition = myGlobalX + 'px 0px'
+      document.getElementById('myFloor').style.backgroundPosition = myGlobalX + 'px 0px'
   }, 100)
 }">
 
 <p>WASD to Move | Space to Shoot</p>
 
-<div id="myFloor" style="position:fixed; bottom:0; left:0; width:100%; height:100px; background-image: url('myFloor.png'); background-repeat: repeat-x;"></div>
+<div id="myFloor" style="position:fixed; bottom:0; left:0; width:100%; height:100px; background-image: url('assets/lvl_floor texture.png'); background-repeat: repeat-x;"></div>
 
-<img id="myImg01" src="myImgNew.jpg" style="position:absolute; width:100px; height:80px; left: 10px; top:190px;">
-<img id="myImg02" src="myImgNew.jpg" style="position:absolute; width:100px; height:80px; left:350px; top:190px;">
-<img id="myImg03" src="myImgNew.jpg" style="position:absolute; width:100px; height:80px; left:500px; top:190px;">
-<img id="myImg04" src="myImgNew.jpg" style="position:absolute; width:100px; height:80px; left:500px; top:400px;">
+<img id="myImg01" src="assets/charater.png" style="position:absolute; width:100px; height:80px; left: 10px; top:190px;">
 
-<img id="myBullet01" src="myImgNew.jpg" style="position:absolute; width:10px; height:10px; left: -200px; top:0px;">
-<img id="myBullet02" src="myImgNew.jpg" style="position:absolute; width:10px; height:10px; left: -200px; top:0px;"> 
+<img id="myImg02" src="assets/charater.png" style="position:absolute; width:100px; height:80px; left:350px; top:190px;">
+<img id="myImg03" src="assets/charater.png" style="position:absolute; width:100px; height:80px; left:500px; top:190px;">
+<img id="myImg04" src="assets/charater.png" style="position:absolute; width:100px; height:80px; left:500px; top:400px;">
+
+<img id="myBullet01" src="assets/charater.png" style="position:absolute; width:10px; height:10px; left: -200px; top:0px;">
+<img id="myBullet02" src="assets/charater.png" style="position:absolute; width:10px; height:10px; left: -200px; top:0px;"> 
 
 </body>
