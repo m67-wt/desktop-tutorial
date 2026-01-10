@@ -22,40 +22,30 @@ function myHitOther(my1,my2){
 
 function myCheckHit(){
    document.all.myText01.value = myScore
-
    if (myHitOther('myImg01','myImg02')){
       document.getElementById('myImg01').style.left = '20px'
-      document.all.myText01.value = 'You hit myImg02'  
       myScore -= 1
    }   
-   
    if (myHitOther('myImg01','myImg03')){
       document.getElementById('myImg01').style.left = '20px'
-      document.all.myText01.value = 'You hit myImg03'  
       myScore -= 1
    }   
-
    if (myHitOther('myBullet01','myImg03')){
       clearInterval(myGun01)
       document.getElementById('myBullet01').style.left = '-200px'
-      document.all.myText01.value = 'You shot myImg03'  
       myScore += 1
    }   
-   
    if (myHitOther('myBullet02','myImg03')){
       clearInterval(myGun02)
       document.getElementById('myBullet02').style.left = '-200px'
-      document.all.myText01.value = 'You shot myImg03'  
       myScore += 1
    }   
-   
    if (myScore <= 0){
-    alert('Sorry you lose')
+    alert('Game Over')
     location.reload()
    }
-
    if (myHitOther('myImg01','myImg04')){
-      alert('You Win, now go to the next level')
+      alert('You Win!')
       location = 'https://www.google.ca'
    }
 }
@@ -85,7 +75,7 @@ function myShoot(){
 }
 </script>
 
-<body id="myBody" style="background-color:black; color:yellow; background-repeat:repeat; background-size: 80%" background="assets/myBackground01.jpg" onkeydown="{
+<body id="myBody" style="margin:0; padding:0; background-image: url('assets/pixel_light_grey_mosaic.jpg'); background-size: cover; background-repeat: no-repeat; background-attachment: fixed; color:black;" onkeydown="{
    let key = event.key.toLowerCase()
    let p = document.getElementById('myImg01')
    if (key == 'w') { p.style.top = parseInt(p.style.top) - 10 + 'px' }
@@ -97,29 +87,20 @@ function myShoot(){
 }">
 
 <h1 align=center>T4A06 Game by Fred</h1>
+<div align=center>
+   <input id="myText01" type=text value="" size=30 placeholder="Score">
+   <p>WASD to Move | Space to Shoot</p>
+</div>
 
-<input id="myText01" type=text value="" size=50 placeholder="Feedback here"><br>
+<div id="myFloor" style="position:fixed; bottom:0; left:0; width:100%; height:80px; background-image: url('assets/lvl_floor texture.png'); background-repeat: repeat-x;"></div>
 
-<input type=button value="Move Background" onclick="{
-  clearInterval(myClock)
-  myClock = setInterval(function(){
-      myGlobalX -= 5
-      document.getElementById('myBody').style.backgroundPosition = myGlobalX + 'px 0px'
-      document.getElementById('myFloor').style.backgroundPosition = myGlobalX + 'px 0px'
-  }, 100)
-}">
+<img id="myImg01" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left: 10px; top:200px;">
 
-<p>WASD to Move | Space to Shoot</p>
+<img id="myImg02" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:300px; top:200px;">
+<img id="myImg03" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:500px; top:200px;">
+<img id="myImg04" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:600px; top:400px;">
 
-<div id="myFloor" style="position:fixed; bottom:0; left:0; width:100%; height:100px; background-image: url('assets/lvl_floor texture.png'); background-repeat: repeat-x;"></div>
-
-<img id="myImg01" src="assets/charater.png" style="position:absolute; width:100px; height:80px; left: 10px; top:190px;">
-
-<img id="myImg02" src="assets/charater.png" style="position:absolute; width:100px; height:80px; left:350px; top:190px;">
-<img id="myImg03" src="assets/charater.png" style="position:absolute; width:100px; height:80px; left:500px; top:190px;">
-<img id="myImg04" src="assets/charater.png" style="position:absolute; width:100px; height:80px; left:500px; top:400px;">
-
-<img id="myBullet01" src="assets/charater.png" style="position:absolute; width:10px; height:10px; left: -200px; top:0px;">
-<img id="myBullet02" src="assets/charater.png" style="position:absolute; width:10px; height:10px; left: -200px; top:0px;"> 
+<img id="myBullet01" src="assets/charater.png" style="position:absolute; width:15px; height:15px; left: -200px; top:0px;">
+<img id="myBullet02" src="assets/charater.png" style="position:absolute; width:15px; height:15px; left: -200px; top:0px;"> 
 
 </body>
