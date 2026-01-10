@@ -62,7 +62,6 @@ function myCheckHit(){
 
 function myShoot(){
     if (myShooting > 2){myShooting = 1}
-
     if (myShooting == 2){
         myShooting += 1
         document.getElementById('myBullet02').style.left = document.getElementById('myImg01').style.left
@@ -73,7 +72,6 @@ function myShoot(){
             myCheckHit() 
         }, 20)
     }
-
     if (myShooting == 1){
         myShooting += 1
         document.getElementById('myBullet01').style.left = document.getElementById('myImg01').style.left
@@ -87,24 +85,22 @@ function myShoot(){
 }
 </script>
 
-<body id="myBody" style="background-repeat:repeat; background-size: 80%" background="myBackground01.jpg" onkeydown="{
+<body id="myBody" style="background-color:black; color:yellow; background-repeat:repeat; background-size: 80%" background="myBackground01.jpg" onkeydown="{
    let key = event.key.toLowerCase()
-   let player = document.getElementById('myImg01')
-
-   if (key == 'w') { player.style.top = parseInt(player.style.top) - 10 + 'px' }
-   if (key == 'a') { player.style.left = parseInt(player.style.left) - 10 + 'px' }
-   if (key == 's') { player.style.top = parseInt(player.style.top) + 10 + 'px' }
-   if (key == 'd') { player.style.left = parseInt(player.style.left) + 10 + 'px' }
+   let p = document.getElementById('myImg01')
+   if (key == 'w') { p.style.top = parseInt(p.style.top) - 10 + 'px' }
+   if (key == 'a') { p.style.left = parseInt(p.style.left) - 10 + 'px' }
+   if (key == 's') { p.style.top = parseInt(p.style.top) + 10 + 'px' }
+   if (key == 'd') { p.style.left = parseInt(p.style.left) + 10 + 'px' }
    if (key == ' ') { myShoot() }
-
    myCheckHit()
 }">
 
-<h1 align=center><font color=Yellow>T4A06 Bullet by Fred</font></h1>
+<h1 align=center>T4A06 Bullet & Floor by Fred</h1>
 
 <input id="myText01" type=text value="" size=50 placeholder="Feedback here"><br>
 
-<input type=button value="Auto Background Left" onclick="{
+<input type=button value="Move Background" onclick="{
   clearInterval(myClock)
   myClock = setInterval(function(){
       myGlobalX -= 5
@@ -112,9 +108,9 @@ function myShoot(){
   }, 100)
 }">
 
-<input type=button value="shoot" onclick="{ myShoot() }">
+<p>WASD to Move | Space to Shoot</p>
 
-<p>Use <b>WASD</b> to move and <b>Spacebar</b> to shoot!</p>
+<div id="myFloor" style="position:fixed; bottom:0; left:0; width:100%; height:100px; background-image: url('myFloor.png'); background-repeat: repeat-x;"></div>
 
 <img id="myImg01" src="myImgNew.jpg" style="position:absolute; width:100px; height:80px; left: 10px; top:190px;">
 <img id="myImg02" src="myImgNew.jpg" style="position:absolute; width:100px; height:80px; left:350px; top:190px;">
