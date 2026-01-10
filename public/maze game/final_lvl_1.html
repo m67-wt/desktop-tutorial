@@ -5,12 +5,13 @@
    let myGun02
    let myShooting = 1
    let enemiesKilled = 0
+   let totalEnemies = 7
    let hasKey = false
 
 function myHitOther(my1,my2){
    let obj1 = document.getElementById(my1)
    let obj2 = document.getElementById(my2)
-   if (obj1.style.display == 'none' || obj2.style.display == 'none') return false
+   if (!obj1 || !obj2 || obj1.style.display == 'none' || obj2.style.display == 'none') return false
 
    left1   = parseInt(obj1.style.left)
    right1  = left1 + parseInt(obj1.style.width)
@@ -26,23 +27,20 @@ function myHitOther(my1,my2){
 }
 
 function myCheckHit(){
-   document.all.myText01.value = 'Score: ' + myScore + ' | Killed: ' + enemiesKilled + '/2'
+   document.all.myText01.value = 'Score: ' + myScore + ' | Killed: ' + enemiesKilled + '/' + totalEnemies
 
-   if (myHitOther('myImg01','myImg02') || myHitOther('myImg01','myImg03')){
-      document.getElementById('myImg01').style.left = '20px'
-      myScore -= 1
-   }
-
-   if (myHitOther('myBullet01','myImg02') || myHitOther('myBullet02','myImg02')){
-      document.getElementById('myImg02').style.display = 'none'
-      enemiesKilled++
-      myScore += 5
-   }
-
-   if (myHitOther('myBullet01','myImg03') || myHitOther('myBullet02','myImg03')){
-      document.getElementById('myImg03').style.display = 'none'
-      enemiesKilled++
-      myScore += 5
+   // Check collision for all 7 enemies
+   for(let i=2; i<=8; i++){
+      let enemyId = 'myImg0' + i
+      if (myHitOther('myImg01', enemyId)){
+         document.getElementById('myImg01').style.left = '20px'
+         myScore -= 1
+      }
+      if (myHitOther('myBullet01', enemyId) || myHitOther('myBullet02', enemyId)){
+         document.getElementById(enemyId).style.display = 'none'
+         enemiesKilled++
+         myScore += 5
+      }
    }
 
    if (myHitOther('myImg01','myKey')){
@@ -50,11 +48,11 @@ function myCheckHit(){
       hasKey = true
    }
 
-   if (enemiesKilled >= 2 && hasKey){
-      document.getElementById('myImg04').style.backgroundColor = 'green'
+   if (enemiesKilled >= totalEnemies && hasKey){
+      document.getElementById('myImgDoor').style.backgroundColor = 'green'
    }
 
-   if (myHitOther('myImg01','myImg04') && enemiesKilled >= 2 && hasKey){
+   if (myHitOther('myImg01','myImgDoor') && enemiesKilled >= totalEnemies && hasKey){
       location = 'https://m67-wt.github.io/desktop-tutorial/public/maze game/maze.html'
    }
 
@@ -67,11 +65,9 @@ function myShoot(){
     if (myShooting > 2) myShooting = 1
     let bulletName = (myShooting == 1) ? 'myBullet01' : 'myBullet02'
     let gunVar = (myShooting == 1) ? myGun01 : myGun02
-    
     myShooting++
     document.getElementById(bulletName).style.left = document.getElementById('myImg01').style.left
     document.getElementById(bulletName).style.top  = document.getElementById('myImg01').style.top
-    
     clearInterval(gunVar)
     let moveBullet = setInterval(function(){
         document.getElementById(bulletName).style.left = parseInt(document.getElementById(bulletName).style.left) + 15 + 'px'
@@ -95,7 +91,7 @@ function myShoot(){
 <h1 align=center>T4A06 Game by Fred</h1>
 <div align=center>
    <input id="myText01" type=text value="" size=40 readonly style="background:transparent; border:none; text-align:center; font-weight:bold;">
-   <p>Kill enemies & get Key to open the Green Exit!</p>
+   <p>Clear all 7 enemies and grab the Giant Key!</p>
 </div>
 
 <div id="myFloor" style="position:fixed; bottom:0; width:100%; height:80px; background-image: url('assets/lvl_floor texture.png');"></div>
@@ -104,10 +100,15 @@ function myShoot(){
 
 <img id="myImg02" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:400px; top:150px;">
 <img id="myImg03" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:600px; top:300px;">
+<img id="myImg04" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:300px; top:400px;">
+<img id="myImg05" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:750px; top:100px;">
+<img id="myImg06" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:500px; top:50px;">
+<img id="myImg07" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:900px; top:450px;">
+<img id="myImg08" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left:200px; top:100px;">
 
-<img id="myKey" src="assets/wall textures-5.png" style="position:absolute; width:40px; height:40px; left:700px; top:100px;">
+<img id="myKey" src="assets/wall textures-5.png" style="position:absolute; width:120px; height:120px; left:1000px; top:50px;">
 
-<div id="myImg04" style="position:absolute; width:80px; height:100px; left:850px; top:250px; background-color:red; border:2px solid black; text-align:center; line-height:100px; font-weight:bold; color:white;">EXIT</div>
+<div id="myImgDoor" style="position:absolute; width:80px; height:100px; left:1100px; top:250px; background-color:red; border:2px solid black; text-align:center; line-height:100px; font-weight:bold; color:white;">EXIT</div>
 
 <img id="myBullet01" src="assets/charater.png" style="position:absolute; width:15px; height:15px; left: -200px;">
 <img id="myBullet02" src="assets/charater.png" style="position:absolute; width:15px; height:15px; left: -200px;"> 
