@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Raycaster - Fire & Reload</title>
+    <title>Raycaster - Portrait HUD</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; }
         canvas { display: block; }
@@ -49,12 +49,10 @@ const wallTextures = [
 
 const reloadSheet = loadImg("assets/gun_reloading.png");
 const fireSheet = loadImg("assets/gun_fire.png");
-// Adjusted path and spelling based on your update
 const faceSheet = loadImg("assets/charater_hurt_models.png"); 
 
 const ANIMS = {
     idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
-    // Fire at 6fps with 5 frames
     fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
     reload: { 
         frames: Array.from({length: 21}, (_, i) => i), 
@@ -72,8 +70,6 @@ window.addEventListener("keydown", e => {
     keys[e.key.toLowerCase()] = true;
     if (e.key === " ") handleAction();
     if (e.key.toLowerCase() === "r") reload();
-    
-    // DEBUG: Take damage with [ and heal with ]
     if (e.key === "[") player.hp = Math.max(0, player.hp - 20);
     if (e.key === "]") player.hp = Math.min(100, player.hp + 20);
 });
@@ -145,7 +141,7 @@ function update() {
 
 function drawWalls() {
     const fov = Math.PI / 3;
-    const HUD_H = 120;
+    const HUD_H = 160; // Increased HUD height for the new layout
     const viewHeight = canvas.height - HUD_H;
     
     for (let x = 0; x < canvas.width; x++) {
@@ -186,17 +182,17 @@ function getFaceIndex() {
 }
 
 function drawUI() {
-    const HUD_H = 120;
+    const HUD_H = 160;
     const hudTop = canvas.height - HUD_H;
 
     // 1. HUD BACKGROUND
-    ctx.fillStyle = "#333"; 
+    ctx.fillStyle = "#222"; 
     ctx.fillRect(0, hudTop, canvas.width, HUD_H);
-    ctx.strokeStyle = "#555";
-    ctx.lineWidth = 6;
-    ctx.strokeRect(3, hudTop+3, canvas.width-6, HUD_H-6);
+    ctx.strokeStyle = "#444";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2, hudTop + 2, canvas.width - 4, HUD_H - 4);
 
-    // 2. GUN RENDER
+    // 2. GUN RENDER (Kept in same spot)
     const currentAnim = ANIMS[weapon.state];
     const sheet = currentAnim.sheet;
     if (sheet.complete && sheet.width > 0) {
@@ -207,47 +203,54 @@ function drawUI() {
         const displayW = displayH * (frameW / frameH);
         
         ctx.save();
-        ctx.translate(canvas.width * 0.3, hudTop + 20);
+        ctx.translate(canvas.width * 0.45, hudTop + 20);
         ctx.rotate(15 * Math.PI / 180);
         ctx.drawImage(sheet, frameIdx * frameW, 0, frameW, frameH, -displayW * 0.1, -displayH * 0.9, displayW, displayH);
         ctx.restore();
     }
 
-    // 3. FACE RENDER (320x64 sheet / 5 frames = 64x64)
+    // 3. FACE PORTRAIT (Now above HP)
+    const portraitX = 40;
+    const portraitY = hudTop + 15;
+    const portraitSize = 70;
+
+    // Box for the face
+    ctx.fillStyle = "#000";
+    ctx.fillRect(portraitX, portraitY, portraitSize, portraitSize);
+    ctx.strokeStyle = "#888"; // Silver/Grey border
+    ctx.lineWidth = 3;
+    ctx.strokeRect(portraitX, portraitY, portraitSize, portraitSize);
+
     if (faceSheet.complete && faceSheet.width > 0) {
         const faceW = 64; 
         const faceH = 64;
         const faceIdx = getFaceIndex();
-        const displaySize = 100;
         ctx.drawImage(
             faceSheet, 
             faceIdx * faceW, 0, faceW, faceH, 
-            (canvas.width / 2) - (displaySize / 2), hudTop + 10, displaySize, displaySize
+            portraitX + 5, portraitY + 5, portraitSize - 10, portraitSize - 10
         );
-    } else {
-        // Fallback if image doesn't load
-        ctx.fillStyle = "yellow";
-        ctx.fillRect((canvas.width / 2) - 50, hudTop + 10, 100, 100);
     }
 
-    // 4. STATS TEXT
+    // 4. STATS TEXT (Moved down to accommodate face box)
     ctx.fillStyle = "red";
-    ctx.font = "bold 20px monospace";
-    ctx.fillText("HEALTH", canvas.width * 0.05, hudTop + 40);
+    ctx.font = "bold 16px monospace";
+    ctx.fillText("HEALTH", portraitX, hudTop + 105);
     ctx.fillStyle = "white";
-    ctx.font = "bold 60px monospace";
-    ctx.fillText(`${player.hp}%`, canvas.width * 0.05, hudTop + 95);
+    ctx.font = "bold 40px monospace";
+    ctx.fillText(`${player.hp}%`, portraitX, hudTop + 145);
 
     ctx.fillStyle = "yellow";
-    ctx.font = "bold 20px monospace";
-    ctx.fillText("AMMO", canvas.width * 0.85, hudTop + 40);
+    ctx.font = "bold 16px monospace";
+    ctx.fillText("AMMO", canvas.width - 120, hudTop + 40);
     ctx.fillStyle = "white";
-    ctx.fillText(weapon.ammo > 0 ? "1 / 1" : "0 / 1", canvas.width * 0.85, hudTop + 95);
+    ctx.font = "bold 30px monospace";
+    ctx.fillText(weapon.ammo > 0 ? "1 / 1" : "0 / 1", canvas.width - 120, hudTop + 80);
 }
 
 function loop() {
     update();
-    const HUD_H = 120;
+    const HUD_H = 160;
     const viewH = canvas.height - HUD_H;
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, viewH/2);
     ctx.fillStyle = "#222"; ctx.fillRect(0, viewH/2, canvas.width, viewH/2);
