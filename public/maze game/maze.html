@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Raycaster - Portrait HUD</title>
+    <title>Raycaster - Gun Behind HUD</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; }
         canvas { display: block; }
@@ -141,7 +141,7 @@ function update() {
 
 function drawWalls() {
     const fov = Math.PI / 3;
-    const HUD_H = 160; // Increased HUD height for the new layout
+    const HUD_H = 160; 
     const viewHeight = canvas.height - HUD_H;
     
     for (let x = 0; x < canvas.width; x++) {
@@ -181,43 +181,52 @@ function getFaceIndex() {
     return 4; 
 }
 
-function drawUI() {
-    const HUD_H = 160;
-    const hudTop = canvas.height - HUD_H;
-
-    // 1. HUD BACKGROUND
-    ctx.fillStyle = "#222"; 
-    ctx.fillRect(0, hudTop, canvas.width, HUD_H);
-    ctx.strokeStyle = "#444";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(2, hudTop + 2, canvas.width - 4, HUD_H - 4);
-
-    // 2. GUN RENDER (Kept in same spot)
+function drawWeapon(hudTop) {
     const currentAnim = ANIMS[weapon.state];
     const sheet = currentAnim.sheet;
     if (sheet.complete && sheet.width > 0) {
         const frameW = sheet.width / currentAnim.count;
         const frameH = sheet.height;
         const frameIdx = currentAnim.frames[weapon.frame];
-        const displayH = (canvas.height - HUD_H) * 0.75;
+        
+        const displayH = canvas.height * 0.70;
         const displayW = displayH * (frameW / frameH);
         
         ctx.save();
-        ctx.translate(canvas.width * 0.45, hudTop + 20);
+        // Original offset: 0.25 width and bottom-10
+        ctx.translate(canvas.width * 0.25, canvas.height - 10);
         ctx.rotate(15 * Math.PI / 180);
-        ctx.drawImage(sheet, frameIdx * frameW, 0, frameW, frameH, -displayW * 0.1, -displayH * 0.9, displayW, displayH);
+        
+        ctx.drawImage(
+            sheet, 
+            frameIdx * frameW, 0, 
+            frameW, frameH, 
+            -displayW * 0.1, -displayH * 0.9, 
+            displayW, displayH
+        );
         ctx.restore();
     }
+}
 
-    // 3. FACE PORTRAIT (Now above HP)
+function drawHUD() {
+    const HUD_H = 160;
+    const hudTop = canvas.height - HUD_H;
+
+    // 1. HUD BACKGROUND BAR (Draws OVER the weapon)
+    ctx.fillStyle = "#222"; 
+    ctx.fillRect(0, hudTop, canvas.width, HUD_H);
+    ctx.strokeStyle = "#444";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2, hudTop + 2, canvas.width - 4, HUD_H - 4);
+
+    // 2. FACE PORTRAIT (Above HP)
     const portraitX = 40;
     const portraitY = hudTop + 15;
     const portraitSize = 70;
 
-    // Box for the face
     ctx.fillStyle = "#000";
     ctx.fillRect(portraitX, portraitY, portraitSize, portraitSize);
-    ctx.strokeStyle = "#888"; // Silver/Grey border
+    ctx.strokeStyle = "#888";
     ctx.lineWidth = 3;
     ctx.strokeRect(portraitX, portraitY, portraitSize, portraitSize);
 
@@ -232,7 +241,7 @@ function drawUI() {
         );
     }
 
-    // 4. STATS TEXT (Moved down to accommodate face box)
+    // 3. TEXT STATS
     ctx.fillStyle = "red";
     ctx.font = "bold 16px monospace";
     ctx.fillText("HEALTH", portraitX, hudTop + 105);
@@ -252,10 +261,16 @@ function loop() {
     update();
     const HUD_H = 160;
     const viewH = canvas.height - HUD_H;
+    
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, viewH/2);
     ctx.fillStyle = "#222"; ctx.fillRect(0, viewH/2, canvas.width, viewH/2);
+    
     drawWalls();
-    drawUI();
+    
+    // Draw order matters here: Weapon first, then HUD
+    drawWeapon(viewH);
+    drawHUD();
+    
     requestAnimationFrame(loop);
 }
 loop();
