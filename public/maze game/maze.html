@@ -176,7 +176,7 @@ function drawUI() {
         const frameIdx = currentAnim.frames[weapon.frame];
         
         // Reduced size by 10% (0.8 * 0.9 = 0.72)
-        const displayH = canvas.height * 0.72;
+        const displayH = canvas.height * 0.95;
         const displayW = displayH * (frameW / frameH);
         
         ctx.save();
@@ -215,3 +215,4 @@ loop();
 </script>
 </body>
 </html>
+
