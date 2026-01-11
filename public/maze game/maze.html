@@ -176,13 +176,13 @@ function drawUI() {
         const frameIdx = currentAnim.frames[weapon.frame];
         
         // Reduced size by 10% (0.8 * 0.9 = 0.72)
-        const displayH = canvas.height * 0.95;
+        const displayH = canvas.height * 0.70;
         const displayW = displayH * (frameW / frameH);
         
         ctx.save();
         
         // Added -7 to the Y translate to raise it up 7 pixels
-        ctx.translate(canvas.width * 0.25, canvas.height - 7);
+        ctx.translate(canvas.width * 0.25, canvas.height - 10);
         
         // Using your 15 degree preference
         ctx.rotate(15 * Math.PI / 180);
@@ -215,4 +215,5 @@ loop();
 </script>
 </body>
 </html>
+
 
