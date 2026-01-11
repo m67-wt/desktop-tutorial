@@ -47,16 +47,23 @@ const wallTextures = [
     loadImg("assets/wall textures-4.png")
 ];
 
-const reloadSheet = loadImg("assets/gun_reload.png");
+// Updated filenames and frame settings
+const reloadSheet = loadImg("assets/gun_reloading.png");
 const fireSheet = loadImg("assets/gunfire.png");
 
 const ANIMS = {
-    idle:   { frames: [0], sheet: reloadSheet, count: 19, speed: 100 },
-    fire:   { frames: [0,1,2,3,4,5,6], sheet: fireSheet, count: 7, speed: 100 }, // 10 FPS
-    reload: { frames: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18], sheet: reloadSheet, count: 19, speed: 95 }
+    // 8 FPS = 125ms per frame
+    idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
+    fire:   { frames: [0,1,2,3,4,5,6], sheet: fireSheet, count: 7, speed: 100 }, 
+    reload: { 
+        frames: Array.from({length: 21}, (_, i) => i), // Creates [0, 1, 2... 20]
+        sheet: reloadSheet, 
+        count: 21, 
+        speed: 125 
+    }
 };
 
-const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 100 };
+const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 };
 const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 3.5, rot: 0.05 };
 const keys = {};
 
@@ -118,7 +125,7 @@ function update() {
             weapon.lastFrameUpdate = now;
             if (weapon.frame >= currentAnim.frames.length) {
                 if (weapon.state === "fire") {
-                    weapon.state = "reload"; // Auto-reload after firing
+                    weapon.state = "reload"; 
                     weapon.frame = 0;
                     weapon.animSpeed = ANIMS.reload.speed;
                 } else {
@@ -171,8 +178,10 @@ function drawUI() {
         const frameIdx = currentAnim.frames[weapon.frame];
         const displayH = canvas.height * 0.8;
         const displayW = displayH * (frameW / frameH);
+        
         ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height);
+        // Shifted to 40% of screen width to favor the left side
+        ctx.translate(canvas.width * 0.4, canvas.height);
         ctx.drawImage(sheet, frameIdx * frameW, 0, frameW, frameH, -displayW / 2, -displayH, displayW, displayH);
         ctx.restore();
     }
