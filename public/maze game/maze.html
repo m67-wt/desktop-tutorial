@@ -47,16 +47,14 @@ const wallTextures = [
     loadImg("assets/wall textures-4.png")
 ];
 
-// Updated filenames and frame settings
 const reloadSheet = loadImg("assets/gun_reloading.png");
 const fireSheet = loadImg("assets/gunfire.png");
 
 const ANIMS = {
-    // 8 FPS = 125ms per frame
     idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
     fire:   { frames: [0,1,2,3,4,5,6], sheet: fireSheet, count: 7, speed: 100 }, 
     reload: { 
-        frames: Array.from({length: 21}, (_, i) => i), // Creates [0, 1, 2... 20]
+        frames: Array.from({length: 21}, (_, i) => i), 
         sheet: reloadSheet, 
         count: 21, 
         speed: 125 
@@ -180,26 +178,25 @@ function drawUI() {
         const displayW = displayH * (frameW / frameH);
         
         ctx.save();
-        // 1. Move the 'anchor' to the bottom left-ish area
-        ctx.translate(canvas.width * 0.35, canvas.height);
         
-        // 2. Rotate 25 degrees to the right (in radians)
-        // 25 * (Math.PI / 180) ≈ 0.436
+        // Pivot point set to lower-left area
+        ctx.translate(canvas.width * 0.25, canvas.height);
+        
+        // Tilt 25 degrees to the right
         ctx.rotate(25 * Math.PI / 180);
         
-        // 3. Draw the image
-        // We adjust the X offset (-displayW * 0.2) to keep the handle near the corner
+        // Draw image relative to the rotated anchor
         ctx.drawImage(
             sheet, 
             frameIdx * frameW, 0, 
             frameW, frameH, 
-            -displayW * 0.2, -displayH, 
+            -displayW * 0.1, -displayH * 0.9, 
             displayW, displayH
         );
+        
         ctx.restore();
     }
     
-    // UI Text
     ctx.fillStyle = "yellow";
     ctx.font = "bold 24px monospace";
     ctx.fillText(weapon.state === "idle" ? (weapon.ammo > 0 ? "READY" : "RELOAD") : weapon.state.toUpperCase(), 30, canvas.height - 35);
@@ -217,4 +214,3 @@ loop();
 </script>
 </body>
 </html>
-
