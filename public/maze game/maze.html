@@ -48,11 +48,12 @@ const wallTextures = [
 ];
 
 const reloadSheet = loadImg("assets/gun_reloading.png");
-const fireSheet = loadImg("assets/gunfire.png");
+const fireSheet = loadImg("assets/gun_fire.png");
 
 const ANIMS = {
     idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
-    fire:   { frames: [0,1,2,3,4,5,6], sheet: fireSheet, count: 7, speed: 100 }, 
+    // 1000ms / 6fps = ~166ms per frame
+    fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
     reload: { 
         frames: Array.from({length: 21}, (_, i) => i), 
         sheet: reloadSheet, 
@@ -215,5 +216,6 @@ loop();
 </script>
 </body>
 </html>
+
 
 
