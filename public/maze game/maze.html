@@ -180,11 +180,26 @@ function drawUI() {
         const displayW = displayH * (frameW / frameH);
         
         ctx.save();
-        // Shifted to 40% of screen width to favor the left side
-        ctx.translate(canvas.width * 0.4, canvas.height);
-        ctx.drawImage(sheet, frameIdx * frameW, 0, frameW, frameH, -displayW / 2, -displayH, displayW, displayH);
+        // 1. Move the 'anchor' to the bottom left-ish area
+        ctx.translate(canvas.width * 0.35, canvas.height);
+        
+        // 2. Rotate 25 degrees to the right (in radians)
+        // 25 * (Math.PI / 180) ≈ 0.436
+        ctx.rotate(25 * Math.PI / 180);
+        
+        // 3. Draw the image
+        // We adjust the X offset (-displayW * 0.2) to keep the handle near the corner
+        ctx.drawImage(
+            sheet, 
+            frameIdx * frameW, 0, 
+            frameW, frameH, 
+            -displayW * 0.2, -displayH, 
+            displayW, displayH
+        );
         ctx.restore();
     }
+    
+    // UI Text
     ctx.fillStyle = "yellow";
     ctx.font = "bold 24px monospace";
     ctx.fillText(weapon.state === "idle" ? (weapon.ammo > 0 ? "READY" : "RELOAD") : weapon.state.toUpperCase(), 30, canvas.height - 35);
@@ -202,3 +217,4 @@ loop();
 </script>
 </body>
 </html>
+
