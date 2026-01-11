@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Raycaster - Fire & Reload</title>
+    <title>Raycaster - Doom HUD</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; }
         canvas { display: block; }
@@ -49,10 +49,11 @@ const wallTextures = [
 
 const reloadSheet = loadImg("assets/gun_reloading.png");
 const fireSheet = loadImg("assets/gun_fire.png");
+// ADD YOUR FACE SPRITE SHEET HERE (5 frames: 100, 80, 60, 40, 20)
+const faceSheet = loadImg("assets/face_sheet.png"); 
 
 const ANIMS = {
     idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
-    // 1000ms / 6fps = ~166ms per frame
     fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
     reload: { 
         frames: Array.from({length: 21}, (_, i) => i), 
@@ -63,13 +64,17 @@ const ANIMS = {
 };
 
 const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 };
-const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 3.5, rot: 0.05 };
+// Added hp: 100
+const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 3.5, rot: 0.05, hp: 100 };
 const keys = {};
 
 window.addEventListener("keydown", e => {
     keys[e.key.toLowerCase()] = true;
     if (e.key === " ") handleAction();
     if (e.key.toLowerCase() === "r") reload();
+    // Test buttons to simulate taking damage
+    if (e.key === "[") player.hp = Math.max(0, player.hp - 20);
+    if (e.key === "]") player.hp = Math.min(100, player.hp + 20);
 });
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 window.addEventListener("mousedown", () => handleAction());
@@ -139,6 +144,8 @@ function update() {
 
 function drawWalls() {
     const fov = Math.PI / 3;
+    // We stop drawing walls slightly higher to leave room for the HUD
+    const wallAreaHeight = canvas.height - 100; 
     for (let x = 0; x < canvas.width; x++) {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
         const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
@@ -152,8 +159,8 @@ function drawWalls() {
                 const wallId = map[my][mx];
                 hitV = Math.floor(px / TILE) !== mx;
                 const corrected = dist * Math.cos(rayAngle - player.angle);
-                const h = (TILE * canvas.height) / corrected;
-                const yPos = (canvas.height - h) / 2;
+                const h = (TILE * wallAreaHeight) / corrected;
+                const yPos = (wallAreaHeight - h) / 2;
                 const texture = wallTextures[wallId];
                 if (texture && texture.complete) {
                     let hitX = hitV ? ry % TILE : rx % TILE;
@@ -168,46 +175,76 @@ function drawWalls() {
     }
 }
 
+// Logic to pick the face frame based on HP
+function getFaceIndex() {
+    if (player.hp >= 100) return 0;
+    if (player.hp >= 80) return 1;
+    if (player.hp >= 60) return 2;
+    if (player.hp >= 40) return 3;
+    return 4; // 20hp or less
+}
+
 function drawUI() {
+    const HUD_HEIGHT = 100;
+    const hudTop = canvas.height - HUD_HEIGHT;
+
+    // 1. DRAW HUD BACKGROUND BAR
+    ctx.fillStyle = "#222"; // Dark grey bar
+    ctx.fillRect(0, hudTop, canvas.width, HUD_HEIGHT);
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(0, hudTop, canvas.width, HUD_HEIGHT);
+
+    // 2. DRAW GUN
     const currentAnim = ANIMS[weapon.state];
     const sheet = currentAnim.sheet;
     if (sheet.complete && sheet.width > 0) {
         const frameW = sheet.width / currentAnim.count;
         const frameH = sheet.height;
         const frameIdx = currentAnim.frames[weapon.frame];
-        
-        // Reduced size by 10% (0.8 * 0.9 = 0.72)
-        const displayH = canvas.height * 0.70;
+        const displayH = (canvas.height - HUD_HEIGHT) * 0.70;
         const displayW = displayH * (frameW / frameH);
         
         ctx.save();
-        
-        // Added -7 to the Y translate to raise it up 7 pixels
-        ctx.translate(canvas.width * 0.25, canvas.height - 10);
-        
-        // Using your 15 degree preference
+        ctx.translate(canvas.width * 0.25, hudTop + 10);
         ctx.rotate(15 * Math.PI / 180);
-        
-        ctx.drawImage(
-            sheet, 
-            frameIdx * frameW, 0, 
-            frameW, frameH, 
-            -displayW * 0.1, -displayH * 0.9, 
-            displayW, displayH
-        );
-        
+        ctx.drawImage(sheet, frameIdx * frameW, 0, frameW, frameH, -displayW * 0.1, -displayH * 0.9, displayW, displayH);
         ctx.restore();
     }
-    
+
+    // 3. DRAW FACE
+    if (faceSheet.complete && faceSheet.width > 0) {
+        const faceW = faceSheet.width / 5; // 5 stages
+        const faceH = faceSheet.height;
+        const faceIdx = getFaceIndex();
+        
+        const faceSize = 80;
+        ctx.drawImage(
+            faceSheet, 
+            faceIdx * faceW, 0, faceW, faceH, 
+            canvas.width / 2 - faceSize / 2, hudTop + 10, faceSize, faceSize
+        );
+    }
+
+    // 4. DRAW HP TEXT
+    ctx.fillStyle = "red";
+    ctx.font = "bold 40px 'Courier New'";
+    ctx.fillText("HEALTH", canvas.width * 0.7, hudTop + 45);
+    ctx.fillStyle = "white";
+    ctx.font = "bold 50px 'Courier New'";
+    ctx.fillText(`${player.hp}%`, canvas.width * 0.7, hudTop + 85);
+
+    // 5. WEAPON STATUS
     ctx.fillStyle = "yellow";
-    ctx.font = "bold 24px monospace";
-    ctx.fillText(weapon.state === "idle" ? (weapon.ammo > 0 ? "READY" : "RELOAD") : weapon.state.toUpperCase(), 30, canvas.height - 35);
+    ctx.font = "bold 20px monospace";
+    ctx.fillText(weapon.state === "idle" ? (weapon.ammo > 0 ? "READY" : "RELOAD") : weapon.state.toUpperCase(), 30, hudTop + 40);
 }
 
 function loop() {
     update();
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, canvas.height/2);
-    ctx.fillStyle = "#333"; ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
+    const hudTop = canvas.height - 100;
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, hudTop/2);
+    ctx.fillStyle = "#333"; ctx.fillRect(0, hudTop/2, canvas.width, hudTop/2);
     drawWalls();
     drawUI();
     requestAnimationFrame(loop);
@@ -216,6 +253,3 @@ loop();
 </script>
 </body>
 </html>
-
-
-
