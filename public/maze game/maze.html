@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Raycaster - Doom HUD & Health</title>
+    <title>Raycaster - Fire & Reload</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; }
         canvas { display: block; }
@@ -49,11 +49,12 @@ const wallTextures = [
 
 const reloadSheet = loadImg("assets/gun_reloading.png");
 const fireSheet = loadImg("assets/gun_fire.png");
-const faceSheet = loadImg("charater_hurt_models.png"); 
+// Adjusted path and spelling based on your update
+const faceSheet = loadImg("assets/charater_hurt_models.png"); 
 
 const ANIMS = {
     idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
-    // 6 FPS Animation (1000ms / 6 = ~166ms)
+    // Fire at 6fps with 5 frames
     fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
     reload: { 
         frames: Array.from({length: 21}, (_, i) => i), 
@@ -72,7 +73,7 @@ window.addEventListener("keydown", e => {
     if (e.key === " ") handleAction();
     if (e.key.toLowerCase() === "r") reload();
     
-    // DEBUG KEYS: Press [ to take damage, ] to heal
+    // DEBUG: Take damage with [ and heal with ]
     if (e.key === "[") player.hp = Math.max(0, player.hp - 20);
     if (e.key === "]") player.hp = Math.min(100, player.hp + 20);
 });
@@ -144,7 +145,7 @@ function update() {
 
 function drawWalls() {
     const fov = Math.PI / 3;
-    const HUD_H = 120; // Room for the status bar
+    const HUD_H = 120;
     const viewHeight = canvas.height - HUD_H;
     
     for (let x = 0; x < canvas.width; x++) {
@@ -188,14 +189,14 @@ function drawUI() {
     const HUD_H = 120;
     const hudTop = canvas.height - HUD_H;
 
-    // 1. DRAW STATUS BAR BACKGROUND
-    ctx.fillStyle = "#333"; // Classic grey HUD
+    // 1. HUD BACKGROUND
+    ctx.fillStyle = "#333"; 
     ctx.fillRect(0, hudTop, canvas.width, HUD_H);
     ctx.strokeStyle = "#555";
     ctx.lineWidth = 6;
     ctx.strokeRect(3, hudTop+3, canvas.width-6, HUD_H-6);
 
-    // 2. DRAW GUN (Offset so it doesn't overlap the HUD too much)
+    // 2. GUN RENDER
     const currentAnim = ANIMS[weapon.state];
     const sheet = currentAnim.sheet;
     if (sheet.complete && sheet.width > 0) {
@@ -212,7 +213,7 @@ function drawUI() {
         ctx.restore();
     }
 
-    // 3. DRAW FACE (320x64 sprite sheet / 5 frames = 64x64 per face)
+    // 3. FACE RENDER (320x64 sheet / 5 frames = 64x64)
     if (faceSheet.complete && faceSheet.width > 0) {
         const faceW = 64; 
         const faceH = 64;
@@ -223,9 +224,13 @@ function drawUI() {
             faceIdx * faceW, 0, faceW, faceH, 
             (canvas.width / 2) - (displaySize / 2), hudTop + 10, displaySize, displaySize
         );
+    } else {
+        // Fallback if image doesn't load
+        ctx.fillStyle = "yellow";
+        ctx.fillRect((canvas.width / 2) - 50, hudTop + 10, 100, 100);
     }
 
-    // 4. DRAW HP & STATUS TEXT
+    // 4. STATS TEXT
     ctx.fillStyle = "red";
     ctx.font = "bold 20px monospace";
     ctx.fillText("HEALTH", canvas.width * 0.05, hudTop + 40);
@@ -254,4 +259,3 @@ loop();
 </script>
 </body>
 </html>
-
