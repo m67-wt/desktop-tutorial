@@ -18,13 +18,13 @@
             let ex = parseInt(enemy.style.left)
             let ey = parseInt(enemy.style.top)
 
-            // MOVEMENT AND FLIPPING LOGIC
+           
             if (ex < px) {
                enemy.style.left = (ex + 1) + 'px'
-               enemy.style.transform = 'scaleX(1)'  // Facing Right
+               enemy.style.transform = 'scaleX(1)' 
             } else {
                enemy.style.left = (ex - 1) + 'px'
-               enemy.style.transform = 'scaleX(-1)' // Facing Left
+               enemy.style.transform = 'scaleX(-1)'
             }
 
             if (ey < py) enemy.style.top = (ey + 1) + 'px'
