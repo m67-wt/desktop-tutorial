@@ -1,12 +1,12 @@
-<script>
+ <script>
    let myScore = 10
-   let myShooting = false // Changed to boolean to manage single bullet
+   let myShooting = false 
    let enemiesKilled = 0
    let totalEnemies = 7
    let hasKey = false
-   let playerDir = 'd' // Default direction is right
+   let playerDir = 'd' 
 
-   // Enemy Follow Logic
+  
    setInterval(function() {
       let p = document.getElementById('myImg01')
       let px = parseInt(p.style.left)
@@ -18,16 +18,16 @@
             let ex = parseInt(enemy.style.left)
             let ey = parseInt(enemy.style.top)
 
-            // Move X
+           
             if (ex < px) {
                enemy.style.left = (ex + 1) + 'px'
-               enemy.style.transform = 'scaleX(-1)' // Flip to face right
+               enemy.style.transform = 'scaleX(-1)' 
             } else {
                enemy.style.left = (ex - 1) + 'px'
-               enemy.style.transform = 'scaleX(1)'  // Face left
+               enemy.style.transform = 'scaleX(1)'  
             }
 
-            // Move Y
+          
             if (ey < py) enemy.style.top = (ey + 1) + 'px'
             else enemy.style.top = (ey - 1) + 'px'
          }
@@ -87,7 +87,7 @@
        
        let bullet = document.getElementById('myBullet01')
        let player = document.getElementById('myImg01')
-       let bDir = playerDir // Capture direction at moment of fire
+       let bDir = playerDir 
        
        bullet.style.left = player.style.left
        bullet.style.top = player.style.top
@@ -103,7 +103,7 @@
 
            myCheckHit()
 
-           // Remove bullet if off screen
+         
            if (bx > 2000 || bx < -100 || by > 2000 || by < -100) {
                clearInterval(moveBullet)
                myShooting = false
