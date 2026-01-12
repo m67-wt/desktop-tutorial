@@ -1,4 +1,4 @@
- <script>
+<script>
    let myScore = 10
    let myShooting = false 
    let enemiesKilled = 0
@@ -18,16 +18,15 @@
             let ex = parseInt(enemy.style.left)
             let ey = parseInt(enemy.style.top)
 
-           
+            // MOVEMENT AND FLIPPING LOGIC
             if (ex < px) {
                enemy.style.left = (ex + 1) + 'px'
-               enemy.style.transform = 'scaleX(-1)' 
+               enemy.style.transform = 'scaleX(1)'  // Facing Right
             } else {
                enemy.style.left = (ex - 1) + 'px'
-               enemy.style.transform = 'scaleX(1)'  
+               enemy.style.transform = 'scaleX(-1)' // Facing Left
             }
 
-          
             if (ey < py) enemy.style.top = (ey + 1) + 'px'
             else enemy.style.top = (ey - 1) + 'px'
          }
@@ -59,7 +58,7 @@
          }
          if (myHitOther('myBullet01', enemyId)){
             document.getElementById(enemyId).style.display = 'none'
-            document.getElementById('myBullet01').style.left = '-200px' // Reset bullet
+            document.getElementById('myBullet01').style.left = '-200px' 
             enemiesKilled++
             myScore += 5
          }
@@ -103,7 +102,6 @@
 
            myCheckHit()
 
-         
            if (bx > 2000 || bx < -100 || by > 2000 || by < -100) {
                clearInterval(moveBullet)
                myShooting = false
@@ -120,34 +118,8 @@
    if (key == 'w') { p.style.top = parseInt(p.style.top) - 10 + 'px'; playerDir = 'w'; }
    if (key == 'a') { p.style.left = parseInt(p.style.left) - 10 + 'px'; playerDir = 'a'; p.style.transform = 'scaleX(-1)'; }
    if (key == 's') { p.style.top = parseInt(p.style.top) + 10 + 'px'; playerDir = 's'; }
-   if (key == 'd') { p.style.left = parseInt(p.style.left) - 10 + 'px'; playerDir = 'd'; p.style.transform = 'scaleX(1)'; }
+   if (key == 'd') { p.style.left = parseInt(p.style.left) + 10 + 'px'; playerDir = 'd'; p.style.transform = 'scaleX(1)'; }
    if (key == ' ') myShoot()
    
    myCheckHit()
 }">
-
-<h1 align=center>T4A06 Game by John</h1>
-<div align=center>
-   <input id="myText01" type=text value="" size=40 readonly style="background:transparent; border:none; text-align:center; font-weight:bold;">
-   <p>Defeat the Freds and grab the Massive Key!</p>
-</div>
-
-<div id="myFloor" style="position:fixed; bottom:0; width:100%; height:80px; background-image: url('assets/lvl_floor texture.png');"></div>
-
-<img id="myImg01" src="assets/charater.png" style="position:absolute; width:80px; height:80px; left: 10px; top:200px;">
-
-<img id="myImg02" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:400px; top:150px;">
-<img id="myImg03" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:600px; top:300px;">
-<img id="myImg04" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:300px; top:400px;">
-<img id="myImg05" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:750px; top:100px;">
-<img id="myImg06" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:500px; top:50px;">
-<img id="myImg07" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:900px; top:450px;">
-<img id="myImg08" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:200px; top:100px;">
-
-<img id="myKey" src="assets/wall textures-5.png" style="position:absolute; width:300px; height:300px; left:950px; top:50px; image-rendering: pixelated;">
-
-<div id="myImgDoor" style="position:absolute; width:100px; height:120px; left:1250px; top:250px; background-color:red; border:2px solid black; text-align:center; line-height:120px; font-weight:bold; color:white;">EXIT</div>
-
-<img id="myBullet01" src="assets/charater.png" style="position:absolute; width:15px; height:15px; left: -200px;">
-
-</body>
