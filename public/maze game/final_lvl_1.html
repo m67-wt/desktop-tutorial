@@ -107,6 +107,7 @@
                clearInterval(moveBullet);
                myShooting = false;
                bullet.style.left = '-200px';
+              
            }
        }, 20);
    }
@@ -119,6 +120,12 @@ onkeydown="{
    let p = document.getElementById('myImg01');
    let topPos = parseInt(p.style.top);
    let leftPos = parseInt(p.style.left);
+   // This math finds the center point between the furthest left and furthest right zombies
+let centerX = (200 + 900) / 2; 
+let centerY = (50 + 450) / 2;
+
+document.getElementById('myKey').style.left = centerX + 'px';
+document.getElementById('myKey').style.top = centerY + 'px';
    
    if (key == 'w') { p.style.top = (topPos - 15) + 'px'; playerDir = 'w'; }
    if (key == 'a') { p.style.left = (leftPos - 15) + 'px'; playerDir = 'a'; p.style.transform = 'scaleX(-1)'; }
@@ -127,7 +134,7 @@ onkeydown="{
    if (key == ' ') myShoot();
 }">
 
-<h1 align=center>T4A06 Game by John</h1>
+<h1 align=center>LvL 1 Game by John</h1>
 <div align=center>
    <input id="myText01" type=text value="" size=40 readonly style="border:none; text-align:center; font-weight:bold;">
    <p>Defeat the Freds and grab the Massive Key!</p>
@@ -143,7 +150,7 @@ onkeydown="{
 <img id="myImg07" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:900px; top:450px;">
 <img id="myImg08" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:200px; top:100px;">
 
-<img id="myKey" src="assets/wall textures-5.png" style="position:absolute; width:100px; height:100px; left:950px; top:500px;">
+<img id="myKey" src="assets/wall textures-5.png" style="position:absolute; width:100px; height:100px; left:550px; top:250px;">
 
 <div id="myImgDoor" style="position:absolute; width:100px; height:120px; left:1250px; top:250px; background-color:red; border:2px solid black; text-align:center; line-height:120px; font-weight:bold; color:white;">EXIT</div>
 
