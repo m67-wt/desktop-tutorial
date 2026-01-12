@@ -8,6 +8,16 @@
    let hasKey = false;
    let playerDir = 'd';
 
+   
+   window.onload = function() {
+      
+      let centerX = (200 + 900) / 2; 
+      let centerY = (50 + 450) / 2;
+      let key = document.getElementById('myKey');
+      key.style.left = centerX + 'px';
+      key.style.top = centerY + 'px';
+   };
+
    setInterval(function() {
       let p = document.getElementById('myImg01');
       let px = parseInt(p.style.left);
@@ -18,7 +28,6 @@
          if(enemy && enemy.style.display !== 'none'){
             let ex = parseInt(enemy.style.left);
             let ey = parseInt(enemy.style.top);
-
             
             if (ex < px) {
                enemy.style.left = (ex + 1) + 'px';
@@ -74,9 +83,9 @@
          document.getElementById('myImgDoor').style.backgroundColor = 'green';
       }
 
+    
       if (myHitOther('myImg01','myImgDoor') && enemiesKilled >= totalEnemies && hasKey){
-         alert("You Win!");
-         location.reload(); 
+         window.location.href = 'LEVEL_2_LINK_HERE.html'; 
       }
 
       if (myScore <= 0) location.reload();
@@ -106,25 +115,18 @@
                clearInterval(moveBullet);
                myShooting = false;
                bullet.style.left = '-200px';
-              
            }
        }, 20);
    }
 </script>
 </head>
 
-<body id="myBody" style="margin:0; background-color: lightgrey; overflow: hidden;" 
+<body id="myBody" style="margin:0; background-image: url('assets/pixel_light_grey_mosaic.jpg'); background-size: cover; background-repeat: no-repeat; background-attachment: fixed; overflow: hidden;" 
 onkeydown="{
    let key = event.key.toLowerCase();
    let p = document.getElementById('myImg01');
    let topPos = parseInt(p.style.top);
    let leftPos = parseInt(p.style.left);
-   // This math finds the center point between the furthest left and furthest right zombies
-let centerX = (200 + 900) / 2; 
-let centerY = (50 + 450) / 2;
-
-document.getElementById('myKey').style.left = centerX + 'px';
-document.getElementById('myKey').style.top = centerY + 'px';
    
    if (key == 'w') { p.style.top = (topPos - 15) + 'px'; playerDir = 'w'; }
    if (key == 'a') { p.style.left = (leftPos - 15) + 'px'; playerDir = 'a'; p.style.transform = 'scaleX(-1)'; }
@@ -135,7 +137,7 @@ document.getElementById('myKey').style.top = centerY + 'px';
 
 <h1 align=center>LvL 1 Game by John</h1>
 <div align=center>
-   <input id="myText01" type=text value="" size=40 readonly style="border:none; text-align:center; font-weight:bold;">
+   <input id="myText01" type=text value="" size=40 readonly style="border:none; text-align:center; font-weight:bold; background: rgba(255,255,255,0.5);">
    <p>Defeat the Freds and grab the Massive Key!</p>
 </div>
 
@@ -149,7 +151,7 @@ document.getElementById('myKey').style.top = centerY + 'px';
 <img id="myImg07" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:900px; top:450px;">
 <img id="myImg08" src="assets/fred.png" style="position:absolute; width:80px; height:80px; left:200px; top:100px;">
 
-<img id="myKey" src="assets/wall textures-5.png" style="position:absolute; width:100px; height:100px; left:550px; top:250px;">
+<img id="myKey" src="assets/wall textures-5.png" style="position:absolute; width:100px; height:100px; left:0px; top:0px;">
 
 <div id="myImgDoor" style="position:absolute; width:100px; height:120px; left:1250px; top:250px; background-color:red; border:2px solid black; text-align:center; line-height:120px; font-weight:bold; color:white;">EXIT</div>
 
