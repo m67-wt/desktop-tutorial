@@ -1,90 +1,128 @@
 <script>
-   let myGlobalX = 0
    let myScore = 10
-   let myGun01
-   let myGun02
-   let myShooting = 1
+   let myShooting = false // Changed to boolean to manage single bullet
    let enemiesKilled = 0
    let totalEnemies = 7
    let hasKey = false
+   let playerDir = 'd' // Default direction is right
 
-function myHitOther(my1,my2){
-   let obj1 = document.getElementById(my1)
-   let obj2 = document.getElementById(my2)
-   if (!obj1 || !obj2 || obj1.style.display == 'none' || obj2.style.display == 'none') return false
+   // Enemy Follow Logic
+   setInterval(function() {
+      let p = document.getElementById('myImg01')
+      let px = parseInt(p.style.left)
+      let py = parseInt(p.style.top)
 
-   left1   = parseInt(obj1.style.left)
-   right1  = left1 + parseInt(obj1.style.width)
-   top1    = parseInt(obj1.style.top)   
-   bottom1 = top1   + parseInt(obj1.style.height)
-   left2   = parseInt(obj2.style.left)
-   right2  = left2 + parseInt(obj2.style.width)
-   top2    = parseInt(obj2.style.top)   
-   bottom2 = top2   + parseInt(obj2.style.height)
-   if ((right1 >= left2) && (bottom1 >= top2) && (left1 <= right2) && (top1 <= bottom2)){
-       return true
-   }
-}
+      for(let i=2; i<=8; i++){
+         let enemy = document.getElementById('myImg0' + i)
+         if(enemy.style.display !== 'none'){
+            let ex = parseInt(enemy.style.left)
+            let ey = parseInt(enemy.style.top)
 
-function myCheckHit(){
-   document.all.myText01.value = 'Score: ' + myScore + ' | Killed: ' + enemiesKilled + '/' + totalEnemies
+            // Move X
+            if (ex < px) {
+               enemy.style.left = (ex + 1) + 'px'
+               enemy.style.transform = 'scaleX(-1)' // Flip to face right
+            } else {
+               enemy.style.left = (ex - 1) + 'px'
+               enemy.style.transform = 'scaleX(1)'  // Face left
+            }
 
-   // Check all 7 Fred enemies
-   for(let i=2; i<=8; i++){
-      let enemyId = 'myImg0' + i
-      if (myHitOther('myImg01', enemyId)){
-         document.getElementById('myImg01').style.left = '20px'
-         myScore -= 1
+            // Move Y
+            if (ey < py) enemy.style.top = (ey + 1) + 'px'
+            else enemy.style.top = (ey - 1) + 'px'
+         }
       }
-      if (myHitOther('myBullet01', enemyId) || myHitOther('myBullet02', enemyId)){
-         document.getElementById(enemyId).style.display = 'none'
-         enemiesKilled++
-         myScore += 5
+      myCheckHit() 
+   }, 30)
+
+   function myHitOther(my1, my2){
+      let obj1 = document.getElementById(my1)
+      let obj2 = document.getElementById(my2)
+      if (!obj1 || !obj2 || obj1.style.display == 'none' || obj2.style.display == 'none') return false
+
+      let left1 = parseInt(obj1.style.left), right1 = left1 + parseInt(obj1.style.width)
+      let top1 = parseInt(obj1.style.top), bottom1 = top1 + parseInt(obj1.style.height)
+      let left2 = parseInt(obj2.style.left), right2 = left2 + parseInt(obj2.style.width)
+      let top2 = parseInt(obj2.style.top), bottom2 = top2 + parseInt(obj2.style.height)
+      
+      return (right1 >= left2 && bottom1 >= top2 && left1 <= right2 && top1 <= bottom2)
+   }
+
+   function myCheckHit(){
+      document.getElementById('myText01').value = 'Score: ' + myScore + ' | Killed: ' + enemiesKilled + '/' + totalEnemies
+
+      for(let i=2; i<=8; i++){
+         let enemyId = 'myImg0' + i
+         if (myHitOther('myImg01', enemyId)){
+            document.getElementById('myImg01').style.left = '20px'
+            myScore -= 1
+         }
+         if (myHitOther('myBullet01', enemyId)){
+            document.getElementById(enemyId).style.display = 'none'
+            document.getElementById('myBullet01').style.left = '-200px' // Reset bullet
+            enemiesKilled++
+            myScore += 5
+         }
       }
+
+      if (myHitOther('myImg01','myKey')){
+         document.getElementById('myKey').style.display = 'none'
+         hasKey = true
+      }
+
+      if (enemiesKilled >= totalEnemies && hasKey){
+         document.getElementById('myImgDoor').style.backgroundColor = 'green'
+      }
+
+      if (myHitOther('myImg01','myImgDoor') && enemiesKilled >= totalEnemies && hasKey){
+         location = 'https://m67-wt.github.io/desktop-tutorial/public/maze game/maze.html'
+      }
+
+      if (myScore <= 0) location.reload()
    }
 
-   if (myHitOther('myImg01','myKey')){
-      document.getElementById('myKey').style.display = 'none'
-      hasKey = true
-   }
+   function myShoot(){
+       if (myShooting) return // Only one bullet at a time
+       myShooting = true
+       
+       let bullet = document.getElementById('myBullet01')
+       let player = document.getElementById('myImg01')
+       let bDir = playerDir // Capture direction at moment of fire
+       
+       bullet.style.left = player.style.left
+       bullet.style.top = player.style.top
+       
+       let moveBullet = setInterval(function(){
+           let bx = parseInt(bullet.style.left)
+           let by = parseInt(bullet.style.top)
 
-   if (enemiesKilled >= totalEnemies && hasKey){
-      document.getElementById('myImgDoor').style.backgroundColor = 'green'
-   }
+           if(bDir == 'd') bullet.style.left = (bx + 15) + 'px'
+           if(bDir == 'a') bullet.style.left = (bx - 15) + 'px'
+           if(bDir == 'w') bullet.style.top  = (by - 15) + 'px'
+           if(bDir == 's') bullet.style.top  = (by + 15) + 'px'
 
-   if (myHitOther('myImg01','myImgDoor') && enemiesKilled >= totalEnemies && hasKey){
-      location = 'https://m67-wt.github.io/desktop-tutorial/public/maze game/maze.html'
-   }
+           myCheckHit()
 
-   if (myScore <= 0){
-    location.reload()
+           // Remove bullet if off screen
+           if (bx > 2000 || bx < -100 || by > 2000 || by < -100) {
+               clearInterval(moveBullet)
+               myShooting = false
+               bullet.style.left = '-200px'
+           }
+       }, 20)
    }
-}
-
-function myShoot(){
-    if (myShooting > 2) myShooting = 1
-    let bulletName = (myShooting == 1) ? 'myBullet01' : 'myBullet02'
-    let gunVar = (myShooting == 1) ? myGun01 : myGun02
-    myShooting++
-    document.getElementById(bulletName).style.left = document.getElementById('myImg01').style.left
-    document.getElementById(bulletName).style.top  = document.getElementById('myImg01').style.top
-    clearInterval(gunVar)
-    let moveBullet = setInterval(function(){
-        document.getElementById(bulletName).style.left = parseInt(document.getElementById(bulletName).style.left) + 15 + 'px'
-        myCheckHit()
-        if (parseInt(document.getElementById(bulletName).style.left) > 2000) clearInterval(moveBullet)
-    }, 20)
-}
 </script>
 
-<body id="myBody" style="margin:0; background-image: url('assets/pixel_light_grey_mosaic.jpg'); background-size: cover; background-attachment: fixed;" onkeydown="{
+<body id="myBody" style="margin:0; background-image: url('assets/pixel_light_grey_mosaic.jpg'); background-size: cover; background-attachment: fixed; overflow: hidden;" onkeydown="{
    let key = event.key.toLowerCase()
    let p = document.getElementById('myImg01')
-   if (key == 'w') p.style.top = parseInt(p.style.top) - 10 + 'px'
-   if (key == 'a') p.style.left = parseInt(p.style.left) - 10 + 'px'
-   if (key == 's') p.style.top = parseInt(p.style.top) + 10 + 'px'
-   if (key == 'd') p.style.left = parseInt(p.style.left) + 10 + 'px'
+   
+   if (key == 'w') { p.style.top = parseInt(p.style.top) - 10 + 'px'; playerDir = 'w'; }
+   if (key == 'a') { p.style.left = parseInt(p.style.left) - 10 + 'px'; playerDir = 'a'; p.style.transform = 'scaleX(-1)'; }
+   if (key == 's') { p.style.top = parseInt(p.style.top) + 10 + 'px'; playerDir = 's'; }
+   if (key == 'd') { p.style.left = parseInt(p.style.left) - 10 + 'px'; playerDir = 'd'; p.style.transform = 'scaleX(1)'; }
    if (key == ' ') myShoot()
+   
    myCheckHit()
 }">
 
@@ -111,6 +149,5 @@ function myShoot(){
 <div id="myImgDoor" style="position:absolute; width:100px; height:120px; left:1250px; top:250px; background-color:red; border:2px solid black; text-align:center; line-height:120px; font-weight:bold; color:white;">EXIT</div>
 
 <img id="myBullet01" src="assets/charater.png" style="position:absolute; width:15px; height:15px; left: -200px;">
-<img id="myBullet02" src="assets/charater.png" style="position:absolute; width:15px; height:15px; left: -200px;"> 
 
 </body>
