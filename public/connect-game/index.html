@@ -1,93 +1,284 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Shared Text Room</title>
+    <title>Raycaster - Gun Behind HUD</title>
     <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #f0f0f0;
-            font-family: Arial;
-        }
-        #box {
-            width: 50%;
-            max-width: 500px;
-            padding: 10px;
-        }
-        #text {
-            width: 100%;
-            height: 200px;
-            font-size: 18px;
-            padding: 10px;
-        }
-        #codeInput {
-            padding: 8px;
-            font-size: 16px;
-            width: 200px;
-        }
-        #joinBtn {
-            padding: 8px 12px;
-            font-size: 16px;
-        }
+        body { margin: 0; overflow: hidden; background: black; }
+        canvas { display: block; }
     </style>
 </head>
 <body>
-
-<div id="box">
-
-    <div id="joinArea">
-        <h2>Enter Join Code</h2>
-        <input id="codeInput" placeholder="Join code">
-        <button id="joinBtn">Join</button>
-        <p id="error" style="color:red;"></p>
-    </div>
-
-    <textarea id="text" style="display:none;"></textarea>
-
-</div>
-
+<canvas id="c"></canvas>
 <script>
-    let socket;
-    const text = document.getElementById("text");
-    const joinArea = document.getElementById("joinArea");
-    const error = document.getElementById("error");
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
 
-    document.getElementById("joinBtn").onclick = () => {
-        const code = document.getElementById("codeInput").value;
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    ctx.imageSmoothingEnabled = false;
+}
+window.addEventListener("resize", resize);
+resize();
 
-        socket = new WebSocket("ws://" + window.location.hostname + ":8080");
+const TILE = 64;
+const map = [
+    [4,4,4,4,4,4,4,4,4,4,4,4],
+    [4,0,0,0,0,0,0,0,0,0,0,4],
+    [4,0,1,1,1,0,2,2,0,0,0,4],
+    [4,0,0,0,1,0,0,0,0,3,0,4],
+    [4,0,3,0,1,0,4,0,0,3,0,4],
+    [4,0,0,0,0,0,4,0,0,0,0,4],
+    [4,4,4,4,4,4,4,4,4,4,4,4],
+];
 
-        socket.onopen = () => {
-            socket.send(JSON.stringify({ type: "join", code }));
-        };
+function loadImg(src) {
+    const img = new Image();
+    img.src = src;
+    return img;
+}
 
-        socket.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
+const TEXTURE_SIZE = 500;
+const wallTextures = [
+    null,
+    loadImg("assets/wall textures-1.png"),
+    loadImg("assets/wall textures-2.png"),
+    loadImg("assets/wall textures-3.png"),
+    loadImg("assets/wall textures-4.png")
+];
 
-            if (msg.type === "error") {
-                error.textContent = msg.message;
+const reloadSheet = loadImg("assets/gun_reloading.png");
+const fireSheet = loadImg("assets/gun_fire.png");
+const faceSheet = loadImg("assets/charater_hurt_models.png"); 
+
+const ANIMS = {
+    idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
+    fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
+    reload: { 
+        frames: Array.from({length: 21}, (_, i) => i), 
+        sheet: reloadSheet, 
+        count: 21, 
+        speed: 125 
+    }
+};
+
+const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 };
+const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 3.5, rot: 0.05, hp: 100 };
+const keys = {};
+
+window.addEventListener("keydown", e => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key === " ") handleAction();
+    if (e.key.toLowerCase() === "r") reload();
+    if (e.key === "[") player.hp = Math.max(0, player.hp - 20);
+    if (e.key === "]") player.hp = Math.min(100, player.hp + 20);
+});
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+window.addEventListener("mousedown", () => handleAction());
+
+function isWall(x, y) {
+    const mx = Math.floor(x / TILE);
+    const my = Math.floor(y / TILE);
+    return map[my] && map[my][mx] > 0;
+}
+
+function handleAction() {
+    if (weapon.state !== "idle") return;
+    if (weapon.ammo > 0) shoot();
+    else reload();
+}
+
+function shoot() {
+    weapon.ammo = 0;
+    weapon.state = "fire";
+    weapon.frame = 0;
+    weapon.animSpeed = ANIMS.fire.speed;
+    weapon.lastFrameUpdate = performance.now();
+}
+
+function reload() {
+    if (weapon.state === "idle" && weapon.ammo === 0) {
+        weapon.state = "reload";
+        weapon.frame = 0;
+        weapon.animSpeed = ANIMS.reload.speed;
+        weapon.lastFrameUpdate = performance.now();
+    }
+}
+
+function update() {
+    let moveStep = 0;
+    if (keys["w"]) moveStep = player.move;
+    if (keys["s"]) moveStep = -player.move;
+    if (keys["a"]) player.angle -= player.rot;
+    if (keys["d"]) player.angle += player.rot;
+
+    let nx = player.x + Math.cos(player.angle) * moveStep;
+    let ny = player.y + Math.sin(player.angle) * moveStep;
+    if (!isWall(nx, player.y)) player.x = nx;
+    if (!isWall(player.x, ny)) player.y = ny;
+
+    const now = performance.now();
+    const currentAnim = ANIMS[weapon.state];
+    
+    if (weapon.state !== "idle") {
+        if (now - weapon.lastFrameUpdate > weapon.animSpeed) {
+            weapon.frame++;
+            weapon.lastFrameUpdate = now;
+            if (weapon.frame >= currentAnim.frames.length) {
+                if (weapon.state === "fire") {
+                    weapon.state = "reload"; 
+                    weapon.frame = 0;
+                    weapon.animSpeed = ANIMS.reload.speed;
+                } else {
+                    weapon.ammo = 1;
+                    weapon.state = "idle";
+                    weapon.frame = 0;
+                }
             }
+        }
+    }
+}
 
-            if (msg.type === "init") {
-                joinArea.style.display = "none";
-                text.style.display = "block";
-                text.value = msg.text;
+function drawWalls() {
+    const fov = Math.PI / 3;
+    const HUD_H = 160; 
+    const viewHeight = canvas.height - HUD_H;
+    
+    for (let x = 0; x < canvas.width; x++) {
+        const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
+        const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
+        let rx = player.x, ry = player.y, dist = 0, hitV = false;
+
+        while (dist < 800) {
+            let px = rx;
+            rx += rayCos * 2; ry += raySin * 2; dist += 2;
+            let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
+            if (map[my] && map[my][mx] > 0) {
+                const wallId = map[my][mx];
+                hitV = Math.floor(px / TILE) !== mx;
+                const corrected = dist * Math.cos(rayAngle - player.angle);
+                const h = (TILE * viewHeight) / corrected;
+                const yPos = (viewHeight - h) / 2;
+                const texture = wallTextures[wallId];
+                if (texture && texture.complete) {
+                    let hitX = hitV ? ry % TILE : rx % TILE;
+                    let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+                    ctx.drawImage(texture, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
+                }
+                ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corrected/600)})`;
+                ctx.fillRect(x, yPos, 1, h);
+                break;
             }
+        }
+    }
+}
 
-            if (msg.type === "updateText") {
-                text.value = msg.text;
-            }
-        };
-    };
+function getFaceIndex() {
+    if (player.hp >= 100) return 0;
+    if (player.hp >= 80) return 1;
+    if (player.hp >= 60) return 2;
+    if (player.hp >= 40) return 3;
+    return 4; 
+}
 
-    // Send text updates
-    text.addEventListener("input", () => {
-        socket.send(JSON.stringify({ type: "updateText", text: text.value }));
-    });
+function drawWeapon(viewH) {
+    const currentAnim = ANIMS[weapon.state];
+    const sheet = currentAnim.sheet;
+    const HUD_H = 160;
+    const hudTop = canvas.height - HUD_H;
+
+    if (sheet.complete && sheet.width > 0) {
+        const frameW = sheet.width / currentAnim.count;
+        const frameH = sheet.height;
+        const frameIdx = currentAnim.frames[weapon.frame];
+        
+        // Gun size
+        const displayH = canvas.height * 0.70;
+        const displayW = displayH * (frameW / frameH);
+        
+        ctx.save();
+        // Positioned at hudTop so the base of the gun image meets the HUD
+        ctx.translate(canvas.width * 0.25, hudTop);
+        ctx.rotate(15 * Math.PI / 180);
+        
+        ctx.drawImage(
+            sheet, 
+            frameIdx * frameW, 0, 
+            frameW, frameH, 
+            -displayW * 0.1, -displayH * 0.95, // Offset so it sits just slightly inside the HUD
+            displayW, displayH
+        );
+        ctx.restore();
+    }
+}
+
+function drawHUD() {
+    const HUD_H = 160;
+    const hudTop = canvas.height - HUD_H;
+
+    // 1. HUD BACKGROUND BAR
+    ctx.fillStyle = "#222"; 
+    ctx.fillRect(0, hudTop, canvas.width, HUD_H);
+    ctx.strokeStyle = "#444";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2, hudTop + 2, canvas.width - 4, HUD_H - 4);
+
+    // 2. FACE PORTRAIT (Increased size by ~20%)
+    const portraitX = 40;
+    const portraitY = hudTop + 10;
+    const portraitSize = 85; // Increased from 70
+
+    ctx.fillStyle = "#000";
+    ctx.fillRect(portraitX, portraitY, portraitSize, portraitSize);
+    ctx.strokeStyle = "#888";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(portraitX, portraitY, portraitSize, portraitSize);
+
+    if (faceSheet.complete && faceSheet.width > 0) {
+        const faceW = 64; 
+        const faceH = 64;
+        const faceIdx = getFaceIndex();
+        ctx.drawImage(
+            faceSheet, 
+            faceIdx * faceW, 0, faceW, faceH, 
+            portraitX + 5, portraitY + 5, portraitSize - 10, portraitSize - 10
+        );
+    }
+
+    // 3. TEXT STATS
+    ctx.fillStyle = "red";
+    ctx.font = "bold 16px monospace";
+    ctx.fillText("HEALTH", portraitX, hudTop + 115); // Shifted down for bigger face
+    ctx.fillStyle = "white";
+    ctx.font = "bold 40px monospace";
+    ctx.fillText(`${player.hp}%`, portraitX, hudTop + 150);
+
+    ctx.fillStyle = "yellow";
+    ctx.font = "bold 16px monospace";
+    ctx.fillText("AMMO", canvas.width - 120, hudTop + 40);
+    ctx.fillStyle = "white";
+    ctx.font = "bold 30px monospace";
+    ctx.fillText(weapon.ammo > 0 ? "1 / 1" : "0 / 1", canvas.width - 120, hudTop + 80);
+}
+
+function loop() {
+    update();
+    const HUD_H = 160;
+    const viewH = canvas.height - HUD_H;
+    
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, viewH/2);
+    ctx.fillStyle = "#222"; ctx.fillRect(0, viewH/2, canvas.width, viewH/2);
+    
+    drawWalls();
+    
+    // Draw order: Weapon is drawn behind HUD
+    drawWeapon(viewH);
+    drawHUD();
+    
+    requestAnimationFrame(loop);
+}
+loop();
 </script>
-
 </body>
 </html>
+
