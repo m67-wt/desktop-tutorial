@@ -232,8 +232,8 @@ function drawHUD() {
     ctx.strokeRect(portraitX, portraitY, portraitSize, portraitSize);
 
     if (faceSheet.complete && faceSheet.width > 0) {
-        const faceW = 100; 
-        const faceH = 100;
+        const faceW = 64; 
+        const faceH = 64;
         const faceIdx = getFaceIndex();
         ctx.drawImage(
             faceSheet, 
@@ -277,4 +277,5 @@ function loop() {
 loop();
 </script>
 </body>
+
 
