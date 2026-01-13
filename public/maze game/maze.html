@@ -189,7 +189,7 @@ function drawWeapon(viewH) {
         const frameH = sheet.height;
         const frameIdx = currentAnim.frames[weapon.frame];
         
-        // Gun size
+        
         const displayH = canvas.height * 0.70;
         const displayW = displayH * (frameW / frameH);
         
@@ -232,8 +232,8 @@ function drawHUD() {
     ctx.strokeRect(portraitX, portraitY, portraitSize, portraitSize);
 
     if (faceSheet.complete && faceSheet.width > 0) {
-        const faceW = 64; 
-        const faceH = 64;
+        const faceW = 100; 
+        const faceH = 100;
         const faceIdx = getFaceIndex();
         ctx.drawImage(
             faceSheet, 
@@ -277,3 +277,4 @@ function loop() {
 loop();
 </script>
 </body>
+
