@@ -1,4 +1,6 @@
-<body>
+<!DOCTYPE html>
+<html>
+<head>
     <style>
         body { margin: 0; overflow: hidden; background: black; }
         canvas { display: block; }
@@ -47,28 +49,36 @@ const wallTextures = [
 const reloadSheet = loadImg("assets/gun_reloading.png");
 const fireSheet = loadImg("assets/gun_fire.png");
 const faceSheet = loadImg("assets/charater_hurt_models.png"); 
+const zombieSheet = loadImg("assets/zombie_animation.png"); // Ensure this path is correct
 
 const ANIMS = {
     idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
     fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
-    reload: { 
-        frames: Array.from({length: 21}, (_, i) => i), 
-        sheet: reloadSheet, 
-        count: 21, 
-        speed: 125 
-    }
+    reload: { frames: Array.from({length: 21}, (_, i) => i), sheet: reloadSheet, count: 21, speed: 125 }
 };
 
 const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 };
 const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 3.5, rot: 0.05, hp: 100 };
 const keys = {};
 
+// --- ENEMY: FRED THE ZOMBIE ---
+const fred = {
+    x: TILE * 8,
+    y: TILE * 4,
+    hp: 2,
+    alive: true,
+    speed: 1.2,
+    size: 64,
+    hitboxW: 30, // Narrower hitbox as requested
+    lastAttack: 0,
+    frame: 0,
+    lastFrameUpdate: 0
+};
+
 window.addEventListener("keydown", e => {
     keys[e.key.toLowerCase()] = true;
     if (e.key === " ") handleAction();
     if (e.key.toLowerCase() === "r") reload();
-    if (e.key === "[") player.hp = Math.max(0, player.hp - 20);
-    if (e.key === "]") player.hp = Math.min(100, player.hp + 20);
 });
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 window.addEventListener("mousedown", () => handleAction());
@@ -91,6 +101,26 @@ function shoot() {
     weapon.frame = 0;
     weapon.animSpeed = ANIMS.fire.speed;
     weapon.lastFrameUpdate = performance.now();
+
+    // Shooting logic for Fred
+    if (fred.alive) {
+        // Calculate angle to Fred
+        const dx = fred.x - player.x;
+        const dy = fred.y - player.y;
+        const angleToFred = Math.atan2(dy, dx);
+        let angleDiff = player.angle - angleToFred;
+
+        // Normalize angle
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        // If fred is roughly in the center of the screen (small angle diff)
+        if (Math.abs(angleDiff) < 0.2 && dist < 500) {
+            fred.hp--;
+            if (fred.hp <= 0) fred.alive = false;
+        }
+    }
 }
 
 function reload() {
@@ -103,6 +133,7 @@ function reload() {
 }
 
 function update() {
+    // Player movement
     let moveStep = 0;
     if (keys["w"]) moveStep = player.move;
     if (keys["s"]) moveStep = -player.move;
@@ -114,9 +145,38 @@ function update() {
     if (!isWall(nx, player.y)) player.x = nx;
     if (!isWall(player.x, ny)) player.y = ny;
 
+    // Fred AI
+    if (fred.alive) {
+        const dx = player.x - fred.x;
+        const dy = player.y - fred.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+
+        // Move toward player if not in melee range
+        if (dist > 40) {
+            const angle = Math.atan2(dy, dx);
+            const moveX = fred.x + Math.cos(angle) * fred.speed;
+            const moveY = fred.y + Math.sin(angle) * fred.speed;
+            if (!isWall(moveX, fred.y)) fred.x = moveX;
+            if (!isWall(fred.x, moveY)) fred.y = moveY;
+        } else {
+            // Melee Attack every 2 seconds
+            const now = performance.now();
+            if (now - fred.lastAttack > 2000) {
+                player.hp = Math.max(0, player.hp - 15);
+                fred.lastAttack = now;
+            }
+        }
+        
+        // Simple animation loop for Fred
+        if (performance.now() - fred.lastFrameUpdate > 200) {
+            fred.frame = (fred.frame + 1) % 4; // Assuming 4 frames
+            fred.lastFrameUpdate = performance.now();
+        }
+    }
+
+    // Weapon Animation
     const now = performance.now();
     const currentAnim = ANIMS[weapon.state];
-    
     if (weapon.state !== "idle") {
         if (now - weapon.lastFrameUpdate > weapon.animSpeed) {
             weapon.frame++;
@@ -125,7 +185,6 @@ function update() {
                 if (weapon.state === "fire") {
                     weapon.state = "reload"; 
                     weapon.frame = 0;
-                    weapon.animSpeed = ANIMS.reload.speed;
                 } else {
                     weapon.ammo = 1;
                     weapon.state = "idle";
@@ -136,10 +195,14 @@ function update() {
     }
 }
 
+// Global Z-Buffer to handle sprite clipping behind walls
+let zBuffer = [];
+
 function drawWalls() {
     const fov = Math.PI / 3;
     const HUD_H = 160; 
     const viewHeight = canvas.height - HUD_H;
+    zBuffer = [];
     
     for (let x = 0; x < canvas.width; x++) {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
@@ -154,6 +217,9 @@ function drawWalls() {
                 const wallId = map[my][mx];
                 hitV = Math.floor(px / TILE) !== mx;
                 const corrected = dist * Math.cos(rayAngle - player.angle);
+                
+                zBuffer[x] = corrected; // Store for sprite clipping
+
                 const h = (TILE * viewHeight) / corrected;
                 const yPos = (viewHeight - h) / 2;
                 const texture = wallTextures[wallId];
@@ -165,6 +231,46 @@ function drawWalls() {
                 ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corrected/600)})`;
                 ctx.fillRect(x, yPos, 1, h);
                 break;
+            }
+        }
+    }
+}
+
+function drawSprites() {
+    if (!fred.alive) return;
+
+    const HUD_H = 160;
+    const viewHeight = canvas.height - HUD_H;
+    const fov = Math.PI / 3;
+
+    // Sprite relative position
+    const dx = fred.x - player.x;
+    const dy = fred.y - player.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    // Angle relative to player view
+    let spriteAngle = Math.atan2(dy, dx) - player.angle;
+    while (spriteAngle < -Math.PI) spriteAngle += Math.PI * 2;
+    while (spriteAngle > Math.PI) spriteAngle -= Math.PI * 2;
+
+    // Basic visibility check
+    if (Math.abs(spriteAngle) > fov) return;
+
+    const spriteSize = (TILE * viewHeight) / (dist * Math.cos(spriteAngle));
+    const xPos = (0.5 * (spriteAngle / (fov / 2)) + 0.5) * canvas.width - spriteSize / 2;
+    const yPos = (viewHeight - spriteSize) / 2;
+
+    if (zombieSheet.complete) {
+        // Render sprite column by column to allow wall clipping
+        for (let col = 0; col < spriteSize; col++) {
+            const screenX = Math.floor(xPos + col);
+            if (screenX >= 0 && screenX < canvas.width && zBuffer[screenX] > dist) {
+                const texX = Math.floor((col / spriteSize) * 64);
+                ctx.drawImage(
+                    zombieSheet, 
+                    fred.frame * 64 + texX, 0, 1, 64, 
+                    screenX, yPos, 1, spriteSize
+                );
             }
         }
     }
@@ -188,22 +294,16 @@ function drawWeapon(viewH) {
         const frameW = sheet.width / currentAnim.count;
         const frameH = sheet.height;
         const frameIdx = currentAnim.frames[weapon.frame];
-        
-        
         const displayH = canvas.height * 0.70;
         const displayW = displayH * (frameW / frameH);
         
         ctx.save();
-       
         ctx.translate(canvas.width * 0.25, hudTop);
         ctx.rotate(15 * Math.PI / 180);
-        
         ctx.drawImage(
             sheet, 
-            frameIdx * frameW, 0, 
-            frameW, frameH, 
-            -displayW * 0.1, -displayH * 0.95, 
-            displayW, displayH
+            frameIdx * frameW, 0, frameW, frameH, 
+            -displayW * 0.1, -displayH * 0.95, displayW, displayH
         );
         ctx.restore();
     }
@@ -212,37 +312,22 @@ function drawWeapon(viewH) {
 function drawHUD() {
     const HUD_H = 160;
     const hudTop = canvas.height - HUD_H;
-
-   
     ctx.fillStyle = "#222"; 
     ctx.fillRect(0, hudTop, canvas.width, HUD_H);
-    ctx.strokeStyle = "#444";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(2, hudTop + 2, canvas.width - 4, HUD_H - 4);
-
-  
+    
+    // Face portrait
     const portraitX = 40;
     const portraitY = hudTop + 10;
     const portraitSize = 85;
-
     ctx.fillStyle = "#000";
     ctx.fillRect(portraitX, portraitY, portraitSize, portraitSize);
-    ctx.strokeStyle = "#888";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(portraitX, portraitY, portraitSize, portraitSize);
 
-    if (faceSheet.complete && faceSheet.width > 0) {
+    if (faceSheet.complete) {
         const faceW = 64; 
-        const faceH = 64;
         const faceIdx = getFaceIndex();
-        ctx.drawImage(
-            faceSheet, 
-            faceIdx * faceW, 0, faceW, faceH, 
-            portraitX + 5, portraitY + 5, portraitSize - 10, portraitSize - 10
-        );
+        ctx.drawImage(faceSheet, faceIdx * faceW, 0, faceW, 64, portraitX + 5, portraitY + 5, portraitSize - 10, portraitSize - 10);
     }
 
-  
     ctx.fillStyle = "red";
     ctx.font = "bold 16px monospace";
     ctx.fillText("HEALTH", portraitX, hudTop + 115); 
@@ -262,13 +347,11 @@ function loop() {
     update();
     const HUD_H = 160;
     const viewH = canvas.height - HUD_H;
-    
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, viewH/2);
     ctx.fillStyle = "#222"; ctx.fillRect(0, viewH/2, canvas.width, viewH/2);
     
     drawWalls();
-    
-   
+    drawSprites(); // Fred is drawn here
     drawWeapon(viewH);
     drawHUD();
     
@@ -277,5 +360,4 @@ function loop() {
 loop();
 </script>
 </body>
-
-
+</html>
