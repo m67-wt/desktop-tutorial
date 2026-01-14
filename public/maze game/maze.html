@@ -70,7 +70,7 @@ const ANIMS = {
 }
 
 const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 }
-const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 1.5, rot: 0.05, hp: 100 }
+const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2.0, rot: 0.05, hp: 100 }
 const keys = {}
 
 window.addEventListener("keydown", e => {
@@ -259,6 +259,7 @@ function loop() {
 loop()
 </script>
 </body>
+
 
 
 
