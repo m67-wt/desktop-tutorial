@@ -65,11 +65,9 @@ const fred = {
     hp: 2,
     alive: true,
     speed: 1.2,
-    size: 64,
-    hitboxW: 30,
-    lastAttack: 0,
     frame: 0,
-    lastFrameUpdate: 0
+    lastFrameUpdate: 0,
+    lastAttack: 0
 }
 
 window.addEventListener("keydown", e => {
@@ -83,7 +81,8 @@ window.addEventListener("mousedown", () => handleAction())
 function isWall(x, y) {
     const mx = Math.floor(x / TILE)
     const my = Math.floor(y / TILE)
-    return map[my] && map[my][mx] > 0
+    if (my < 0 || my >= map.length || mx < 0 || mx >= map[0].length) return true
+    return map[my][mx] > 0
 }
 
 function handleAction() {
@@ -96,7 +95,6 @@ function shoot() {
     weapon.ammo = 0
     weapon.state = "fire"
     weapon.frame = 0
-    weapon.animSpeed = ANIMS.fire.speed
     weapon.lastFrameUpdate = performance.now()
 
     if (fred.alive) {
@@ -104,10 +102,8 @@ function shoot() {
         const dy = fred.y - player.y
         const angleToFred = Math.atan2(dy, dx)
         let angleDiff = player.angle - angleToFred
-
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-
         const dist = Math.sqrt(dx*dx + dy*dy)
         if (Math.abs(angleDiff) < 0.2 && dist < 500) {
             fred.hp--
@@ -120,7 +116,6 @@ function reload() {
     if (weapon.state === "idle" && weapon.ammo === 0) {
         weapon.state = "reload"
         weapon.frame = 0
-        weapon.animSpeed = ANIMS.reload.speed
         weapon.lastFrameUpdate = performance.now()
     }
 }
@@ -141,13 +136,12 @@ function update() {
         const dx = player.x - fred.x
         const dy = player.y - fred.y
         const dist = Math.sqrt(dx*dx + dy*dy)
-
         if (dist > 40) {
             const angle = Math.atan2(dy, dx)
-            const moveX = fred.x + Math.cos(angle) * fred.speed
-            const moveY = fred.y + Math.sin(angle) * fred.speed
-            if (!isWall(moveX, fred.y)) fred.x = moveX
-            if (!isWall(fred.x, moveY)) fred.y = moveY
+            const mx = fred.x + Math.cos(angle) * fred.speed
+            const my = fred.y + Math.sin(angle) * fred.speed
+            if (!isWall(mx, fred.y)) fred.x = mx
+            if (!isWall(fred.x, my)) fred.y = my
         } else {
             const now = performance.now()
             if (now - fred.lastAttack > 2000) {
@@ -155,7 +149,6 @@ function update() {
                 fred.lastAttack = now
             }
         }
-        
         if (performance.now() - fred.lastFrameUpdate > 200) {
             fred.frame = (fred.frame + 1) % 4
             fred.lastFrameUpdate = performance.now()
@@ -163,56 +156,44 @@ function update() {
     }
 
     const now = performance.now()
-    const currentAnim = ANIMS[weapon.state]
-    if (weapon.state !== "idle") {
-        if (now - weapon.lastFrameUpdate > weapon.animSpeed) {
-            weapon.frame++
-            weapon.lastFrameUpdate = now
-            if (weapon.frame >= currentAnim.frames.length) {
-                if (weapon.state === "fire") {
-                    weapon.state = "reload"
-                    weapon.frame = 0
-                } else {
-                    weapon.ammo = 1
-                    weapon.state = "idle"
-                    weapon.frame = 0
-                }
+    const anim = ANIMS[weapon.state]
+    if (weapon.state !== "idle" && now - weapon.lastFrameUpdate > anim.speed) {
+        weapon.frame++
+        weapon.lastFrameUpdate = now
+        if (weapon.frame >= anim.frames.length) {
+            if (weapon.state === "fire") {
+                weapon.state = "reload"
+                weapon.frame = 0
+            } else {
+                weapon.ammo = 1
+                weapon.state = "idle"
+                weapon.frame = 0
             }
         }
     }
 }
 
-let zBuffer = []
+let zBuffer = new Array(2000).fill(0)
 
 function drawWalls() {
     const fov = Math.PI / 3
-    const HUD_H = 160 
-    const viewHeight = canvas.height - HUD_H
-    zBuffer = []
-    
+    const viewH = canvas.height - 160
     for (let x = 0; x < canvas.width; x++) {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov
         const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle)
-        let rx = player.x, ry = player.y, dist = 0, hitV = false
-
+        let rx = player.x, ry = player.y, dist = 0
         while (dist < 800) {
-            let px = rx
             rx += rayCos * 2; ry += raySin * 2; dist += 2
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE)
             if (map[my] && map[my][mx] > 0) {
-                const wallId = map[my][mx]
-                hitV = Math.floor(px / TILE) !== mx
                 const corrected = dist * Math.cos(rayAngle - player.angle)
-                
                 zBuffer[x] = corrected
-
-                const h = (TILE * viewHeight) / corrected
-                const yPos = (viewHeight - h) / 2
-                const texture = wallTextures[wallId]
-                if (texture && texture.complete) {
-                    let hitX = hitV ? ry % TILE : rx % TILE
-                    let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE)
-                    ctx.drawImage(texture, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h)
+                const h = (TILE * viewH) / corrected
+                const yPos = (viewH - h) / 2
+                const tex = wallTextures[map[my][mx]]
+                if (tex && tex.complete) {
+                    let hitX = (Math.floor(rx) % TILE === 0 || Math.floor(rx) % TILE === TILE - 1) ? ry % TILE : rx % TILE
+                    ctx.drawImage(tex, Math.floor((hitX / TILE) * TEXTURE_SIZE), 0, 1, TEXTURE_SIZE, x, yPos, 1, h)
                 }
                 ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corrected/600)})`
                 ctx.fillRect(x, yPos, 1, h)
@@ -223,119 +204,66 @@ function drawWalls() {
 }
 
 function drawSprites() {
-    if (!fred.alive) return
-
-    const HUD_H = 160
-    const viewHeight = canvas.height - HUD_H
+    if (!fred.alive || !zombieSheet.complete) return
+    const viewH = canvas.height - 160
     const fov = Math.PI / 3
-
     const dx = fred.x - player.x
     const dy = fred.y - player.y
     const dist = Math.sqrt(dx*dx + dy*dy)
-
     let spriteAngle = Math.atan2(dy, dx) - player.angle
     while (spriteAngle < -Math.PI) spriteAngle += Math.PI * 2
     while (spriteAngle > Math.PI) spriteAngle -= Math.PI * 2
-
     if (Math.abs(spriteAngle) > fov) return
-
-    const spriteSize = (TILE * viewHeight) / (dist * Math.cos(spriteAngle))
-    const xPos = (0.5 * (spriteAngle / (fov / 2)) + 0.5) * canvas.width - spriteSize / 2
-    const yPos = (viewHeight - spriteSize) / 2
-
-    if (zombieSheet.complete) {
-        for (let col = 0; col < spriteSize; col++) {
-            const screenX = Math.floor(xPos + col)
-            if (screenX >= 0 && screenX < canvas.width && zBuffer[screenX] > dist) {
-                const texX = Math.floor((col / spriteSize) * 64)
-                ctx.drawImage(
-                    zombieSheet, 
-                    fred.frame * 64 + texX, 0, 1, 64, 
-                    screenX, yPos, 1, spriteSize
-                )
-            }
+    const cosAngle = Math.cos(spriteAngle)
+    if (cosAngle <= 0) return
+    const size = (TILE * viewH) / (dist * cosAngle)
+    const xPos = (0.5 * (spriteAngle / (fov / 2)) + 0.5) * canvas.width - size / 2
+    const yPos = (viewH - size) / 2
+    for (let col = 0; col < size; col++) {
+        const sx = Math.floor(xPos + col)
+        if (sx >= 0 && sx < canvas.width && zBuffer[sx] > dist) {
+            ctx.drawImage(zombieSheet, fred.frame * 64 + Math.floor((col / size) * 64), 0, 1, 64, sx, yPos, 1, size)
         }
     }
 }
 
-function getFaceIndex() {
-    if (player.hp >= 100) return 0
-    if (player.hp >= 80) return 1
-    if (player.hp >= 60) return 2
-    if (player.hp >= 40) return 3
-    return 4 
-}
-
-function drawWeapon(viewH) {
-    const currentAnim = ANIMS[weapon.state]
-    const sheet = currentAnim.sheet
-    const HUD_H = 160
-    const hudTop = canvas.height - HUD_H
-
-    if (sheet.complete && sheet.width > 0) {
-        const frameW = sheet.width / currentAnim.count
-        const frameH = sheet.height
-        const frameIdx = currentAnim.frames[weapon.frame]
-        const displayH = canvas.height * 0.70
-        const displayW = displayH * (frameW / frameH)
-        
-        ctx.save()
-        ctx.translate(canvas.width * 0.25, hudTop)
-        ctx.rotate(15 * Math.PI / 180)
-        ctx.drawImage(
-            sheet, 
-            frameIdx * frameW, 0, frameW, frameH, 
-            -displayW * 0.1, -displayH * 0.95, displayW, displayH
-        )
-        ctx.restore()
-    }
+function drawWeapon() {
+    const anim = ANIMS[weapon.state]
+    const sheet = anim.sheet
+    if (!sheet.complete) return
+    const fw = sheet.width / anim.count
+    const dh = canvas.height * 0.7
+    const dw = dh * (fw / sheet.height)
+    ctx.save()
+    ctx.translate(canvas.width * 0.25, canvas.height - 160)
+    ctx.rotate(15 * Math.PI / 180)
+    ctx.drawImage(sheet, anim.frames[weapon.frame] * fw, 0, fw, sheet.height, -dw * 0.1, -dh * 0.95, dw, dh)
+    ctx.restore()
 }
 
 function drawHUD() {
-    const HUD_H = 160
-    const hudTop = canvas.height - HUD_H
-    ctx.fillStyle = "#222" 
-    ctx.fillRect(0, hudTop, canvas.width, HUD_H)
-    
-    const portraitX = 40
-    const portraitY = hudTop + 10
-    const portraitSize = 85
-    ctx.fillStyle = "#000"
-    ctx.fillRect(portraitX, portraitY, portraitSize, portraitSize)
-
+    const hTop = canvas.height - 160
+    ctx.fillStyle = "#222"
+    ctx.fillRect(0, hTop, canvas.width, 160)
     if (faceSheet.complete) {
-        const faceW = 64 
-        const faceIdx = getFaceIndex()
-        ctx.drawImage(faceSheet, faceIdx * faceW, 0, faceW, 64, portraitX + 5, portraitY + 5, portraitSize - 10, portraitSize - 10)
+        const idx = player.hp >= 100 ? 0 : player.hp >= 80 ? 1 : player.hp >= 60 ? 2 : player.hp >= 40 ? 3 : 4
+        ctx.drawImage(faceSheet, idx * 64, 0, 64, 64, 45, hTop + 15, 75, 75)
     }
-
-    ctx.fillStyle = "red"
-    ctx.font = "bold 16px monospace"
-    ctx.fillText("HEALTH", portraitX, hudTop + 115) 
     ctx.fillStyle = "white"
     ctx.font = "bold 40px monospace"
-    ctx.fillText(`${player.hp}%`, portraitX, hudTop + 150)
-
-    ctx.fillStyle = "yellow"
-    ctx.font = "bold 16px monospace"
-    ctx.fillText("AMMO", canvas.width - 120, hudTop + 40)
-    ctx.fillStyle = "white"
-    ctx.font = "bold 30px monospace"
-    ctx.fillText(weapon.ammo > 0 ? "1 / 1" : "0 / 1", canvas.width - 120, hudTop + 80)
+    ctx.fillText(`${player.hp}%`, 40, hTop + 150)
+    ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, hTop + 80)
 }
 
 function loop() {
     update()
-    const HUD_H = 160
-    const viewH = canvas.height - HUD_H
+    const viewH = canvas.height - 160
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, viewH/2)
     ctx.fillStyle = "#222"; ctx.fillRect(0, viewH/2, canvas.width, viewH/2)
-    
     drawWalls()
     drawSprites()
-    drawWeapon(viewH)
+    drawWeapon()
     drawHUD()
-    
     requestAnimationFrame(loop)
 }
 loop()
