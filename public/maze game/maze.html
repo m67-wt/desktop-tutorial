@@ -57,8 +57,8 @@ const wallTextures = [
     loadImg("assets/wall textures-2.png"),
     loadImg("assets/wall textures-3.png"),
     loadImg("assets/wall textures-4.png"),
-    loadImg("assets/wall_texture_door-1.png"),      // Index 5: Door Closed
-    loadImg("assets/wall_texture_door_open-2.png")  // Index 6: Door Open
+    loadImg("assets/wall_texture_door-1.png"),      
+    loadImg("assets/wall_texture_door_open-2.png")  
 ]
 
 const keyTexture = loadImg("assets/wall textures-5.png");
@@ -92,7 +92,8 @@ window.addEventListener("mousedown", () => handleAction())
 function isWall(x, y) {
     const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
     const tile = map[my] ? map[my][mx] : 0;
-    if (tile === 5) return !openDoors[`${my},${mx}`];
+    // If it's a door and it's open, it has no collision (you can walk through)
+    if (tile === 5 && openDoors[`${my},${mx}`]) return false;
     return tile > 0;
 }
 
@@ -106,6 +107,7 @@ function tryOpenDoor() {
         const doorKey = `${my},${mx}`;
         if (!openDoors[doorKey]) {
             openDoors[doorKey] = true;
+            // Doors stay open for 5 seconds
             setTimeout(() => { delete openDoors[doorKey]; }, 5000);
         }
     }
@@ -164,11 +166,14 @@ function drawWalls() {
     const viewH = canvas.height - 160;
     zBuffer = [];
     
+    // Player's current grid position
+    const pmx = Math.floor(player.x / TILE);
+    const pmy = Math.floor(player.y / TILE);
+
     for (let x = 0; x < canvas.width; x++) {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
         const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
         let rx = player.x, ry = player.y, dist = 0;
-        let hasHitOpenDoor = false;
 
         while (dist < 800) {
             rx += rayCos * 2; 
@@ -179,28 +184,22 @@ function drawWalls() {
             
             if (map[my] && map[my][mx] > 0) {
                 let tid = map[my][mx];
-                let isDoorOpen = (tid === 5 && openDoors[`${my},${mx}`]);
+                let isDoor = (tid === 5);
+                let isDoorOpen = (isDoor && openDoors[`${my},${mx}`]);
 
+                // NEW LOGIC: If door is open and player is INSIDE it, don't draw it.
+                // Otherwise, if it's open, draw the Open PNG and STOP the ray.
                 if (isDoorOpen) {
-                    if (!hasHitOpenDoor) {
-                        const corr = dist * Math.cos(rayAngle - player.angle);
-                        const h = (TILE * viewH) / corr;
-                        const tex = wallTextures[6]; 
-                        
-                        if (tex && tex.complete) {
-                            let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
-                            let hitX = hitV ? ry % TILE : rx % TILE;
-                            let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
-                            ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH - h) / 2, 1, h);
-                        }
-                        ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, dist/600)})`;
-                        ctx.fillRect(x, (viewH - h) / 2, 1, h);
-                        hasHitOpenDoor = true;
+                    if (mx === pmx && my === pmy) {
+                        // Player is inside the door tile. Make it invisible!
+                        continue; 
+                    } else {
+                        // Player is outside. Show the open door texture.
+                        tid = 6; // Use index 6 (Open Door Texture)
                     }
-                    continue; // Keep going through the doorway
                 }
 
-                // Handle Solid Walls
+                // Standard wall drawing
                 const corr = dist * Math.cos(rayAngle - player.angle);
                 zBuffer[x] = corr; 
                 const h = (TILE * viewH) / corr;
