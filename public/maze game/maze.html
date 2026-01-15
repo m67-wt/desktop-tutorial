@@ -199,7 +199,48 @@ function drawWalls() {
                     dist += 8; rx += rayCos * 8; ry += raySin * 8; // Jump past the door
                     continue; 
                 }
+// --- Inside drawWalls() while loop ---
 
+let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
+if (map[my] && map[my][mx] > 0) {
+    let tid = map[my][mx];
+    let isDoor = (tid === 5);
+    let isDoorOpen = (isDoor && openDoors[`${my},${mx}`]);
+
+    if (isDoorOpen) {
+        // If we haven't drawn the door texture for this ray yet, draw it
+        if (!hasHitOpenDoor) {
+            const corr = dist * Math.cos(rayAngle - player.angle);
+            const h = (TILE * viewH) / corr;
+            const tex = wallTextures[6]; // Open door texture
+            
+            if (tex && tex.complete) {
+                let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
+                let hitX = hitV ? ry % TILE : rx % TILE;
+                
+                // Only draw the "frame" parts (e.g., the outer 10% of the tile)
+                // or draw the full open frame texture. 
+                let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+                ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH - h) / 2, 1, h);
+            }
+            
+            // Add shading
+            ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corr/600)})`;
+            ctx.fillRect(x, (viewH - h) / 2, 1, h);
+            
+            hasHitOpenDoor = true; 
+        }
+        // IMPORTANT: Do NOT 'break' here and do NOT jump 'dist' by 8.
+        // Let the while loop continue naturally to find the wall BEHIND the door.
+        continue; 
+    }
+
+    // Handle Solid Walls (Standard logic)
+    if (!isDoorOpen) {
+        // ... your existing solid wall drawing code ...
+        break; // Stop the ray here
+    }
+}
                 // Handle Solid Walls
                 if (!isDoorOpen) {
                     const corr = dist * Math.cos(rayAngle - player.angle);
@@ -296,3 +337,4 @@ loop();
 </script>
 </body>
 </html>
+
