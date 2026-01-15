@@ -39,7 +39,7 @@ const map = [
     [0,0,0,0,0,2,2,2,2,2,2,0,0,3,0,3,0,2,3,0,0,0,0,3,3,3,0,3,3,3,4,0,0,0,0,0,0,0,4],
     [0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2,3,3,5,3,3,3,0,3,0,3,0,0,4,0,3,3,0,3,3,0,4],
     [0,0,0,0,0,2,0,2,2,2,2,0,0,3,0,3,0,2,0,4,0,4,0,0,0,3,0,3,0,0,4,0,0,0,0,0,0,0,4],
-    [0,0,0,0,0,2,0,2,0,0,2,2,2,2,2,2,2,2,0,4,0,4,0,0,0,2,0,2,0,0,4,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    [0,0,0,0,0,2,0,2,0,0,2,2,2,2,2,2,2,2,0,4,0,4,0,0,0,2,0,2,0,0,4,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,1,0,1,1,1,1,1,1,1,1,1,1,0,0,4,0,4,0,0,0,2,0,2,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,1,1,1,1,1,0,5,0,0,0,0,0,0,0,0,1,0,0,4,0,4,0,0,0,2,0,2,0,2,5,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,4,0,4,0,0,0,2,0,2,2,2,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -68,12 +68,12 @@ function loadImg(src) {
 const TEXTURE_SIZE = 500
 const wallTextures = [
     null,
-    loadImg("assets/wall textures-1.png"),      // 1: Stone
-    loadImg("assets/wall textures-2.png"),      // 2: Wood
-    loadImg("assets/wall textures-3.png"),      // 3: Blue
-    loadImg("assets/wall textures-4.png"),      // 4: Alt
-    loadImg("assets/wall_texture_door-1.png"),  // 5: Closed Door
-    loadImg("assets/wall_texture_door_open-2.png") // 6: Open Door
+    loadImg("assets/wall textures-1.png"),      
+    loadImg("assets/wall textures-2.png"),      
+    loadImg("assets/wall textures-3.png"),      
+    loadImg("assets/wall textures-4.png"),      
+    loadImg("assets/wall_texture_door-1.png"),  
+    loadImg("assets/wall_texture_door_open-2.png") 
 ]
 
 const keyTexture = loadImg("assets/wall textures-5.png");
@@ -297,6 +297,7 @@ loop();
 </script>
 </body>
 </html>
+
 
 
 
