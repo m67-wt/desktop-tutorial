@@ -9,19 +9,20 @@
 <body>
 <canvas id="c"></canvas>
 <script>
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");
+const canvas = document.getElementById("c")
+const ctx = canvas.getContext("2d")
+
 let zBuffer = [];
 
 function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    ctx.imageSmoothingEnabled = false;
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    ctx.imageSmoothingEnabled = false
 }
-window.addEventListener("resize", resize);
-resize();
+window.addEventListener("resize", resize)
+resize()
 
-const TILE = 64;
+const TILE = 64
 const map = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -41,7 +42,7 @@ const map = [
     [1,0,0,3,0,0,1],
     [1,0,0,0,0,0,1],
     [1,1,1,1,1,1,1],
-];
+]
 
 function loadImg(src) {
     const img = new Image();
@@ -49,175 +50,249 @@ function loadImg(src) {
     return img;
 }
 
+const TEXTURE_SIZE = 500
 const wallTextures = [
     null,
     loadImg("assets/wall textures-1.png"),
     loadImg("assets/wall textures-2.png"),
     loadImg("assets/wall textures-3.png"),
     loadImg("assets/wall textures-4.png"),
-    loadImg("assets/wall_texture_door-1.png"),
-    loadImg("assets/wall_texture_door_open-2.png")
-];
+    loadImg("assets/wall_texture_door-1.png"),      // Index 5: Door Closed
+    loadImg("assets/wall_texture_door_open-2.png")  // Index 6: Door Open
+]
 
 const keyTexture = loadImg("assets/wall textures-5.png");
 const sprites = [{ x: TILE * 4.5, y: TILE * 1.5, texture: keyTexture, collected: false }];
-const openDoors = {};
+const openDoors = {}; 
 
-const reloadSheet = loadImg("assets/gun_reloading.png");
-const fireSheet = loadImg("assets/gun_fire.png");
-const faceSheet = loadImg("assets/charater_hurt_models.png");
+const reloadSheet = loadImg("assets/gun_reloading.png")
+const fireSheet = loadImg("assets/gun_fire.png")
+const faceSheet = loadImg("assets/charater_hurt_models.png")
 
-const weapon = { ammo: 1, state: "idle", frame: 0, lastUpdate: 0 };
-const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, hp: 100, hasKey: false };
-const keys = {};
+const ANIMS = {
+    idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
+    fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
+    reload: { frames: Array.from({length: 21}, (_, i) => i), sheet: reloadSheet, count: 21, speed: 125 }
+}
 
-window.onkeydown = e => { keys[e.key.toLowerCase()] = true; if(e.key === "e") tryOpenDoor(); if(e.key === " ") shoot(); };
-window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 }
+const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2.5, rot: 0.05, hp: 100, hasKey: false }
+const keys = {}
+
+window.addEventListener("keydown", e => {
+    const k = e.key.toLowerCase();
+    keys[k] = true;
+    if (k === " ") handleAction();
+    if (k === "r") reload();
+    if (k === "e") tryOpenDoor();
+})
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
+window.addEventListener("mousedown", () => handleAction())
+
+function isWall(x, y) {
+    const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
+    const tile = map[my] ? map[my][mx] : 0;
+    if (tile === 5) return !openDoors[`${my},${mx}`];
+    return tile > 0;
+}
 
 function tryOpenDoor() {
-    const mx = Math.floor((player.x + Math.cos(player.angle) * 50) / TILE);
-    const my = Math.floor((player.y + Math.sin(player.angle) * 50) / TILE);
+    const checkDist = 60;
+    const dx = player.x + Math.cos(player.angle) * checkDist;
+    const dy = player.y + Math.sin(player.angle) * checkDist;
+    const mx = Math.floor(dx / TILE), my = Math.floor(dy / TILE);
+    
     if (map[my] && map[my][mx] === 5) {
-        const id = `${my},${mx}`;
-        openDoors[id] = true;
-        setTimeout(() => delete openDoors[id], 5000);
+        const doorKey = `${my},${mx}`;
+        if (!openDoors[doorKey]) {
+            openDoors[doorKey] = true;
+            setTimeout(() => { delete openDoors[doorKey]; }, 5000);
+        }
     }
 }
 
+function handleAction() {
+    if (weapon.state !== "idle") return;
+    if (weapon.ammo > 0) shoot(); else reload();
+}
+
 function shoot() {
-    if (weapon.state === "idle" && weapon.ammo > 0) {
-        weapon.ammo = 0; weapon.state = "fire"; weapon.frame = 0; weapon.lastUpdate = performance.now();
+    weapon.ammo = 0; weapon.state = "fire"; weapon.frame = 0;
+    weapon.animSpeed = ANIMS.fire.speed; weapon.lastFrameUpdate = performance.now();
+}
+
+function reload() {
+    if (weapon.state === "idle" && weapon.ammo === 0) {
+        weapon.state = "reload"; weapon.frame = 0;
+        weapon.animSpeed = ANIMS.reload.speed; weapon.lastFrameUpdate = performance.now();
     }
 }
 
 function update() {
-    const rotSpeed = 0.04, moveSpeed = 2.5;
-    if (keys["a"]) player.angle -= rotSpeed;
-    if (keys["d"]) player.angle += rotSpeed;
-    const moveX = Math.cos(player.angle) * moveSpeed;
-    const moveY = Math.sin(player.angle) * moveSpeed;
-    if (keys["w"]) {
-        if (!isWall(player.x + moveX, player.y)) player.x += moveX;
-        if (!isWall(player.x, player.y + moveY)) player.y += moveY;
-    }
-    if (keys["s"]) {
-        if (!isWall(player.x - moveX, player.y)) player.x -= moveX;
-        if (!isWall(player.x, player.y - moveY)) player.y -= moveY;
-    }
+    let moveStep = 0;
+    if (keys["w"]) moveStep = player.move;
+    if (keys["s"]) moveStep = -player.move;
+    if (keys["a"]) player.angle -= player.rot;
+    if (keys["d"]) player.angle += player.rot;
 
-    // Key collection
+    let nx = player.x + Math.cos(player.angle) * moveStep;
+    let ny = player.y + Math.sin(player.angle) * moveStep;
+    if (!isWall(nx, player.y)) player.x = nx;
+    if (!isWall(player.x, ny)) player.y = ny;
+
     sprites.forEach(s => {
-        if (!s.collected && Math.hypot(player.x - s.x, player.y - s.y) < 30) {
-            s.collected = true; player.hasKey = true;
+        if (!s.collected) {
+            const d = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
+            if (d < 30) { s.collected = true; player.hasKey = true; }
         }
     });
 
-    // Weapon Animation
     const now = performance.now();
-    if (weapon.state !== "idle" && now - weapon.lastUpdate > 120) {
-        weapon.frame++; weapon.lastUpdate = now;
-        if (weapon.state === "fire" && weapon.frame > 4) { weapon.state = "reload"; weapon.frame = 0; }
-        if (weapon.state === "reload" && weapon.frame > 20) { weapon.state = "idle"; weapon.frame = 0; weapon.ammo = 1; }
-    }
-}
-
-function isWall(x, y) {
-    const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
-    if (!map[my] || !map[my][mx]) return false;
-    if (map[my][mx] === 5) return !openDoors[`${my},${mx}`];
-    return map[my][mx] > 0;
-}
-
-function draw() {
-    update();
-    const vH = canvas.height - 160;
-    ctx.fillStyle = "#111"; ctx.fillRect(0, 0, canvas.width, vH / 2);
-    ctx.fillStyle = "#222"; ctx.fillRect(0, vH / 2, canvas.width, vH / 2);
-
-    const fov = Math.PI / 3;
-    zBuffer = [];
-
-    for (let x = 0; x < canvas.width; x++) {
-        let rayAngle = player.angle - fov / 2 + (x / canvas.width) * fov;
-        let rayDirX = Math.cos(rayAngle), rayDirY = Math.sin(rayAngle);
-        
-        let mapX = Math.floor(player.x / TILE), mapY = Math.floor(player.y / TILE);
-        let deltaDistX = Math.abs(1 / rayDirX), deltaDistY = Math.abs(1 / rayDirY);
-        let stepX, stepY, sideDistX, sideDistY;
-
-        if (rayDirX < 0) { stepX = -1; sideDistX = (player.x / TILE - mapX) * deltaDistX; }
-        else { stepX = 1; sideDistX = (mapX + 1.0 - player.x / TILE) * deltaDistX; }
-        if (rayDirY < 0) { stepY = -1; sideDistY = (player.y / TILE - mapY) * deltaDistY; }
-        else { stepY = 1; sideDistY = (mapY + 1.0 - player.y / TILE) * deltaDistY; }
-
-        let hit = 0, side, dist;
-        while (hit === 0) {
-            if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
-            else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
-            
-            let tile = map[mapY] ? map[mapY][mapX] : 0;
-            if (tile > 0) {
-                let isDoorOpen = (tile === 5 && openDoors[`${mapY},${mapX}`]);
-                dist = side === 0 ? (sideDistX - deltaDistX) : (sideDistY - deltaDistY);
-                let corrDist = dist * Math.cos(rayAngle - player.angle);
-                
-                // Draw the slice
-                let h = (TILE * vH) / corrDist;
-                let tex = wallTextures[isDoorOpen ? 6 : tile];
-                if (tex && tex.complete) {
-                    let wallX = side === 0 ? (player.y / TILE + dist * rayDirY) : (player.x / TILE + dist * rayDirX);
-                    wallX -= Math.floor(wallX);
-                    ctx.drawImage(tex, wallX * 500, 0, 1, 500, x, (vH - h) / 2, 1, h);
-                }
-                
-                if (!isDoorOpen) { hit = 1; zBuffer[x] = corrDist; }
-            }
-            if (dist > 20) break; // Safety
+    const anim = ANIMS[weapon.state];
+    if (weapon.state !== "idle" && now - weapon.lastFrameUpdate > weapon.animSpeed) {
+        weapon.frame++;
+        weapon.lastFrameUpdate = now;
+        if (weapon.frame >= anim.frames.length) {
+            if (weapon.state === "fire") { weapon.state = "reload"; weapon.frame = 0; }
+            else { weapon.ammo = 1; weapon.state = "idle"; weapon.frame = 0; }
         }
     }
+}
 
-    // Sprites
+function drawWalls() {
+    const fov = Math.PI / 3;
+    const viewH = canvas.height - 160;
+    zBuffer = [];
+    
+    for (let x = 0; x < canvas.width; x++) {
+        const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
+        const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
+        let rx = player.x, ry = player.y, dist = 0;
+        let hasHitOpenDoor = false;
+
+        // Loop ray forward
+        while (dist < 800) {
+            rx += rayCos * 2; 
+            ry += raySin * 2; 
+            dist += 2;
+            
+            let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
+            if (map[my] && map[my][mx] > 0) {
+                let tid = map[my][mx];
+                let isDoorOpen = (tid === 5 && openDoors[`${my},${mx}`]);
+
+                // Handle Open Doors
+                if (isDoorOpen && !hasHitOpenDoor) {
+                    const corr = dist * Math.cos(rayAngle - player.angle);
+                    const h = (TILE * viewH) / corr;
+                    const tex = wallTextures[6];
+                    if (tex && tex.complete) {
+                        let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
+                        let hitX = hitV ? ry % TILE : rx % TILE;
+                        let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+                        ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH - h) / 2, 1, h);
+                    }
+                    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corr/600)})`;
+                    ctx.fillRect(x, (viewH - h) / 2, 1, h);
+
+                    hasHitOpenDoor = true;
+                    dist += 8; rx += rayCos * 8; ry += raySin * 8; // Jump past the door
+                    continue; 
+                }
+
+                // Handle Solid Walls
+                if (!isDoorOpen) {
+                    const corr = dist * Math.cos(rayAngle - player.angle);
+                    zBuffer[x] = corr;
+                    const h = (TILE * viewH) / corr;
+                    const yPos = (viewH - h) / 2;
+                    const tex = wallTextures[tid];
+                    if (tex && tex.complete) {
+                        let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
+                        let hitX = hitV ? ry % TILE : rx % TILE;
+                        let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+                        ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
+                    }
+                    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corr/600)})`;
+                    ctx.fillRect(x, yPos, 1, h);
+                    break; 
+                }
+            }
+        }
+    }
+}
+
+function drawSprites() {
+    const viewH = canvas.height - 160;
+    const fov = Math.PI / 3;
     sprites.forEach(s => {
-        if (s.collected) return;
-        let dx = s.x - player.x, dy = s.y - player.y;
-        let dist = Math.sqrt(dx*dx+dy*dy);
-        let angle = Math.atan2(dy, dx) - player.angle;
-        if (angle < -Math.PI) angle += 2*Math.PI; if (angle > Math.PI) angle -= 2*Math.PI;
-        if (Math.abs(angle) < fov) {
-            let h = (TILE * vH) / (dist * Math.cos(angle));
-            let sx = (0.5 * (angle / (fov / 2)) + 0.5) * canvas.width;
+        if (s.collected || !s.texture.complete) return;
+        const dx = s.x - player.x, dy = s.y - player.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        let ang = Math.atan2(dy, dx) - player.angle;
+        while (ang < -Math.PI) ang += 2 * Math.PI;
+        while (ang > Math.PI) ang -= 2 * Math.PI;
+        const corr = dist * Math.cos(ang);
+        
+        if (Math.abs(ang) < fov && corr > 10) {
+            const h = (TILE * viewH) / corr;
+            const sx = (0.5 * (ang / (fov / 2)) + 0.5) * canvas.width;
             for (let i = 0; i < h; i++) {
-                let cx = Math.floor(sx - h/2 + i);
-                if (cx > 0 && cx < canvas.width && zBuffer[cx] > dist) {
-                    ctx.drawImage(s.texture, (i/h)*500, 0, 1, 500, cx, (vH-h)/2, 1, h);
+                const cx = Math.floor(sx - h/2 + i);
+                if (cx >= 0 && cx < canvas.width && zBuffer[cx] > corr) {
+                    const texX = Math.floor((i/h) * s.texture.width);
+                    ctx.drawImage(s.texture, texX, 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
                 }
             }
         }
     });
+}
 
-    drawWeapon(); drawHUD();
-    requestAnimationFrame(draw);
+function getFaceIndex() {
+    if (player.hp >= 100) return 0;
+    if (player.hp >= 80) return 1;
+    if (player.hp >= 60) return 2;
+    if (player.hp >= 40) return 3;
+    return 4;
 }
 
 function drawWeapon() {
-    let sheet = weapon.state === "fire" ? fireSheet : reloadSheet;
-    if (sheet.complete) {
-        let fw = sheet.width / (weapon.state === "fire" ? 5 : 21);
-        let h = canvas.height * 0.7; let w = h * (fw / sheet.height);
-        ctx.drawImage(sheet, weapon.frame * fw, 0, fw, sheet.height, canvas.width/2 - w/2, canvas.height - 160 - h, w, h);
+    const anim = ANIMS[weapon.state];
+    const sheet = anim.sheet;
+    if (sheet.complete && sheet.width > 0) {
+        const fw = sheet.width / anim.count;
+        const fh = sheet.height;
+        const dh = canvas.height * 0.7;
+        const dw = dh * (fw / fh);
+        ctx.save();
+        ctx.translate(canvas.width * 0.25, canvas.height - 160);
+        ctx.rotate(15 * Math.PI / 180);
+        ctx.drawImage(sheet, anim.frames[weapon.frame] * fw, 0, fw, fh, -dw * 0.1, -dh * 0.95, dw, dh);
+        ctx.restore();
     }
 }
 
 function drawHUD() {
     const top = canvas.height - 160;
     ctx.fillStyle = "#222"; ctx.fillRect(0, top, canvas.width, 160);
-    ctx.fillStyle = "white"; ctx.font = "20px Arial";
-    ctx.fillText(`HP: ${player.hp}%`, 50, top + 50);
-    ctx.fillText(`AMMO: ${weapon.ammo}/1`, 50, top + 90);
-    if (player.hasKey) ctx.fillText("KEY FOUND", canvas.width - 150, top + 50);
+    ctx.fillStyle = "#000"; ctx.fillRect(40, top + 10, 85, 85);
+    if (faceSheet.complete) ctx.drawImage(faceSheet, getFaceIndex()*64, 0, 64, 64, 45, top+15, 75, 75);
+    ctx.fillStyle = "red"; ctx.font = "bold 16px monospace"; ctx.fillText("HEALTH", 40, top + 115);
+    ctx.fillStyle = "white"; ctx.font = "bold 40px monospace"; ctx.fillText(`${player.hp}%`, 40, top + 150);
+    ctx.fillStyle = "yellow"; ctx.font = "bold 16px monospace"; ctx.fillText("AMMO", canvas.width - 120, top + 40);
+    ctx.fillStyle = "white"; ctx.font = "bold 30px monospace"; ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80);
+    if (player.hasKey) { ctx.fillStyle = "gold"; ctx.font = "bold 18px monospace"; ctx.fillText("KEY OBTAINED", canvas.width/2 - 80, top + 80); }
 }
 
-draw();
+function loop() {
+    update();
+    const vH = canvas.height - 160;
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2);
+    ctx.fillStyle = "#222"; ctx.fillRect(0, vH/2, canvas.width, vH/2);
+    drawWalls(); drawSprites(); drawWeapon(); drawHUD();
+    requestAnimationFrame(loop);
+}
+loop();
 </script>
 </body>
 </html>
