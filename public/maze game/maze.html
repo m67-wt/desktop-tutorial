@@ -46,7 +46,9 @@ const map = [
 ]
 
 function loadImg(src) {
-    const img = new Image(); img.src = src; return img;
+    const img = new Image();
+    img.src = src;
+    return img;
 }
 
 const TEXTURE_SIZE = 500
@@ -79,7 +81,8 @@ const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2.5, rot: 0.05, h
 const keys = {}
 
 window.addEventListener("keydown", e => {
-    const k = e.key.toLowerCase(); keys[k] = true;
+    const k = e.key.toLowerCase();
+    keys[k] = true;
     if (k === " ") handleAction();
     if (k === "r") reload();
     if (k === "e") tryOpenDoor();
@@ -99,16 +102,19 @@ function tryOpenDoor() {
     const dx = player.x + Math.cos(player.angle) * checkDist;
     const dy = player.y + Math.sin(player.angle) * checkDist;
     const mx = Math.floor(dx / TILE), my = Math.floor(dy / TILE);
+    
     if (map[my] && map[my][mx] === 5) {
         const doorKey = `${my},${mx}`;
-        openDoors[doorKey] = true;
-        setTimeout(() => { delete openDoors[doorKey]; }, 5000);
+        if (!openDoors[doorKey]) {
+            openDoors[doorKey] = true;
+            setTimeout(() => { delete openDoors[doorKey]; }, 5000);
+        }
     }
 }
 
 function handleAction() {
-    if (weapon.state !== "idle") return
-    weapon.ammo > 0 ? shoot() : reload();
+    if (weapon.state !== "idle") return;
+    if (weapon.ammo > 0) shoot(); else reload();
 }
 
 function shoot() {
@@ -119,7 +125,7 @@ function shoot() {
 function reload() {
     if (weapon.state === "idle" && weapon.ammo === 0) {
         weapon.state = "reload"; weapon.frame = 0;
-        weapon.animSpeed = ANIMS.reload.speed; weapon.lastKeyFrameUpdate = performance.now();
+        weapon.animSpeed = ANIMS.reload.speed; weapon.lastFrameUpdate = performance.now();
     }
 }
 
@@ -145,7 +151,8 @@ function update() {
     const now = performance.now();
     const anim = ANIMS[weapon.state];
     if (weapon.state !== "idle" && now - weapon.lastFrameUpdate > weapon.animSpeed) {
-        weapon.frame++; weapon.lastFrameUpdate = now;
+        weapon.frame++;
+        weapon.lastFrameUpdate = now;
         if (weapon.frame >= anim.frames.length) {
             if (weapon.state === "fire") { weapon.state = "reload"; weapon.frame = 0; }
             else { weapon.ammo = 1; weapon.state = "idle"; weapon.frame = 0; }
@@ -162,22 +169,23 @@ function drawWalls() {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
         const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
         let rx = player.x, ry = player.y, dist = 0;
-        let doorFound = false;
 
-        while (dist < 800) {
-            rx += rayCos * 2; ry += raySin * 2; dist += 2;
-            let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
+        // Limiting ray steps to prevent performance spikes
+        for (let step = 0; step < 400; step++) {
+            rx += rayCos * 2; 
+            ry += raySin * 2; 
+            dist += 2;
             
+            let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
             if (map[my] && map[my][mx] > 0) {
                 let tid = map[my][mx];
                 let isDoorOpen = (tid === 5 && openDoors[`${my},${mx}`]);
                 
-                // If it's an open door, draw it but DON'T break the loop
-                // This lets us see the walls behind it.
                 let drawId = isDoorOpen ? 6 : tid;
-                
                 const corr = dist * Math.cos(rayAngle - player.angle);
-                if (!isDoorOpen) zBuffer[x] = corr; // Only solid walls block sprites
+                
+                // Only solid objects update the Z-Buffer
+                if (!isDoorOpen) zBuffer[x] = corr;
 
                 const h = (TILE * viewH) / corr;
                 const yPos = (viewH - h) / 2;
@@ -193,16 +201,22 @@ function drawWalls() {
                 ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corr/600)})`;
                 ctx.fillRect(x, yPos, 1, h);
 
-                // If this was a solid wall or closed door, stop ray.
-                // If it was an open door, continue to see what's behind!
                 if (!isDoorOpen) break;
+                else {
+                    // PERFORMANCE FIX: Jump the ray forward slightly so it doesn't
+                    // re-trigger the same open door tile in the next step
+                    rx += rayCos * 4;
+                    ry += raySin * 4;
+                    dist += 4;
+                }
             }
         }
     }
 }
 
 function drawSprites() {
-    const viewH = canvas.height - 160; const fov = Math.PI / 3;
+    const viewH = canvas.height - 160;
+    const fov = Math.PI / 3;
     sprites.forEach(s => {
         if (s.collected || !s.texture.complete) return;
         const dx = s.x - player.x, dy = s.y - player.y;
@@ -211,13 +225,15 @@ function drawSprites() {
         while (ang < -Math.PI) ang += 2 * Math.PI;
         while (ang > Math.PI) ang -= 2 * Math.PI;
         const corr = dist * Math.cos(ang);
+        
         if (Math.abs(ang) < fov && corr > 10) {
             const h = (TILE * viewH) / corr;
             const sx = (0.5 * (ang / (fov / 2)) + 0.5) * canvas.width;
             for (let i = 0; i < h; i++) {
                 const cx = Math.floor(sx - h/2 + i);
                 if (cx >= 0 && cx < canvas.width && zBuffer[cx] > corr) {
-                    ctx.drawImage(s.texture, Math.floor((i/h)*s.texture.width), 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
+                    const texX = Math.floor((i/h) * s.texture.width);
+                    ctx.drawImage(s.texture, texX, 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
                 }
             }
         }
@@ -225,14 +241,21 @@ function drawSprites() {
 }
 
 function getFaceIndex() {
-    return player.hp >= 100 ? 0 : player.hp >= 80 ? 1 : player.hp >= 60 ? 2 : player.hp >= 40 ? 3 : 4;
+    if (player.hp >= 100) return 0;
+    if (player.hp >= 80) return 1;
+    if (player.hp >= 60) return 2;
+    if (player.hp >= 40) return 3;
+    return 4;
 }
 
 function drawWeapon() {
-    const anim = ANIMS[weapon.state]; const sheet = anim.sheet;
+    const anim = ANIMS[weapon.state];
+    const sheet = anim.sheet;
     if (sheet.complete && sheet.width > 0) {
-        const fw = sheet.width / anim.count; const fh = sheet.height;
-        const dh = canvas.height * 0.7; const dw = dh * (fw / fh);
+        const fw = sheet.width / anim.count;
+        const fh = sheet.height;
+        const dh = canvas.height * 0.7;
+        const dw = dh * (fw / fh);
         ctx.save();
         ctx.translate(canvas.width * 0.25, canvas.height - 160);
         ctx.rotate(15 * Math.PI / 180);
@@ -245,12 +268,19 @@ function drawHUD() {
     const top = canvas.height - 160;
     ctx.fillStyle = "#222"; ctx.fillRect(0, top, canvas.width, 160);
     ctx.fillStyle = "#000"; ctx.fillRect(40, top + 10, 85, 85);
-    if (faceSheet.complete) ctx.drawImage(faceSheet, getFaceIndex()*64, 0, 64, 64, 45, top+15, 75, 75);
+    
+    if (faceSheet.complete) {
+        ctx.drawImage(faceSheet, getFaceIndex()*64, 0, 64, 64, 45, top+15, 75, 75);
+    }
+    
     ctx.fillStyle = "red"; ctx.font = "bold 16px monospace"; ctx.fillText("HEALTH", 40, top + 115);
     ctx.fillStyle = "white"; ctx.font = "bold 40px monospace"; ctx.fillText(`${player.hp}%`, 40, top + 150);
-    ctx.fillStyle = "yellow"; ctx.fillText("AMMO", canvas.width - 120, top + 40);
-    ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80);
-    if (player.hasKey) { ctx.fillStyle = "gold"; ctx.fillText("KEY OBTAINED", canvas.width/2 - 80, top + 80); }
+    ctx.fillStyle = "yellow"; ctx.font = "bold 16px monospace"; ctx.fillText("AMMO", canvas.width - 120, top + 40);
+    ctx.fillStyle = "white"; ctx.font = "bold 30px monospace"; ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80);
+    
+    if (player.hasKey) {
+        ctx.fillStyle = "gold"; ctx.font = "bold 18px monospace"; ctx.fillText("KEY OBTAINED", canvas.width/2 - 80, top + 80);
+    }
 }
 
 function loop() {
@@ -258,7 +288,10 @@ function loop() {
     const vH = canvas.height - 160;
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2);
     ctx.fillStyle = "#222"; ctx.fillRect(0, vH/2, canvas.width, vH/2);
-    drawWalls(); drawSprites(); drawWeapon(); drawHUD();
+    drawWalls();
+    drawSprites();
+    drawWeapon();
+    drawHUD();
     requestAnimationFrame(loop);
 }
 loop();
