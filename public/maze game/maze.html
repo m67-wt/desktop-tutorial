@@ -170,52 +170,61 @@ function drawWalls() {
         let rx = player.x, ry = player.y, dist = 0;
         let hasHitOpenDoor = false;
 
-        // Loop ray forward
-        while (dist < 800) {
-            rx += rayCos * 2; 
-            ry += raySin * 2; 
-            dist += 2;
+        // Limiting total distance to 800 and steps to 300 for performance
+        let steps = 0;
+        while (dist < 800 && steps < 300) {
+            rx += rayCos * 2.5; // Slightly larger steps for FPS boost
+            ry += raySin * 2.5; 
+            dist += 2.5;
+            steps++;
             
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
             if (map[my] && map[my][mx] > 0) {
                 let tid = map[my][mx];
                 let isDoorOpen = (tid === 5 && openDoors[`${my},${mx}`]);
 
-                // Handle Open Doors
+                // SCENARIO A: We hit an OPEN door
                 if (isDoorOpen && !hasHitOpenDoor) {
                     const corr = dist * Math.cos(rayAngle - player.angle);
                     const h = (TILE * viewH) / corr;
-                    const tex = wallTextures[6];
+                    const tex = wallTextures[6]; // Open door frame
+                    
                     if (tex && tex.complete) {
-                        let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
+                        let hitV = Math.floor((rx - rayCos * 2.5) / TILE) !== mx;
                         let hitX = hitV ? ry % TILE : rx % TILE;
                         let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
                         ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH - h) / 2, 1, h);
                     }
-                    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corr/600)})`;
+                    
+                    // Apply distance shading to the door frame
+                    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, corr/600)})`;
                     ctx.fillRect(x, (viewH - h) / 2, 1, h);
 
                     hasHitOpenDoor = true;
-                    dist += 8; rx += rayCos * 8; ry += raySin * 8; // Jump past the door
+                    // BIG JUMP: Move ray forward significantly to clear the door tile
+                    dist += 12; rx += rayCos * 12; ry += raySin * 12;
                     continue; 
                 }
 
-                // Handle Solid Walls
+                // SCENARIO B: We hit a SOLID wall or a CLOSED door
                 if (!isDoorOpen) {
                     const corr = dist * Math.cos(rayAngle - player.angle);
-                    zBuffer[x] = corr;
+                    zBuffer[x] = corr; // This blocks sprites from showing through walls
+
                     const h = (TILE * viewH) / corr;
                     const yPos = (viewH - h) / 2;
-                    const tex = wallTextures[tid];
+                    const tex = wallTextures[tid]; // Uses texture 5 if closed, 1-4 if wall
+                    
                     if (tex && tex.complete) {
-                        let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
+                        let hitV = Math.floor((rx - rayCos * 2.5) / TILE) !== mx;
                         let hitX = hitV ? ry % TILE : rx % TILE;
                         let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
                         ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
                     }
+                    
                     ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corr/600)})`;
                     ctx.fillRect(x, yPos, 1, h);
-                    break; 
+                    break; // STOP the ray completely
                 }
             }
         }
@@ -296,3 +305,4 @@ loop();
 </script>
 </body>
 </html>
+
