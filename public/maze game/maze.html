@@ -10,6 +10,9 @@
 const canvas = document.getElementById("c")
 const ctx = canvas.getContext("2d")
 
+// Z-Buffer to store wall distances for sprite clipping
+let zBuffer = [];
+
 function resize() {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
@@ -20,9 +23,6 @@ resize()
 
 const TILE = 64
 const map = [
-
-
-    
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -59,6 +59,12 @@ const wallTextures = [
     loadImg("assets/wall textures-4.png")
 ]
 
+const keyTexture = loadImg("assets/wall textures-5.png");
+
+const sprites = [
+    { x: TILE * 4.5, y: TILE * 1.5, texture: keyTexture, collected: false }
+];
+
 const reloadSheet = loadImg("assets/gun_reloading.png")
 const fireSheet = loadImg("assets/gun_fire.png")
 const faceSheet = loadImg("assets/charater_hurt_models.png")
@@ -70,7 +76,7 @@ const ANIMS = {
 }
 
 const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 }
-const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2.0, rot: 0.05, hp: 100 }
+const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2.0, rot: 0.05, hp: 100, hasKey: false }
 const keys = {}
 
 window.addEventListener("keydown", e => {
@@ -122,6 +128,17 @@ function update() {
     if (!isWall(nx, player.y)) player.x = nx
     if (!isWall(player.x, ny)) player.y = ny
 
+    // Check for picking up key
+    sprites.forEach(s => {
+        if (!s.collected) {
+            const dist = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
+            if (dist < 30) {
+                s.collected = true;
+                player.hasKey = true;
+            }
+        }
+    });
+
     const now = performance.now()
     const currentAnim = ANIMS[weapon.state]
     if (weapon.state !== "idle") {
@@ -146,6 +163,7 @@ function drawWalls() {
     const fov = Math.PI / 3
     const HUD_H = 160 
     const viewHeight = canvas.height - HUD_H
+    zBuffer = []; // Reset Z-Buffer for this frame
     
     for (let x = 0; x < canvas.width; x++) {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov
@@ -161,6 +179,9 @@ function drawWalls() {
                 hitV = Math.floor(px / TILE) !== mx
                 const corrected = dist * Math.cos(rayAngle - player.angle)
                 
+                // Store distance in Z-Buffer for sprites
+                zBuffer[x] = corrected;
+
                 const h = (TILE * viewHeight) / corrected
                 const yPos = (viewHeight - h) / 2
                 const texture = wallTextures[wallId]
@@ -175,6 +196,44 @@ function drawWalls() {
             }
         }
     }
+}
+
+function drawSprites() {
+    const HUD_H = 160;
+    const viewHeight = canvas.height - HUD_H;
+    const fov = Math.PI / 3;
+
+    sprites.forEach(sprite => {
+        if (sprite.collected || !sprite.texture.complete) return;
+
+        const dx = sprite.x - player.x;
+        const dy = sprite.y - player.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        let spriteAngle = Math.atan2(dy, dx) - player.angle;
+        while (spriteAngle < -Math.PI) spriteAngle += 2 * Math.PI;
+        while (spriteAngle > Math.PI) spriteAngle -= 2 * Math.PI;
+
+        const correctedDist = dist * Math.cos(spriteAngle);
+        
+        if (Math.abs(spriteAngle) < fov && correctedDist > 10) {
+            const sHeight = (TILE * viewHeight) / correctedDist;
+            const sWidth = sHeight; 
+            
+            // X position on screen based on angle
+            const screenX = (0.5 * (spriteAngle / (fov / 2)) + 0.5) * canvas.width;
+            const screenY = (viewHeight - sHeight) / 2;
+
+            // Draw sprite column by column to check Z-Buffer
+            for (let i = 0; i < sWidth; i++) {
+                const colX = Math.floor(screenX - sWidth/2 + i);
+                if (colX >= 0 && colX < canvas.width && zBuffer[colX] > correctedDist) {
+                    const texX = Math.floor((i / sWidth) * sprite.texture.width);
+                    ctx.drawImage(sprite.texture, texX, 0, 1, sprite.texture.height, colX, screenY, 1, sHeight);
+                }
+            }
+        }
+    });
 }
 
 function getFaceIndex() {
@@ -241,6 +300,12 @@ function drawHUD() {
     ctx.fillStyle = "white"
     ctx.font = "bold 30px monospace"
     ctx.fillText(weapon.ammo > 0 ? "1 / 1" : "0 / 1", canvas.width - 120, hudTop + 80)
+
+    if (player.hasKey) {
+        ctx.fillStyle = "gold";
+        ctx.font = "bold 14px monospace";
+        ctx.fillText("KEY OBTAINED", canvas.width / 2 - 50, hudTop + 40);
+    }
 }
 
 function loop() {
@@ -251,6 +316,7 @@ function loop() {
     ctx.fillStyle = "#222"; ctx.fillRect(0, viewH/2, canvas.width, viewH/2)
     
     drawWalls()
+    drawSprites() // New function call
     drawWeapon()
     drawHUD()
     
@@ -259,15 +325,3 @@ function loop() {
 loop()
 </script>
 </body>
-
-
-
-
-
-
-
-
-
-
-
-
