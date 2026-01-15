@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wolfenstein Raycaster - Custom Map</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: black; font-family: monospace; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById("c")
+const ctx = canvas.getContext("2d")
+
+let zBuffer = [];
+
+function resize() {
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    ctx.imageSmoothingEnabled = false
+}
+window.addEventListener("resize", resize)
+resize()
+
+const TILE = 64
+
+// MAP KEY:
+// 0: Empty, 1: Mossy Brick (Jail), 3: Blue/Stone, 4: Drywall, 5: Door
+// Map layout based on Image 1
+const map = [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,5,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,5,1,1,1,0,0,0,0,0,0,0,0,1],
+    [1,1,1,5,1,1,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,5,0,0,0,5,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,1],
+    [4,1,1,5,1,1,1,0,0,0,1,1,1,1,1,1,1,5,1,1,1,1,1,0,0,3,3,3,3,3,3,1],
+    [4,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,0,0,0,0,3,1],
+    [4,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,5,0,0,0,0,3,1],
+    [4,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,0,0,0,0,3,1],
+    [4,0,1,0,1,0,1,1,1,1,5,1,1,1,1,1,0,0,1,1,1,1,1,0,0,3,3,3,3,3,3,1],
+    [4,0,1,1,1,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [4,0,0,0,1,0,1,0,0,0,0,0,0,0,0,1,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [4,0,0,0,1,0,1,0,0,0,1,1,1,0,0,1,0,0,1,1,1,1,5,1,1,1,1,0,0,0,0,1],
+    [4,0,0,0,1,0,1,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+    [4,1,5,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,1],
+    [4,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,1,5,1,1,1,1,1,1,0,0,0,0,1],
+    [4,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,5,0,0,0,0,1],
+    [4,1,1,5,1,1,1,1,5,1,1,1,1,1,5,1,1,1,1,1,0,0,0,0,0,0,1,1,1,5,1,1],
+    [4,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1],
+    [4,0,3,0,0,0,5,0,0,0,5,0,3,3,3,0,5,0,0,0,0,0,5,0,0,0,5,0,0,0,0,1],
+    [4,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+    [4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+function loadImg(src) {
+    const img = new Image();
+    img.src = src;
+    return img;
+}
+
+const TEXTURE_SIZE = 500
+const wallTextures = [
+    null,
+    loadImg("assets/wall textures-1.png"),      // 1: Mossy Brick
+    loadImg("assets/wall textures-2.png"),      
+    loadImg("assets/wall textures-3.png"),      // 3: Blue Stone
+    loadImg("assets/wall textures-4.png"),      // 4: Drywall
+    loadImg("assets/wall_texture_door-1.png"),  // 5: Door
+    loadImg("assets/wall_texture_door_open-2.png") 
+]
+
+const keyTexture = loadImg("assets/wall textures-5.png");
+const sprites = [
+    { x: TILE * 2.5, y: TILE * 21.5, texture: keyTexture, collected: false, id: 'key1' }, // Key 1 (Yellow area)
+    { x: TILE * 28.5, y: TILE * 1.5, texture: keyTexture, collected: false, id: 'key2' }  // Key 2 (Locked area)
+];
+
+const openDoors = {}; 
+const lockedDoors = {
+    "9,25": "key1", // Door protecting Key 2
+    "19,29": "key2" // Exit Door
+};
+
+const reloadSheet = loadImg("assets/gun_reloading.png")
+const fireSheet = loadImg("assets/gun_fire.png")
+const faceSheet = loadImg("assets/charater_hurt_models.png")
+
+const ANIMS = {
+    idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
+    fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
+    reload: { frames: Array.from({length: 21}, (_, i) => i), sheet: reloadSheet, count: 21, speed: 125 }
+}
+
+const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 }
+const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 3, rot: 0.06, hp: 100, inventory: [] }
+const keys = {}
+
+window.addEventListener("keydown", e => {
+    const k = e.key.toLowerCase();
+    keys[k] = true;
+    if (k === " ") handleAction();
+    if (k === "e") tryOpenDoor();
+})
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
+
+function isWall(x, y) {
+    const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
+    if (!map[my] || map[my][mx] === undefined) return true;
+    const tile = map[my][mx];
+    if (tile === 5 && openDoors[`${my},${mx}`]) return false;
+    return tile > 0;
+}
+
+function tryOpenDoor() {
+    const checkDist = 65;
+    const dx = player.x + Math.cos(player.angle) * checkDist;
+    const dy = player.y + Math.sin(player.angle) * checkDist;
+    const mx = Math.floor(dx / TILE), my = Math.floor(dy / TILE);
+    const doorKey = `${my},${mx}`;
+    
+    if (map[my] && map[my][mx] === 5) {
+        // Check if door is locked
+        if (lockedDoors[doorKey]) {
+            if (player.inventory.includes(lockedDoors[doorKey])) {
+                openDoors[doorKey] = true;
+            } else {
+                console.log("Locked! You need a specific key.");
+            }
+        } else {
+            if (!openDoors[doorKey]) {
+                openDoors[doorKey] = true;
+                setTimeout(() => { delete openDoors[doorKey]; }, 5000);
+            }
+        }
+    }
+}
+
+function handleAction() {
+    if (weapon.state !== "idle") return;
+    if (weapon.ammo > 0) shoot(); else reload();
+}
+
+function shoot() {
+    weapon.ammo = 0; weapon.state = "fire"; weapon.frame = 0;
+    weapon.animSpeed = ANIMS.fire.speed; weapon.lastFrameUpdate = performance.now();
+}
+
+function reload() {
+    if (weapon.state === "idle" && weapon.ammo === 0) {
+        weapon.state = "reload"; weapon.frame = 0;
+        weapon.animSpeed = ANIMS.reload.speed; weapon.lastFrameUpdate = performance.now();
+    }
+}
+
+function update() {
+    let moveStep = 0;
+    if (keys["w"]) moveStep = player.move;
+    if (keys["s"]) moveStep = -player.move;
+    if (keys["a"]) player.angle -= player.rot;
+    if (keys["d"]) player.angle += player.rot;
+
+    let nx = player.x + Math.cos(player.angle) * moveStep;
+    let ny = player.y + Math.sin(player.angle) * moveStep;
+    if (!isWall(nx, player.y)) player.x = nx;
+    if (!isWall(player.x, ny)) player.y = ny;
+
+    sprites.forEach(s => {
+        if (!s.collected) {
+            const d = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
+            if (d < 40) { 
+                s.collected = true; 
+                player.inventory.push(s.id); 
+            }
+        }
+    });
+
+    const now = performance.now();
+    const anim = ANIMS[weapon.state];
+    if (weapon.state !== "idle" && now - weapon.lastFrameUpdate > weapon.animSpeed) {
+        weapon.frame++;
+        weapon.lastFrameUpdate = now;
+        if (weapon.frame >= anim.frames.length) {
+            if (weapon.state === "fire") { weapon.state = "reload"; weapon.frame = 0; }
+            else { weapon.ammo = 1; weapon.state = "idle"; weapon.frame = 0; }
+        }
+    }
+}
+
+function drawWalls() {
+    const fov = Math.PI / 3;
+    const viewH = canvas.height - 160;
+    zBuffer = [];
+    const pmx = Math.floor(player.x / TILE);
+    const pmy = Math.floor(player.y / TILE);
+
+    for (let x = 0; x < canvas.width; x++) {
+        const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
+        const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
+        let rx = player.x, ry = player.y, dist = 0;
+
+        while (dist < 1500) { 
+            rx += rayCos * 2; 
+            ry += raySin * 2; 
+            dist += 2;
+            
+            let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
+            if (map[my] && map[my][mx] > 0) {
+                let tid = map[my][mx];
+                let isDoorOpen = (tid === 5 && openDoors[`${my},${mx}`]);
+
+                if (isDoorOpen) {
+                    if (mx === pmx && my === pmy) continue; 
+                    else tid = 6; 
+                }
+
+                const corr = dist * Math.cos(rayAngle - player.angle);
+                zBuffer[x] = corr; 
+                const h = (TILE * viewH) / corr;
+                const yPos = (viewH - h) / 2;
+                const tex = wallTextures[tid];
+                
+                if (tex && tex.complete) {
+                    let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
+                    let hitX = hitV ? ry % TILE : rx % TILE;
+                    let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+                    ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
+                }
+                
+                ctx.fillStyle = `rgba(0,0,0,${Math.min(0.85, dist/1000)})`;
+                ctx.fillRect(x, yPos, 1, h);
+                break; 
+            }
+        }
+    }
+}
+
+function drawSprites() {
+    const viewH = canvas.height - 160;
+    const fov = Math.PI / 3;
+    sprites.forEach(s => {
+        if (s.collected || !s.texture.complete) return;
+        const dx = s.x - player.x, dy = s.y - player.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        let ang = Math.atan2(dy, dx) - player.angle;
+        while (ang < -Math.PI) ang += 2 * Math.PI;
+        while (ang > Math.PI) ang -= 2 * Math.PI;
+        const corr = dist * Math.cos(ang);
+        
+        if (Math.abs(ang) < fov && corr > 10) {
+            const h = (TILE * viewH) / corr;
+            const sx = (0.5 * (ang / (fov / 2)) + 0.5) * canvas.width;
+            for (let i = 0; i < h; i++) {
+                const cx = Math.floor(sx - h/2 + i);
+                if (cx >= 0 && cx < canvas.width && zBuffer[cx] > corr) {
+                    const texX = Math.floor((i/h) * s.texture.width);
+                    ctx.drawImage(s.texture, texX, 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
+                }
+            }
+        }
+    });
+}
+
+function drawHUD() {
+    const top = canvas.height - 160;
+    ctx.fillStyle = "#333"; ctx.fillRect(0, top, canvas.width, 160);
+    ctx.fillStyle = "#000"; ctx.fillRect(40, top + 10, 85, 85);
+    if (faceSheet.complete) ctx.drawImage(faceSheet, 0, 0, 64, 64, 45, top+15, 75, 75);
+    
+    ctx.fillStyle = "white"; ctx.font = "bold 20px monospace";
+    ctx.fillText(`HEALTH: ${player.hp}%`, 150, top + 50);
+    ctx.fillText(`KEYS: ${player.inventory.length}/2`, 150, top + 90);
+    
+    if (player.inventory.includes("key1")) ctx.fillStyle = "yellow";
+    if (player.inventory.includes("key2")) ctx.fillStyle = "red";
+    if (player.inventory.length > 0) ctx.fillText("KEY CARD ACTIVE", 150, top + 130);
+}
+
+function drawWeapon() {
+    const anim = ANIMS[weapon.state];
+    const sheet = anim.sheet;
+    if (sheet.complete && sheet.width > 0) {
+        const fw = sheet.width / anim.count;
+        const fh = sheet.height;
+        const dh = canvas.height * 0.7;
+        const dw = dh * (fw / fh);
+        ctx.save();
+        ctx.translate(canvas.width * 0.5, canvas.height - 160);
+        ctx.drawImage(sheet, anim.frames[weapon.frame] * fw, 0, fw, fh, -dw/2, -dh + 20, dw, dh);
+        ctx.restore();
+    }
+}
+
+function loop() {
+    update();
+    const vH = canvas.height - 160;
+    ctx.fillStyle = "#222"; ctx.fillRect(0, 0, canvas.width, vH/2);
+    ctx.fillStyle = "#444"; ctx.fillRect(0, vH/2, canvas.width, vH/2);
+    drawWalls(); drawSprites(); drawWeapon(); drawHUD();
+    requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
