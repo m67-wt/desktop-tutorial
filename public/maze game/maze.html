@@ -57,8 +57,8 @@ const wallTextures = [
     loadImg("assets/wall textures-2.png"),
     loadImg("assets/wall textures-3.png"),
     loadImg("assets/wall textures-4.png"),
-    loadImg("assets/wall_texture_door-1.png"),      // Index 5: Door Closed
-    loadImg("assets/wall_texture_door_open-2.png")  // Index 6: Door Open
+    loadImg("assets/wall_texture_door-1.png"),      
+    loadImg("assets/wall_texture_door_open-2.png")  
 ]
 
 const keyTexture = loadImg("assets/wall textures-5.png");
@@ -87,7 +87,6 @@ window.addEventListener("keydown", e => {
     if (k === "e") tryOpenDoor();
 })
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
-window.addEventListener("mousedown", () => handleAction())
 
 function isWall(x, y) {
     const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
@@ -101,7 +100,6 @@ function tryOpenDoor() {
     const dx = player.x + Math.cos(player.angle) * checkDist;
     const dy = player.y + Math.sin(player.angle) * checkDist;
     const mx = Math.floor(dx / TILE), my = Math.floor(dy / TILE);
-    
     if (map[my] && map[my][mx] === 5) {
         const doorKey = `${my},${mx}`;
         if (!openDoors[doorKey]) {
@@ -170,61 +168,50 @@ function drawWalls() {
         let rx = player.x, ry = player.y, dist = 0;
         let hasHitOpenDoor = false;
 
-        // Limiting total distance to 800 and steps to 300 for performance
-        let steps = 0;
-        while (dist < 800 && steps < 300) {
-            rx += rayCos * 2.5; // Slightly larger steps for FPS boost
-            ry += raySin * 2.5; 
-            dist += 2.5;
-            steps++;
+        // Smaller steps (1.5) improve visual accuracy and prevent texture bleeding
+        while (dist < 800) {
+            rx += rayCos * 1.5; 
+            ry += raySin * 1.5; 
+            dist += 1.5;
             
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
             if (map[my] && map[my][mx] > 0) {
                 let tid = map[my][mx];
                 let isDoorOpen = (tid === 5 && openDoors[`${my},${mx}`]);
 
-                // SCENARIO A: We hit an OPEN door
+                // DRAW OPEN DOOR FRAME
                 if (isDoorOpen && !hasHitOpenDoor) {
                     const corr = dist * Math.cos(rayAngle - player.angle);
                     const h = (TILE * viewH) / corr;
-                    const tex = wallTextures[6]; // Open door frame
-                    
+                    const tex = wallTextures[6];
                     if (tex && tex.complete) {
-                        let hitV = Math.floor((rx - rayCos * 2.5) / TILE) !== mx;
+                        let hitV = Math.floor((rx - rayCos * 1.5) / TILE) !== mx;
                         let hitX = hitV ? ry % TILE : rx % TILE;
                         let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
                         ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH - h) / 2, 1, h);
                     }
-                    
-                    // Apply distance shading to the door frame
-                    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.7, corr/600)})`;
-                    ctx.fillRect(x, (viewH - h) / 2, 1, h);
-
                     hasHitOpenDoor = true;
-                    // BIG JUMP: Move ray forward significantly to clear the door tile
-                    dist += 12; rx += rayCos * 12; ry += raySin * 12;
+                    // Jump forward to find the wall behind the door
+                    dist += 8; rx += rayCos * 8; ry += raySin * 8;
                     continue; 
                 }
 
-                // SCENARIO B: We hit a SOLID wall or a CLOSED door
+                // DRAW SOLID WALL OR CLOSED DOOR
                 if (!isDoorOpen) {
                     const corr = dist * Math.cos(rayAngle - player.angle);
-                    zBuffer[x] = corr; // This blocks sprites from showing through walls
-
+                    zBuffer[x] = corr;
                     const h = (TILE * viewH) / corr;
-                    const yPos = (viewH - h) / 2;
-                    const tex = wallTextures[tid]; // Uses texture 5 if closed, 1-4 if wall
-                    
+                    const tex = wallTextures[tid];
                     if (tex && tex.complete) {
-                        let hitV = Math.floor((rx - rayCos * 2.5) / TILE) !== mx;
+                        let hitV = Math.floor((rx - rayCos * 1.5) / TILE) !== mx;
                         let hitX = hitV ? ry % TILE : rx % TILE;
                         let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
-                        ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
+                        ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH - h) / 2, 1, h);
                     }
-                    
+                    // Apply Shading
                     ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corr/600)})`;
-                    ctx.fillRect(x, yPos, 1, h);
-                    break; // STOP the ray completely
+                    ctx.fillRect(x, (viewH - h) / 2, 1, h);
+                    break; 
                 }
             }
         }
@@ -242,55 +229,26 @@ function drawSprites() {
         while (ang < -Math.PI) ang += 2 * Math.PI;
         while (ang > Math.PI) ang -= 2 * Math.PI;
         const corr = dist * Math.cos(ang);
-        
         if (Math.abs(ang) < fov && corr > 10) {
             const h = (TILE * viewH) / corr;
             const sx = (0.5 * (ang / (fov / 2)) + 0.5) * canvas.width;
             for (let i = 0; i < h; i++) {
                 const cx = Math.floor(sx - h/2 + i);
                 if (cx >= 0 && cx < canvas.width && zBuffer[cx] > corr) {
-                    const texX = Math.floor((i/h) * s.texture.width);
-                    ctx.drawImage(s.texture, texX, 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
+                    ctx.drawImage(s.texture, Math.floor((i/h) * s.texture.width), 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
                 }
             }
         }
     });
 }
 
-function getFaceIndex() {
-    if (player.hp >= 100) return 0;
-    if (player.hp >= 80) return 1;
-    if (player.hp >= 60) return 2;
-    if (player.hp >= 40) return 3;
-    return 4;
-}
-
-function drawWeapon() {
-    const anim = ANIMS[weapon.state];
-    const sheet = anim.sheet;
-    if (sheet.complete && sheet.width > 0) {
-        const fw = sheet.width / anim.count;
-        const fh = sheet.height;
-        const dh = canvas.height * 0.7;
-        const dw = dh * (fw / fh);
-        ctx.save();
-        ctx.translate(canvas.width * 0.25, canvas.height - 160);
-        ctx.rotate(15 * Math.PI / 180);
-        ctx.drawImage(sheet, anim.frames[weapon.frame] * fw, 0, fw, fh, -dw * 0.1, -dh * 0.95, dw, dh);
-        ctx.restore();
-    }
-}
-
 function drawHUD() {
     const top = canvas.height - 160;
     ctx.fillStyle = "#222"; ctx.fillRect(0, top, canvas.width, 160);
-    ctx.fillStyle = "#000"; ctx.fillRect(40, top + 10, 85, 85);
-    if (faceSheet.complete) ctx.drawImage(faceSheet, getFaceIndex()*64, 0, 64, 64, 45, top+15, 75, 75);
-    ctx.fillStyle = "red"; ctx.font = "bold 16px monospace"; ctx.fillText("HEALTH", 40, top + 115);
-    ctx.fillStyle = "white"; ctx.font = "bold 40px monospace"; ctx.fillText(`${player.hp}%`, 40, top + 150);
-    ctx.fillStyle = "yellow"; ctx.font = "bold 16px monospace"; ctx.fillText("AMMO", canvas.width - 120, top + 40);
-    ctx.fillStyle = "white"; ctx.font = "bold 30px monospace"; ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80);
-    if (player.hasKey) { ctx.fillStyle = "gold"; ctx.font = "bold 18px monospace"; ctx.fillText("KEY OBTAINED", canvas.width/2 - 80, top + 80); }
+    ctx.fillStyle = "white"; ctx.font = "bold 20px monospace";
+    ctx.fillText(`HEALTH: ${player.hp}%`, 40, top + 60);
+    ctx.fillText(`AMMO: ${weapon.ammo}/1`, 40, top + 100);
+    if (player.hasKey) ctx.fillText("KEY OBTAINED", canvas.width - 200, top + 60);
 }
 
 function loop() {
@@ -298,11 +256,10 @@ function loop() {
     const vH = canvas.height - 160;
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2);
     ctx.fillStyle = "#222"; ctx.fillRect(0, vH/2, canvas.width, vH/2);
-    drawWalls(); drawSprites(); drawWeapon(); drawHUD();
+    drawWalls(); drawSprites(); drawHUD();
     requestAnimationFrame(loop);
 }
 loop();
 </script>
 </body>
 </html>
-
