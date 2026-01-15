@@ -12,7 +12,6 @@
 const canvas = document.getElementById("c")
 const ctx = canvas.getContext("2d")
 
-// Depth buffer to handle sprite clipping
 let zBuffer = [];
 
 function resize() {
@@ -24,7 +23,6 @@ window.addEventListener("resize", resize)
 resize()
 
 const TILE = 64
-// 5 is the Closed Door. In this map, I've placed one at row 1, col 4.
 const map = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -48,9 +46,7 @@ const map = [
 ]
 
 function loadImg(src) {
-    const img = new Image()
-    img.src = src
-    return img
+    const img = new Image(); img.src = src; return img;
 }
 
 const TEXTURE_SIZE = 500
@@ -65,12 +61,8 @@ const wallTextures = [
 ]
 
 const keyTexture = loadImg("assets/wall textures-5.png");
-
-const sprites = [
-    { x: TILE * 4.5, y: TILE * 1.5, texture: keyTexture, collected: false }
-];
-
-const openDoors = {}; // Tracks "row,col" of open doors
+const sprites = [{ x: TILE * 4.5, y: TILE * 1.5, texture: keyTexture, collected: false }];
+const openDoors = {}; 
 
 const reloadSheet = loadImg("assets/gun_reloading.png")
 const fireSheet = loadImg("assets/gun_fire.png")
@@ -87,31 +79,26 @@ const player = { x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2.5, rot: 0.05, h
 const keys = {}
 
 window.addEventListener("keydown", e => {
-    const key = e.key.toLowerCase();
-    keys[key] = true;
-    if (key === " ") handleAction();
-    if (key === "r") reload();
-    if (key === "e") tryOpenDoor();
+    const k = e.key.toLowerCase(); keys[k] = true;
+    if (k === " ") handleAction();
+    if (k === "r") reload();
+    if (k === "e") tryOpenDoor();
 })
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
 window.addEventListener("mousedown", () => handleAction())
 
 function isWall(x, y) {
-    const mx = Math.floor(x / TILE)
-    const my = Math.floor(y / TILE)
+    const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
     const tile = map[my] ? map[my][mx] : 0;
-    if (tile === 0) return false;
-    if (tile === 5) return !openDoors[`${my},${mx}`]; // Collidable only if not open
+    if (tile === 5) return !openDoors[`${my},${mx}`];
     return tile > 0;
 }
 
 function tryOpenDoor() {
-    const checkDist = 50;
+    const checkDist = 60;
     const dx = player.x + Math.cos(player.angle) * checkDist;
     const dy = player.y + Math.sin(player.angle) * checkDist;
-    const mx = Math.floor(dx / TILE);
-    const my = Math.floor(dy / TILE);
-
+    const mx = Math.floor(dx / TILE), my = Math.floor(dy / TILE);
     if (map[my] && map[my][mx] === 5) {
         const doorKey = `${my},${mx}`;
         openDoors[doorKey] = true;
@@ -121,139 +108,116 @@ function tryOpenDoor() {
 
 function handleAction() {
     if (weapon.state !== "idle") return
-    if (weapon.ammo > 0) shoot()
-    else reload()
+    weapon.ammo > 0 ? shoot() : reload();
 }
 
 function shoot() {
-    weapon.ammo = 0
-    weapon.state = "fire"
-    weapon.frame = 0
-    weapon.animSpeed = ANIMS.fire.speed
-    weapon.lastFrameUpdate = performance.now()
+    weapon.ammo = 0; weapon.state = "fire"; weapon.frame = 0;
+    weapon.animSpeed = ANIMS.fire.speed; weapon.lastFrameUpdate = performance.now();
 }
 
 function reload() {
     if (weapon.state === "idle" && weapon.ammo === 0) {
-        weapon.state = "reload"
-        weapon.frame = 0
-        weapon.animSpeed = ANIMS.reload.speed
-        weapon.lastFrameUpdate = performance.now()
+        weapon.state = "reload"; weapon.frame = 0;
+        weapon.animSpeed = ANIMS.reload.speed; weapon.lastKeyFrameUpdate = performance.now();
     }
 }
 
 function update() {
-    let moveStep = 0
-    if (keys["w"]) moveStep = player.move
-    if (keys["s"]) moveStep = -player.move
-    if (keys["a"]) player.angle -= player.rot
-    if (keys["d"]) player.angle += player.rot
+    let moveStep = 0;
+    if (keys["w"]) moveStep = player.move;
+    if (keys["s"]) moveStep = -player.move;
+    if (keys["a"]) player.angle -= player.rot;
+    if (keys["d"]) player.angle += player.rot;
 
-    let nx = player.x + Math.cos(player.angle) * moveStep
-    let ny = player.y + Math.sin(player.angle) * moveStep
-    if (!isWall(nx, player.y)) player.x = nx
-    if (!isWall(player.x, ny)) player.y = ny
+    let nx = player.x + Math.cos(player.angle) * moveStep;
+    let ny = player.y + Math.sin(player.angle) * moveStep;
+    if (!isWall(nx, player.y)) player.x = nx;
+    if (!isWall(player.x, ny)) player.y = ny;
 
-    // Sprite Pickup Logic
     sprites.forEach(s => {
         if (!s.collected) {
-            const dist = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
-            if (dist < 30) {
-                s.collected = true;
-                player.hasKey = true;
-            }
+            const d = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
+            if (d < 30) { s.collected = true; player.hasKey = true; }
         }
     });
 
-    const now = performance.now()
-    const currentAnim = ANIMS[weapon.state]
-    if (weapon.state !== "idle") {
-        if (now - weapon.lastFrameUpdate > weapon.animSpeed) {
-            weapon.frame++
-            weapon.lastFrameUpdate = now
-            if (weapon.frame >= currentAnim.frames.length) {
-                if (weapon.state === "fire") {
-                    weapon.state = "reload"
-                    weapon.frame = 0
-                } else {
-                    weapon.ammo = 1
-                    weapon.state = "idle"
-                    weapon.frame = 0
-                }
-            }
+    const now = performance.now();
+    const anim = ANIMS[weapon.state];
+    if (weapon.state !== "idle" && now - weapon.lastFrameUpdate > weapon.animSpeed) {
+        weapon.frame++; weapon.lastFrameUpdate = now;
+        if (weapon.frame >= anim.frames.length) {
+            if (weapon.state === "fire") { weapon.state = "reload"; weapon.frame = 0; }
+            else { weapon.ammo = 1; weapon.state = "idle"; weapon.frame = 0; }
         }
     }
 }
 
 function drawWalls() {
-    const fov = Math.PI / 3
-    const HUD_H = 160 
-    const viewHeight = canvas.height - HUD_H
+    const fov = Math.PI / 3;
+    const viewH = canvas.height - 160;
     zBuffer = [];
     
     for (let x = 0; x < canvas.width; x++) {
-        const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov
-        const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle)
-        let rx = player.x, ry = player.y, dist = 0, hitV = false
+        const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
+        const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
+        let rx = player.x, ry = player.y, dist = 0;
+        let doorFound = false;
 
         while (dist < 800) {
-            let px = rx
-            rx += rayCos * 2; ry += raySin * 2; dist += 2
-            let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE)
+            rx += rayCos * 2; ry += raySin * 2; dist += 2;
+            let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
+            
             if (map[my] && map[my][mx] > 0) {
-                let wallId = map[my][mx];
+                let tid = map[my][mx];
+                let isDoorOpen = (tid === 5 && openDoors[`${my},${mx}`]);
                 
-                // Door Visual Swap
-                if (wallId === 5 && openDoors[`${my},${mx}`]) wallId = 6;
+                // If it's an open door, draw it but DON'T break the loop
+                // This lets us see the walls behind it.
+                let drawId = isDoorOpen ? 6 : tid;
+                
+                const corr = dist * Math.cos(rayAngle - player.angle);
+                if (!isDoorOpen) zBuffer[x] = corr; // Only solid walls block sprites
 
-                hitV = Math.floor(px / TILE) !== mx
-                const corrected = dist * Math.cos(rayAngle - player.angle)
-                zBuffer[x] = corrected;
-
-                const h = (TILE * viewHeight) / corrected
-                const yPos = (viewHeight - h) / 2
-                const texture = wallTextures[wallId]
-                if (texture && texture.complete) {
-                    let hitX = hitV ? ry % TILE : rx % TILE
-                    let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE)
-                    ctx.drawImage(texture, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h)
+                const h = (TILE * viewH) / corr;
+                const yPos = (viewH - h) / 2;
+                const tex = wallTextures[drawId];
+                
+                if (tex && tex.complete) {
+                    let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
+                    let hitX = hitV ? ry % TILE : rx % TILE;
+                    let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
+                    ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
                 }
-                ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corrected/600)})`
-                ctx.fillRect(x, yPos, 1, h)
-                break
+                
+                ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, corr/600)})`;
+                ctx.fillRect(x, yPos, 1, h);
+
+                // If this was a solid wall or closed door, stop ray.
+                // If it was an open door, continue to see what's behind!
+                if (!isDoorOpen) break;
             }
         }
     }
 }
 
 function drawSprites() {
-    const viewHeight = canvas.height - 160;
-    const fov = Math.PI / 3;
-
-    sprites.forEach(sprite => {
-        if (sprite.collected || !sprite.texture.complete) return;
-
-        const dx = sprite.x - player.x;
-        const dy = sprite.y - player.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        let spriteAngle = Math.atan2(dy, dx) - player.angle;
-        while (spriteAngle < -Math.PI) spriteAngle += 2 * Math.PI;
-        while (spriteAngle > Math.PI) spriteAngle -= 2 * Math.PI;
-
-        const correctedDist = dist * Math.cos(spriteAngle);
-        
-        if (Math.abs(spriteAngle) < fov && correctedDist > 10) {
-            const sHeight = (TILE * viewHeight) / correctedDist;
-            const sWidth = sHeight; 
-            const screenX = (0.5 * (spriteAngle / (fov / 2)) + 0.5) * canvas.width;
-            const screenY = (viewHeight - sHeight) / 2;
-
-            for (let i = 0; i < sWidth; i++) {
-                const colX = Math.floor(screenX - sWidth/2 + i);
-                if (colX >= 0 && colX < canvas.width && zBuffer[colX] > correctedDist) {
-                    const texX = Math.floor((i / sWidth) * sprite.texture.width);
-                    ctx.drawImage(sprite.texture, texX, 0, 1, sprite.texture.height, colX, screenY, 1, sHeight);
+    const viewH = canvas.height - 160; const fov = Math.PI / 3;
+    sprites.forEach(s => {
+        if (s.collected || !s.texture.complete) return;
+        const dx = s.x - player.x, dy = s.y - player.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        let ang = Math.atan2(dy, dx) - player.angle;
+        while (ang < -Math.PI) ang += 2 * Math.PI;
+        while (ang > Math.PI) ang -= 2 * Math.PI;
+        const corr = dist * Math.cos(ang);
+        if (Math.abs(ang) < fov && corr > 10) {
+            const h = (TILE * viewH) / corr;
+            const sx = (0.5 * (ang / (fov / 2)) + 0.5) * canvas.width;
+            for (let i = 0; i < h; i++) {
+                const cx = Math.floor(sx - h/2 + i);
+                if (cx >= 0 && cx < canvas.width && zBuffer[cx] > corr) {
+                    ctx.drawImage(s.texture, Math.floor((i/h)*s.texture.width), 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
                 }
             }
         }
@@ -261,72 +225,43 @@ function drawSprites() {
 }
 
 function getFaceIndex() {
-    if (player.hp >= 100) return 0
-    if (player.hp >= 80) return 1
-    if (player.hp >= 60) return 2
-    if (player.hp >= 40) return 3
-    return 4 
+    return player.hp >= 100 ? 0 : player.hp >= 80 ? 1 : player.hp >= 60 ? 2 : player.hp >= 40 ? 3 : 4;
 }
 
 function drawWeapon() {
-    const currentAnim = ANIMS[weapon.state]
-    const sheet = currentAnim.sheet
-    const hudTop = canvas.height - 160
-
+    const anim = ANIMS[weapon.state]; const sheet = anim.sheet;
     if (sheet.complete && sheet.width > 0) {
-        const frameW = sheet.width / currentAnim.count
-        const frameH = sheet.height
-        const frameIdx = currentAnim.frames[weapon.frame]
-        const displayH = canvas.height * 0.70
-        const displayW = displayH * (frameW / frameH)
-        
-        ctx.save()
-        ctx.translate(canvas.width * 0.25, hudTop)
-        ctx.rotate(15 * Math.PI / 180)
-        ctx.drawImage(sheet, frameIdx * frameW, 0, frameW, frameH, -displayW * 0.1, -displayH * 0.95, displayW, displayH)
-        ctx.restore()
+        const fw = sheet.width / anim.count; const fh = sheet.height;
+        const dh = canvas.height * 0.7; const dw = dh * (fw / fh);
+        ctx.save();
+        ctx.translate(canvas.width * 0.25, canvas.height - 160);
+        ctx.rotate(15 * Math.PI / 180);
+        ctx.drawImage(sheet, anim.frames[weapon.frame] * fw, 0, fw, fh, -dw * 0.1, -dh * 0.95, dw, dh);
+        ctx.restore();
     }
 }
 
 function drawHUD() {
-    const HUD_H = 160
-    const hudTop = canvas.height - HUD_H
-    ctx.fillStyle = "#222"; ctx.fillRect(0, hudTop, canvas.width, HUD_H)
-    
-    const portraitX = 40; const portraitY = hudTop + 10; const portraitSize = 85
-    ctx.fillStyle = "#000"; ctx.fillRect(portraitX, portraitY, portraitSize, portraitSize)
-
-    if (faceSheet.complete) {
-        const faceW = 64; const faceIdx = getFaceIndex()
-        ctx.drawImage(faceSheet, faceIdx * faceW, 0, 64, 64, portraitX+5, portraitY+5, portraitSize-10, portraitSize-10)
-    }
-
-    ctx.fillStyle = "red"; ctx.font = "bold 16px monospace"; ctx.fillText("HEALTH", portraitX, hudTop + 115) 
-    ctx.fillStyle = "white"; ctx.font = "bold 40px monospace"; ctx.fillText(`${player.hp}%`, portraitX, hudTop + 150)
-
-    ctx.fillStyle = "yellow"; ctx.font = "bold 16px monospace"; ctx.fillText("AMMO", canvas.width - 120, hudTop + 40)
-    ctx.fillStyle = "white"; ctx.font = "bold 30px monospace"; ctx.fillText(weapon.ammo > 0 ? "1 / 1" : "0 / 1", canvas.width - 120, hudTop + 80)
-
-    if (player.hasKey) {
-        ctx.fillStyle = "gold"; ctx.font = "bold 18px monospace"; ctx.fillText("KEY OBTAINED", canvas.width/2 - 60, hudTop + 80);
-    }
+    const top = canvas.height - 160;
+    ctx.fillStyle = "#222"; ctx.fillRect(0, top, canvas.width, 160);
+    ctx.fillStyle = "#000"; ctx.fillRect(40, top + 10, 85, 85);
+    if (faceSheet.complete) ctx.drawImage(faceSheet, getFaceIndex()*64, 0, 64, 64, 45, top+15, 75, 75);
+    ctx.fillStyle = "red"; ctx.font = "bold 16px monospace"; ctx.fillText("HEALTH", 40, top + 115);
+    ctx.fillStyle = "white"; ctx.font = "bold 40px monospace"; ctx.fillText(`${player.hp}%`, 40, top + 150);
+    ctx.fillStyle = "yellow"; ctx.fillText("AMMO", canvas.width - 120, top + 40);
+    ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80);
+    if (player.hasKey) { ctx.fillStyle = "gold"; ctx.fillText("KEY OBTAINED", canvas.width/2 - 80, top + 80); }
 }
 
 function loop() {
-    update()
-    const viewH = canvas.height - 160
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, viewH/2)
-    ctx.fillStyle = "#222"; ctx.fillRect(0, viewH/2, canvas.width, viewH/2)
-    
-    drawWalls()
-    drawSprites()
-    drawWeapon()
-    drawHUD()
-    
-    requestAnimationFrame(loop)
+    update();
+    const vH = canvas.height - 160;
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2);
+    ctx.fillStyle = "#222"; ctx.fillRect(0, vH/2, canvas.width, vH/2);
+    drawWalls(); drawSprites(); drawWeapon(); drawHUD();
+    requestAnimationFrame(loop);
 }
-loop()
+loop();
 </script>
 </body>
 </html>
-
