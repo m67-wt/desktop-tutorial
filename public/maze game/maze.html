@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Wolfenstein Raycaster</title>
     <style>
-        body { margin: 0; overflow: hidden; background: black; }
+        body { margin: 0; overflow: hidden; background: black; font-family: monospace; }
         canvas { display: block; }
     </style>
 </head>
@@ -23,26 +24,29 @@ window.addEventListener("resize", resize)
 resize()
 
 const TILE = 64
+
+// REPLICATED WOLFENSTEIN E1M1 MAP LAYOUT
+// 1: Stone, 2: Wood, 3: Blue, 4: Alt Stone, 5: Door
 const map = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,5,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,1,0,0,0,1,1,1,1,1,1,1,1],
-    [1,0,1,1,1,1,1,0,0,0,0,0,0,1],
-    [1,0,5,0,0,0,0,0,3,0,3,0,3,3],
-    [1,0,1,1,1,1,1,0,3,0,3,0,3,3],
-    [1,0,1,0,0,0,1,0,0,0,0,0,0,1],
-    [1,0,1,0,0,0,1,1,1,1,1,1,1,1],
-    [1,5,1,1,1,1,1],
-    [1,0,0,3,0,0,1],
-    [1,0,0,3,0,0,1],
-    [1,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1],
-]
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,5,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,5,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,5,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+    [1,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,5,1,1,1,1,1,1,1,1,1,1,1,1],
+    [3,3,3,3,3,3,3,3,3,3,0,3,3,3,3,3,3,3,3,3,3,3,3],
+    [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+    [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+    [3,3,3,3,3,3,3,5,3,3,3,3,3,3,3,3,3,5,3,3,3,3,3],
+    [2,0,0,0,0,0,2,0,0,0,0,0,1,1,0,0,0,0,0,2],
+    [2,0,0,0,0,0,2,0,0,0,0,0,1,1,0,0,0,0,0,2],
+    [2,0,0,0,0,0,5,0,0,0,0,0,5,5,0,0,0,0,0,2],
+    [2,0,0,0,0,0,2,0,0,0,0,0,1,1,0,0,0,0,0,2],
+    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+];
 
 function loadImg(src) {
     const img = new Image();
@@ -53,12 +57,12 @@ function loadImg(src) {
 const TEXTURE_SIZE = 500
 const wallTextures = [
     null,
-    loadImg("assets/wall textures-1.png"),
-    loadImg("assets/wall textures-2.png"),
-    loadImg("assets/wall textures-3.png"),
-    loadImg("assets/wall textures-4.png"),
-    loadImg("assets/wall_texture_door-1.png"),      
-    loadImg("assets/wall_texture_door_open-2.png")  
+    loadImg("assets/wall textures-1.png"),      // 1: Stone
+    loadImg("assets/wall textures-2.png"),      // 2: Wood
+    loadImg("assets/wall textures-3.png"),      // 3: Blue
+    loadImg("assets/wall textures-4.png"),      // 4: Alt
+    loadImg("assets/wall_texture_door-1.png"),  // 5: Closed Door
+    loadImg("assets/wall_texture_door_open-2.png") // 6: Open Door
 ]
 
 const keyTexture = loadImg("assets/wall textures-5.png");
@@ -91,8 +95,8 @@ window.addEventListener("mousedown", () => handleAction())
 
 function isWall(x, y) {
     const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
-    const tile = map[my] ? map[my][mx] : 0;
-    // If it's a door and it's open, it has no collision (you can walk through)
+    if (!map[my] || map[my][mx] === undefined) return true;
+    const tile = map[my][mx];
     if (tile === 5 && openDoors[`${my},${mx}`]) return false;
     return tile > 0;
 }
@@ -107,7 +111,6 @@ function tryOpenDoor() {
         const doorKey = `${my},${mx}`;
         if (!openDoors[doorKey]) {
             openDoors[doorKey] = true;
-            // Doors stay open for 5 seconds
             setTimeout(() => { delete openDoors[doorKey]; }, 5000);
         }
     }
@@ -165,8 +168,6 @@ function drawWalls() {
     const fov = Math.PI / 3;
     const viewH = canvas.height - 160;
     zBuffer = [];
-    
-    // Player's current grid position
     const pmx = Math.floor(player.x / TILE);
     const pmy = Math.floor(player.y / TILE);
 
@@ -175,31 +176,21 @@ function drawWalls() {
         const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
         let rx = player.x, ry = player.y, dist = 0;
 
-        while (dist < 800) {
+        while (dist < 1200) { // Increased distance for larger map
             rx += rayCos * 2; 
             ry += raySin * 2; 
             dist += 2;
             
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
-            
             if (map[my] && map[my][mx] > 0) {
                 let tid = map[my][mx];
-                let isDoor = (tid === 5);
-                let isDoorOpen = (isDoor && openDoors[`${my},${mx}`]);
+                let isDoorOpen = (tid === 5 && openDoors[`${my},${mx}`]);
 
-                // NEW LOGIC: If door is open and player is INSIDE it, don't draw it.
-                // Otherwise, if it's open, draw the Open PNG and STOP the ray.
                 if (isDoorOpen) {
-                    if (mx === pmx && my === pmy) {
-                        // Player is inside the door tile. Make it invisible!
-                        continue; 
-                    } else {
-                        // Player is outside. Show the open door texture.
-                        tid = 6; // Use index 6 (Open Door Texture)
-                    }
+                    if (mx === pmx && my === pmy) continue; 
+                    else tid = 6; 
                 }
 
-                // Standard wall drawing
                 const corr = dist * Math.cos(rayAngle - player.angle);
                 zBuffer[x] = corr; 
                 const h = (TILE * viewH) / corr;
@@ -213,7 +204,7 @@ function drawWalls() {
                     ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
                 }
                 
-                ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, dist/600)})`;
+                ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, dist/800)})`;
                 ctx.fillRect(x, yPos, 1, h);
                 break; 
             }
@@ -295,4 +286,3 @@ loop();
 </script>
 </body>
 </html>
-
