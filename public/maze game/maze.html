@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Wolfenstein Raycaster - Door Overhaul</title>
+    <title>Wolfenstein Raycaster - Fixed</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; font-family: monospace; }
         canvas { display: block; }
@@ -26,19 +26,13 @@ resize()
 const TILE = 64
 const TEXTURE_SIZE = 500
 
-/** * MAP LEGEND:
- * 1-4: Standard Walls
- * 5: Normal Door (No Key)
- * 6: Silver Door (Silver Key)
- * 7: Gold Door (Gold Key)
- * 8: Ruby Door (Ruby Key)
- */
+// Map: 5=Normal, 6=Silver, 7=Gold, 8=Ruby
 const map = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,5,0,0,6,0,0,7,0,0,8,0,0,0,0,0,0,1], 
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,5,0,6,0,7,0,8,0,0,0,0,0,1], 
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
 function loadImg(src) {
@@ -47,59 +41,43 @@ function loadImg(src) {
     return img;
 }
 
-// Fixed Texture Array Mapping
-const wallTextures = {
-    1: loadImg("assets/wall textures-1.png"),
-    2: loadImg("assets/wall textures-2.png"),
-    3: loadImg("assets/wall textures-3.png"),
-    4: loadImg("assets/wall textures-4.png"),
-    // Door 5: Normal
-    "5_closed": loadImg("assets/wall_texture_door-1.png"),
-    "5_open":   loadImg("assets/wall_texture_door_open-2.png"),
-    // Door 6: Silver
-    "6_closed": loadImg("assets/wall_texture_silver_door-1.png"),
-    "6_open":   loadImg("assets/wall_texture_silver_door_open-2.png"),
-    // Door 7: Gold
-    "7_closed": loadImg("assets/wall_texture_gold_door-3.png"),
-    "7_open":   loadImg("assets/wall_texture_gold_door_open-4.png"),
-    // Door 8: Ruby
-    "8_closed": loadImg("assets/wall_texture_ruby_door-5.png"),
-    "8_open":   loadImg("assets/wall_texture_ruby_door_open-6.png")
-}
+// Fixed Texture Array
+const wallTextures = [
+    null,                                           // 0
+    loadImg("assets/wall textures-1.png"),          // 1
+    loadImg("assets/wall textures-2.png"),          // 2
+    loadImg("assets/wall textures-3.png"),          // 3
+    loadImg("assets/wall textures-4.png"),          // 4
+    loadImg("assets/wall_texture_door-1.png"),      // 5: Normal Door Closed
+    loadImg("assets/wall_texture_door_open-2.png"), // 6: Normal Door Open (used internally)
+    loadImg("assets/wall_texture_silver_door-1.png"),// 7: Silver Door Closed
+    loadImg("assets/wall_texture_silver_door_open-2.png"), // 8: Silver Door Open
+    loadImg("assets/wall_texture_gold_door-3.png"),  // 9: Gold Door Closed
+    loadImg("assets/wall_texture_gold_door_open-4.png"),   // 10: Gold Door Open
+    loadImg("assets/wall_texture_ruby_door-5.png"),  // 11: Ruby Door Closed
+    loadImg("assets/wall_texture_ruby_door_open-6.png")    // 12: Ruby Door Open
+];
 
 const sprites = [
-    { x: TILE * 5.5, y: TILE * 1.5, texture: loadImg("assets/wall_texture_silver_door-1.png"), type: 'silver', collected: false },
-    { x: TILE * 8.5, y: TILE * 1.5, texture: loadImg("assets/wall textures-5.png"), type: 'gold', collected: false },
-    { x: TILE * 10.5, y: TILE * 1.5, texture: loadImg("assets/wall_texture_ruby_door-5.png"), type: 'ruby', collected: false }
+    { x: TILE * 4.5, y: TILE * 3.5, texture: loadImg("assets/wall_texture_silver_door-1.png"), type: 'silver', collected: false },
+    { x: TILE * 6.5, y: TILE * 3.5, texture: loadImg("assets/wall textures-5.png"), type: 'gold', collected: false },
+    { x: TILE * 8.5, y: TILE * 3.5, texture: loadImg("assets/wall_texture_ruby_door-5.png"), type: 'ruby', collected: false }
 ];
 
 const openDoors = {}; 
-const reloadSheet = loadImg("assets/gun_reloading.png")
-const fireSheet = loadImg("assets/gun_fire.png")
-const faceSheet = loadImg("assets/charater_hurt_models.png")
+const faceSheet = loadImg("assets/charater_hurt_models.png");
+const keys = {};
 
-const ANIMS = {
-    idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
-    fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
-    reload: { frames: Array.from({length: 21}, (_, i) => i), sheet: reloadSheet, count: 21, speed: 125 }
-}
-
-const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 }
 const player = { 
     x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2.5, rot: 0.05, hp: 100,
     inventory: { gold: false, silver: false, ruby: false }
-}
-const keys = {}
+};
 
 window.addEventListener("keydown", e => {
-    const k = e.key.toLowerCase();
-    keys[k] = true;
-    if (k === " ") handleAction();
-    if (k === "r") reload();
-    if (k === "e") tryOpenDoor();
-})
-window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
-window.addEventListener("mousedown", () => handleAction())
+    keys[e.key.toLowerCase()] = true;
+    if (e.key.toLowerCase() === "e") tryOpenDoor();
+});
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 function isWall(x, y) {
     const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
@@ -110,17 +88,16 @@ function isWall(x, y) {
 }
 
 function tryOpenDoor() {
-    const checkDist = 64;
-    const dx = player.x + Math.cos(player.angle) * checkDist;
-    const dy = player.y + Math.sin(player.angle) * checkDist;
+    const dx = player.x + Math.cos(player.angle) * 64;
+    const dy = player.y + Math.sin(player.angle) * 64;
     const mx = Math.floor(dx / TILE), my = Math.floor(dy / TILE);
     
     if (map[my]) {
         const tile = map[my][mx];
         const doorPos = `${my},${mx}`;
-        
         let canOpen = false;
-        if (tile === 5) canOpen = true; // Normal door always opens
+
+        if (tile === 5) canOpen = true;
         if (tile === 6 && player.inventory.silver) canOpen = true;
         if (tile === 7 && player.inventory.gold) canOpen = true;
         if (tile === 8 && player.inventory.ruby) canOpen = true;
@@ -129,23 +106,6 @@ function tryOpenDoor() {
             openDoors[doorPos] = true;
             setTimeout(() => { delete openDoors[doorPos]; }, 5000);
         }
-    }
-}
-
-function handleAction() {
-    if (weapon.state !== "idle") return;
-    if (weapon.ammo > 0) shoot(); else reload();
-}
-
-function shoot() {
-    weapon.ammo = 0; weapon.state = "fire"; weapon.frame = 0;
-    weapon.animSpeed = ANIMS.fire.speed; weapon.lastFrameUpdate = performance.now();
-}
-
-function reload() {
-    if (weapon.state === "idle" && weapon.ammo === 0) {
-        weapon.state = "reload"; weapon.frame = 0;
-        weapon.animSpeed = ANIMS.reload.speed; weapon.lastFrameUpdate = performance.now();
     }
 }
 
@@ -164,70 +124,55 @@ function update() {
     sprites.forEach(s => {
         if (!s.collected) {
             const d = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
-            if (d < 40) { s.collected = true; player.inventory[s.type] = true; }
+            if (d < 30) { s.collected = true; player.inventory[s.type] = true; }
         }
     });
-
-    const now = performance.now();
-    const anim = ANIMS[weapon.state];
-    if (weapon.state !== "idle" && now - weapon.lastFrameUpdate > weapon.animSpeed) {
-        weapon.frame++;
-        weapon.lastFrameUpdate = now;
-        if (weapon.frame >= anim.frames.length) {
-            if (weapon.state === "fire") { weapon.state = "reload"; weapon.frame = 0; }
-            else { weapon.ammo = 1; weapon.state = "idle"; weapon.frame = 0; }
-        }
-    }
 }
 
-function drawWalls() {
-    const fov = Math.PI / 3;
+function draw() {
     const viewH = canvas.height - 160;
-    zBuffer = [];
-    const pmx = Math.floor(player.x / TILE);
-    const pmy = Math.floor(player.y / TILE);
+    const fov = Math.PI / 3;
+    
+    // Background
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, viewH/2);
+    ctx.fillStyle = "#222"; ctx.fillRect(0, viewH/2, canvas.width, viewH/2);
 
+    zBuffer = [];
     for (let x = 0; x < canvas.width; x++) {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
         const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
         let rx = player.x, ry = player.y, dist = 0;
 
-        while (dist < 1500) {
+        while (dist < 1000) {
             rx += rayCos * 2; ry += raySin * 2; dist += 2;
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
             
             if (map[my] && map[my][mx] > 0) {
                 let tid = map[my][mx];
-                let tex;
+                let texIdx = tid;
 
-                if ([5,6,7,8].includes(tid)) {
-                    const state = openDoors[`${my},${mx}`] ? "open" : "closed";
-                    tex = wallTextures[`${tid}_${state}`];
-                } else {
-                    tex = wallTextures[tid];
-                }
+                // Door Rendering logic
+                if (tid === 5) texIdx = openDoors[`${my},${mx}`] ? 6 : 5;
+                if (tid === 6) texIdx = openDoors[`${my},${mx}`] ? 8 : 7;
+                if (tid === 7) texIdx = openDoors[`${my},${mx}`] ? 10 : 9;
+                if (tid === 8) texIdx = openDoors[`${my},${mx}`] ? 12 : 11;
 
+                const corr = dist * Math.cos(rayAngle - player.angle);
+                zBuffer[x] = corr;
+                const h = (TILE * viewH) / corr;
+                const tex = wallTextures[texIdx];
+                
                 if (tex && tex.complete) {
-                    const corr = dist * Math.cos(rayAngle - player.angle);
-                    zBuffer[x] = corr; 
-                    const h = (TILE * viewH) / corr;
-                    const yPos = (viewH - h) / 2;
                     let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
-                    let hitX = hitV ? ry % TILE : rx % TILE;
-                    let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
-                    ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
-                    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, dist/1000)})`;
-                    ctx.fillRect(x, yPos, 1, h);
+                    let texX = Math.floor(((hitV ? ry % TILE : rx % TILE) / TILE) * TEXTURE_SIZE);
+                    ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH-h)/2, 1, h);
                 }
-                break; 
+                break;
             }
         }
     }
-}
 
-function drawSprites() {
-    const viewH = canvas.height - 160;
-    const fov = Math.PI / 3;
+    // Sprites
     sprites.forEach(s => {
         if (s.collected || !s.texture.complete) return;
         const dx = s.x - player.x, dy = s.y - player.y;
@@ -248,32 +193,22 @@ function drawSprites() {
             }
         }
     });
-}
 
-function drawHUD() {
+    // HUD
     const top = canvas.height - 160;
-    ctx.fillStyle = "#222"; ctx.fillRect(0, top, canvas.width, 160);
-    ctx.fillStyle = "#000"; ctx.fillRect(40, top + 10, 85, 85);
-    if (faceSheet.complete) ctx.drawImage(faceSheet, 0, 0, 64, 64, 45, top+15, 75, 75);
+    ctx.fillStyle = "#333"; ctx.fillRect(0, top, canvas.width, 160);
+    if (faceSheet.complete) ctx.drawImage(faceSheet, 0, 0, 64, 64, 40, top+20, 80, 80);
     
-    ctx.fillStyle = "white"; ctx.font = "bold 14px monospace";
-    ctx.fillText("KEYS:", 150, top + 35);
-    if (player.inventory.gold) { ctx.fillStyle = "gold"; ctx.fillText("[GOLD KEY]", 150, top + 60); }
-    if (player.inventory.silver) { ctx.fillStyle = "#C0C0C0"; ctx.fillText("[SILVER KEY]", 150, top + 85); }
-    if (player.inventory.ruby) { ctx.fillStyle = "#FF2222"; ctx.fillText("[RUBY KEY]", 150, top + 110); }
-
-    ctx.fillStyle = "red"; ctx.font = "bold 16px monospace"; ctx.fillText("HEALTH", 40, top + 115);
-    ctx.fillStyle = "white"; ctx.font = "bold 40px monospace"; ctx.fillText(`${player.hp}%`, 40, top + 150);
-    ctx.fillStyle = "yellow"; ctx.font = "bold 16px monospace"; ctx.fillText("AMMO", canvas.width - 120, top + 40);
-    ctx.fillStyle = "white"; ctx.font = "bold 30px monospace"; ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80);
+    ctx.fillStyle = "white"; ctx.font = "14px monospace";
+    ctx.fillText("INVENTORY:", 150, top + 40);
+    if (player.inventory.silver) { ctx.fillStyle = "silver"; ctx.fillText("[SILVER KEY]", 150, top + 65); }
+    if (player.inventory.gold) { ctx.fillStyle = "gold"; ctx.fillText("[GOLD KEY]", 150, top + 90); }
+    if (player.inventory.ruby) { ctx.fillStyle = "#ff4444"; ctx.fillText("[RUBY KEY]", 150, top + 115); }
 }
 
 function loop() {
     update();
-    const vH = canvas.height - 160;
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2);
-    ctx.fillStyle = "#222"; ctx.fillRect(0, vH/2, canvas.width, vH/2);
-    drawWalls(); drawSprites(); drawWeapon(); drawHUD();
+    draw();
     requestAnimationFrame(loop);
 }
 loop();
