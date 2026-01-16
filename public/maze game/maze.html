@@ -77,12 +77,15 @@ const wallTextures = {
     "8_open":   loadImg("assets/wall_texture_ruby_door_open-6.png")
 };
 
+const explosionSheet = loadImg("assets/enemy_exploder.png");
+
 const sprites = [
     { x: TILE * 21.5, y: TILE * 21.5, texture: loadImg("assets/wall textures-5.png"), type: 'gold', collected: false },
     { x: TILE * 29.5, y: TILE * 4.5, texture: loadImg("assets/silver_key-2.png"), type: 'silver', collected: false },
     { x: TILE * 37.5, y: TILE * 8.5, texture: loadImg("assets/ruby_key-1.png"), type: 'ruby', collected: false },
-    // ENEMY ADDED HERE
-    { x: TILE * 8.5, y: TILE * 3.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 3, lastAttack: 0, speed: 1.2 }
+    { x: TILE * 8.5, y: TILE * 3.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 3, lastAttack: 0, speed: 1.2 },
+    // NEW KAMIKAZE ENEMY
+    { x: TILE * 9.5, y: TILE * 3.5, texture: loadImg("assets/enemy_exploder-1.png"), type: 'exploder', health: 1, speed: 2.0, state: 'chase', timer: 0, frame: 0 }
 ];
 
 const openDoors = {}; 
@@ -159,16 +162,14 @@ function shoot() {
     weapon.ammo = 0; weapon.state = "fire"; weapon.frame = 0;
     weapon.animSpeed = ANIMS.fire.speed; weapon.lastFrameUpdate = performance.now();
     
-    // Enemy hit logic: Check if any enemy is in front of player when shooting
     sprites.forEach(s => {
-        if (s.type === 'enemy' && s.health > 0) {
+        if ((s.type === 'enemy' || s.type === 'exploder') && s.health > 0) {
             const dx = s.x - player.x, dy = s.y - player.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
             let ang = Math.atan2(dy, dx) - player.angle;
             while (ang < -Math.PI) ang += 2 * Math.PI;
             while (ang > Math.PI) ang -= 2 * Math.PI;
             
-            // If enemy is roughly in center of screen and within range
             if (Math.abs(ang) < 0.2 && dist < 600) {
                 s.health--;
             }
@@ -186,12 +187,12 @@ function reload() {
 function updateEnemies() {
     const now = performance.now();
     sprites.forEach(s => {
-        if (s.type === 'enemy' && s.health > 0) {
-            const dx = player.x - s.x;
-            const dy = player.y - s.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
+        if (s.health <= 0) return;
+        const dx = player.x - s.x;
+        const dy = player.y - s.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
 
-            // Detection range: 5 tiles (5 * 64 = 320)
+        if (s.type === 'enemy') {
             if (dist < 320 && dist > 40) {
                 const angle = Math.atan2(dy, dx);
                 const nx = s.x + Math.cos(angle) * s.speed;
@@ -199,12 +200,34 @@ function updateEnemies() {
                 if (!isWall(nx, s.y)) s.x = nx;
                 if (!isWall(s.x, ny)) s.y = ny;
             }
-
-            // Melee range: ~1 tile or less (60 units)
             if (dist <= 45 && now - s.lastAttack > 1500) {
                 player.hp -= 15;
                 s.lastAttack = now;
                 if (player.hp < 0) player.hp = 0;
+            }
+        } else if (s.type === 'exploder') {
+            if (s.state === 'chase') {
+                if (dist < 400 && dist > 60) {
+                    const angle = Math.atan2(dy, dx);
+                    const nx = s.x + Math.cos(angle) * s.speed;
+                    const ny = s.y + Math.sin(angle) * s.speed;
+                    if (!isWall(nx, s.y)) s.x = nx;
+                    if (!isWall(s.x, ny)) s.y = ny;
+                }
+                if (dist <= 64) { s.state = 'priming'; s.timer = now; }
+            } else if (s.state === 'priming') {
+                if (now - s.timer > 2000) { s.state = 'exploding'; s.timer = now; s.texture = explosionSheet; }
+            } else if (s.state === 'exploding') {
+                s.frame = Math.floor((now - s.timer) / 400); // ~2.5 fps
+                if (s.frame >= 4) {
+                    if (dist <= 64) {
+                        if (dist <= 16) player.hp = 0; 
+                        else if (dist <= 32) player.hp -= 128;
+                        else player.hp -= 50;
+                        if (player.hp < 0) player.hp = 0;
+                    }
+                    s.health = 0;
+                }
             }
         }
     });
@@ -223,7 +246,7 @@ function update() {
     if (!isWall(player.x, ny)) player.y = ny;
 
     sprites.forEach(s => {
-        if (s.type !== 'enemy' && !s.collected) {
+        if (s.type !== 'enemy' && s.type !== 'exploder' && !s.collected) {
             const d = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
             if (d < 30) { s.collected = true; player.inventory[s.type] = true; }
         }
@@ -295,7 +318,6 @@ function drawSprites() {
     const viewH = canvas.height - 160;
     const fov = Math.PI / 3;
     
-    // Sort sprites by distance so closer ones draw on top
     sprites.sort((a,b) => {
         const distA = Math.sqrt((a.x-player.x)**2 + (a.y-player.y)**2);
         const distB = Math.sqrt((b.x-player.x)**2 + (b.y-player.y)**2);
@@ -303,7 +325,7 @@ function drawSprites() {
     });
 
     sprites.forEach(s => {
-        if (s.collected || (s.type === 'enemy' && s.health <= 0) || !s.texture.complete) return;
+        if (s.collected || s.health <= 0 || !s.texture.complete) return;
         const dx = s.x - player.x, dy = s.y - player.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         let ang = Math.atan2(dy, dx) - player.angle;
@@ -316,8 +338,14 @@ function drawSprites() {
             for (let i = 0; i < h; i++) {
                 const cx = Math.floor(sx - h/2 + i);
                 if (cx >= 0 && cx < canvas.width && zBuffer[cx] > corr) {
-                    const texX = Math.floor((i/h) * s.texture.width);
-                    ctx.drawImage(s.texture, texX, 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
+                    if (s.type === 'exploder' && s.state === 'exploding') {
+                        const fw = 320;
+                        const texX = Math.floor((i/h) * fw) + (s.frame * fw);
+                        ctx.drawImage(s.texture, texX, 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
+                    } else {
+                        const texX = Math.floor((i/h) * s.texture.width);
+                        ctx.drawImage(s.texture, texX, 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
+                    }
                 }
             }
         }
@@ -371,5 +399,3 @@ loop();
 </script>
 </body>
 </html>
-
-
