@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Wolfenstein Raycaster</title>
+    <title>Wolfenstein Raycaster - Ghost Doors</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; font-family: monospace; }
         canvas { display: block; }
@@ -10,21 +10,21 @@
 <body>
 <canvas id="c"></canvas>
 <script>
-const canvas = document.getElementById("c")
-const ctx = canvas.getContext("2d")
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
 
 let zBuffer = [];
 
 function resize() {
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-    ctx.imageSmoothingEnabled = false
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    ctx.imageSmoothingEnabled = false;
 }
-window.addEventListener("resize", resize)
-resize()
+window.addEventListener("resize", resize);
+resize();
 
-const TILE = 64
-
+const TILE = 64;
+const TEXTURE_SIZE = 500;
 
 const map = [
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,4,4,3],
@@ -35,17 +35,17 @@ const map = [
     [0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,0,2,0,1,0,1,1,0,0,0,0,1,0,0,0,1,3,4,4,3,1],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,3,3,0,3,3,1,1,1,1,1,1,1,1,4,4,4,4,4,4,4,4],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,3,0,0,0,0,3,3,3,3,3,3,3,4,0,0,0,0,3,0,0,4],
-    [0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,0,5,0,0,0,0,0,5,0,0,0,0,0,0,5,0,3,3,0,3,3,0,4],
+    [0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,0,5,0,0,0,0,0,5,0,0,0,0,0,0,7,0,3,3,0,3,3,0,4],
     [0,0,0,0,0,2,2,2,2,2,2,0,0,3,0,3,0,2,3,0,0,0,0,3,3,3,0,3,3,3,4,0,0,0,0,0,0,0,4],
     [0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2,3,3,5,3,3,3,0,3,0,3,0,0,4,0,3,3,0,3,3,0,4],
     [0,0,0,0,0,2,0,2,2,2,2,0,0,3,0,3,0,2,0,4,0,4,0,0,0,3,0,3,0,0,4,0,0,0,0,0,0,0,4],
     [0,0,0,0,0,2,0,2,0,0,2,2,2,2,2,2,2,2,0,4,0,4,0,0,0,2,0,2,0,0,4,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,1,0,1,1,1,1,1,1,1,1,1,1,0,0,4,0,4,0,0,0,2,0,2,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,1,1,1,1,1,0,5,0,0,0,0,0,0,0,0,1,0,0,4,0,4,0,0,0,2,0,2,0,2,5,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,1,1,0,5,0,0,0,0,0,0,0,0,1,0,0,4,0,4,0,0,0,2,0,2,0,2,6,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,4,0,4,0,0,0,2,0,2,2,2,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,1,0,3,1,3,0,1,1,1,0,0,0,0,0,0,0,4,4,4,0,4,4,4,4,2,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,0,0,2,2,2,2,0,0,0,0,0,0,0,0],
     [0,1,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,4,4,4,4,4,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,2,2,2,2,0,0,2,0,0,0,0,0,0,0,0],
-    [0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,4,4,4,4,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,5,0,0,0,0,0,2,0,0,0,0,0,0,0,0],
+    [0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,4,4,4,4,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,8,0,0,0,0,0,2,0,0,0,0,0,0,0,0],
     [1,1,5,1,0,0,0,0,0,0,0,0,0,0,0,0,1,3,4,4,4,3,1,4,4,4,4,5,4,4,4,4,0,0,0,0,0,0,5,0,0,0,0,0,2,2,2,2,0,0,2,0,0,0,0,0,0,0,0],
     [1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,3,4,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,0,0,0,0,2,0,0,0,2,2,2,0,0,0,0,0,0,0,0],
     [3,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,4,4,0,3,0,3,0,3,0,4,0,0,0,0,0,0,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -53,10 +53,7 @@ const map = [
     [1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,3,4,4,4,3,1,4,0,3,0,3,0,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,3,0,3,0,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,4,4,4,4,4,4],
-
-    
-    
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,4,4,4,4,4,4]
 ];
 
 function loadImg(src) {
@@ -65,21 +62,30 @@ function loadImg(src) {
     return img;
 }
 
-const TEXTURE_SIZE = 500
-const wallTextures = [
-    null,
-    loadImg("assets/wall textures-1.png"),      
-    loadImg("assets/wall textures-2.png"),      
-    loadImg("assets/wall textures-3.png"),      
-    loadImg("assets/wall textures-4.png"),      
-    loadImg("assets/wall_texture_door-1.png"),  
-    loadImg("assets/wall_texture_door_open-2.png") 
-]
+const wallTextures = {
+    1: loadImg("assets/wall textures-1.png"),
+    2: loadImg("assets/wall textures-2.png"),
+    3: loadImg("assets/wall textures-3.png"),
+    4: loadImg("assets/wall textures-4.png"),
+    "5_closed": loadImg("assets/wall_texture_door-1.png"),
+    "5_open":   loadImg("assets/wall_texture_door_open-2.png"),
+    "6_closed": loadImg("assets/wall_texture_silver_door-1.png"),
+    "6_open":   loadImg("assets/wall_texture_silver_door_open-2.png"),
+    "7_closed": loadImg("assets/wall_texture_gold_door-3.png"),
+    "7_open":   loadImg("assets/wall_texture_gold_door_open-4.png"),
+    "8_closed": loadImg("assets/wall_texture_ruby_door-5.png"),
+    "8_open":   loadImg("assets/wall_texture_ruby_door_open-6.png")
+};
 
-const keyTexture = loadImg("assets/wall textures-5.png");
-const sprites = [{ x: TILE * 4.5, y: TILE * 1.5, texture: keyTexture, collected: false }];
+const sprites = [
+    { x: TILE * 21.5, y: TILE * 21.5, texture: loadImg("assets/wall textures-5.png"), type: 'gold', collected: false },
+    { x: TILE * 29.5, y: TILE * 4.5, texture: loadImg("assets/silver_key-2.png"), type: 'silver', collected: false },
+    { x: TILE * 37.5, y: TILE * 8.5, texture: loadImg("assets/ruby_key-1.png"), type: 'ruby', collected: false },
+    // ENEMY ADDED HERE
+    { x: TILE * 8.5, y: TILE * 3.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 3, lastAttack: 0, speed: 1.2 }
+];
+
 const openDoors = {}; 
-
 const reloadSheet = loadImg("assets/gun_reloading.png")
 const fireSheet = loadImg("assets/gun_fire.png")
 const faceSheet = loadImg("assets/charater_hurt_models.png")
@@ -91,7 +97,7 @@ const ANIMS = {
 }
 
 const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 }
-const player = { x: TILE * 2.5, y: TILE * 2.0, angle: 0, move: 2.5, rot: 0.05, hp: 100, hasKey: false }
+const player = { x: TILE * 2.5, y: TILE * 2.5, angle: 0, move: 2.5, rot: 0.05, hp: 100, inventory: { gold: false, silver: false, ruby: false } }
 const keys = {}
 
 window.addEventListener("keydown", e => {
@@ -105,24 +111,41 @@ window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
 window.addEventListener("mousedown", () => handleAction())
 
 function isWall(x, y) {
-    const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
+    const mx = Math.floor(x / TILE);
+    const my = Math.floor(y / TILE);
     if (!map[my] || map[my][mx] === undefined) return true;
+    
     const tile = map[my][mx];
-    if (tile === 5 && openDoors[`${my},${mx}`]) return false;
+    const doorPos = `${my},${mx}`;
+
+    if (tile === 0) return false;
+    
+    if ([5, 6, 7, 8].includes(tile)) {
+        const pmx = Math.floor(player.x / TILE);
+        const pmy = Math.floor(player.y / TILE);
+        if (openDoors[doorPos] || (pmx === mx && pmy === my)) return false;
+    }
     return tile > 0;
 }
 
 function tryOpenDoor() {
-    const checkDist = 60;
-    const dx = player.x + Math.cos(player.angle) * checkDist;
-    const dy = player.y + Math.sin(player.angle) * checkDist;
+    const dx = player.x + Math.cos(player.angle) * 60;
+    const dy = player.y + Math.sin(player.angle) * 60;
     const mx = Math.floor(dx / TILE), my = Math.floor(dy / TILE);
     
-    if (map[my] && map[my][mx] === 5) {
-        const doorKey = `${my},${mx}`;
-        if (!openDoors[doorKey]) {
-            openDoors[doorKey] = true;
-            setTimeout(() => { delete openDoors[doorKey]; }, 5000);
+    if (map[my]) {
+        const tile = map[my][mx];
+        const doorPos = `${my},${mx}`;
+        let canOpen = false;
+
+        if (tile === 5) canOpen = true;
+        if (tile === 6 && player.inventory.silver) canOpen = true;
+        if (tile === 7 && player.inventory.gold) canOpen = true;
+        if (tile === 8 && player.inventory.ruby) canOpen = true;
+
+        if (canOpen && !openDoors[doorPos]) {
+            openDoors[doorPos] = true;
+            setTimeout(() => { delete openDoors[doorPos]; }, 5000);
         }
     }
 }
@@ -135,6 +158,22 @@ function handleAction() {
 function shoot() {
     weapon.ammo = 0; weapon.state = "fire"; weapon.frame = 0;
     weapon.animSpeed = ANIMS.fire.speed; weapon.lastFrameUpdate = performance.now();
+    
+    // Enemy hit logic: Check if any enemy is in front of player when shooting
+    sprites.forEach(s => {
+        if (s.type === 'enemy' && s.health > 0) {
+            const dx = s.x - player.x, dy = s.y - player.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            let ang = Math.atan2(dy, dx) - player.angle;
+            while (ang < -Math.PI) ang += 2 * Math.PI;
+            while (ang > Math.PI) ang -= 2 * Math.PI;
+            
+            // If enemy is roughly in center of screen and within range
+            if (Math.abs(ang) < 0.2 && dist < 600) {
+                s.health--;
+            }
+        }
+    });
 }
 
 function reload() {
@@ -142,6 +181,33 @@ function reload() {
         weapon.state = "reload"; weapon.frame = 0;
         weapon.animSpeed = ANIMS.reload.speed; weapon.lastFrameUpdate = performance.now();
     }
+}
+
+function updateEnemies() {
+    const now = performance.now();
+    sprites.forEach(s => {
+        if (s.type === 'enemy' && s.health > 0) {
+            const dx = player.x - s.x;
+            const dy = player.y - s.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            // Detection range: 5 tiles (5 * 64 = 320)
+            if (dist < 320 && dist > 40) {
+                const angle = Math.atan2(dy, dx);
+                const nx = s.x + Math.cos(angle) * s.speed;
+                const ny = s.y + Math.sin(angle) * s.speed;
+                if (!isWall(nx, s.y)) s.x = nx;
+                if (!isWall(s.x, ny)) s.y = ny;
+            }
+
+            // Melee range: ~1 tile or less (60 units)
+            if (dist <= 45 && now - s.lastAttack > 1500) {
+                player.hp -= 15;
+                s.lastAttack = now;
+                if (player.hp < 0) player.hp = 0;
+            }
+        }
+    });
 }
 
 function update() {
@@ -157,11 +223,13 @@ function update() {
     if (!isWall(player.x, ny)) player.y = ny;
 
     sprites.forEach(s => {
-        if (!s.collected) {
+        if (s.type !== 'enemy' && !s.collected) {
             const d = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
-            if (d < 30) { s.collected = true; player.hasKey = true; }
+            if (d < 30) { s.collected = true; player.inventory[s.type] = true; }
         }
     });
+
+    updateEnemies();
 
     const now = performance.now();
     const anim = ANIMS[weapon.state];
@@ -186,55 +254,62 @@ function drawWalls() {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
         const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
         let rx = player.x, ry = player.y, dist = 0;
+        let hit = false;
 
-        while (dist < 1200) { // Increased distance for larger map
-            rx += rayCos * 2; 
-            ry += raySin * 2; 
-            dist += 2;
-            
+        while (dist < 1200) {
+            rx += rayCos * 1.5; ry += raySin * 1.5; dist += 1.5;
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
-            if (map[my] && map[my][mx] > 0) {
-                let tid = map[my][mx];
-                let isDoorOpen = (tid === 5 && openDoors[`${my},${mx}`]);
 
-                if (isDoorOpen) {
-                    if (mx === pmx && my === pmy) continue; 
-                    else tid = 6; 
+            if (map[my] && map[my][mx] > 0) {
+                if (mx === pmx && my === pmy) continue;
+
+                let tid = map[my][mx];
+                let tex;
+                if ([5, 6, 7, 8].includes(tid)) {
+                    const state = openDoors[`${my},${mx}`] ? "open" : "closed";
+                    if (state === "open") continue; 
+                    tex = wallTextures[`${tid}_${state}`];
+                } else {
+                    tex = wallTextures[tid];
                 }
 
                 const corr = dist * Math.cos(rayAngle - player.angle);
-                zBuffer[x] = corr; 
+                zBuffer[x] = corr;
                 const h = (TILE * viewH) / corr;
-                const yPos = (viewH - h) / 2;
-                const tex = wallTextures[tid];
-                
+
                 if (tex && tex.complete) {
                     let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
-                    let hitX = hitV ? ry % TILE : rx % TILE;
-                    let texX = Math.floor((hitX / TILE) * TEXTURE_SIZE);
-                    ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, yPos, 1, h);
+                    let texX = Math.floor(((hitV ? ry % TILE : rx % TILE) / TILE) * TEXTURE_SIZE);
+                    ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH-h)/2, 1, h);
                 }
-                
                 ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, dist/800)})`;
-                ctx.fillRect(x, yPos, 1, h);
-                break; 
+                ctx.fillRect(x, (viewH-h)/2, 1, h);
+                hit = true; break;
             }
         }
+        if (!hit) zBuffer[x] = 1200;
     }
 }
 
 function drawSprites() {
     const viewH = canvas.height - 160;
     const fov = Math.PI / 3;
+    
+    // Sort sprites by distance so closer ones draw on top
+    sprites.sort((a,b) => {
+        const distA = Math.sqrt((a.x-player.x)**2 + (a.y-player.y)**2);
+        const distB = Math.sqrt((b.x-player.x)**2 + (b.y-player.y)**2);
+        return distB - distA;
+    });
+
     sprites.forEach(s => {
-        if (s.collected || !s.texture.complete) return;
+        if (s.collected || (s.type === 'enemy' && s.health <= 0) || !s.texture.complete) return;
         const dx = s.x - player.x, dy = s.y - player.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         let ang = Math.atan2(dy, dx) - player.angle;
         while (ang < -Math.PI) ang += 2 * Math.PI;
         while (ang > Math.PI) ang -= 2 * Math.PI;
         const corr = dist * Math.cos(ang);
-        
         if (Math.abs(ang) < fov && corr > 10) {
             const h = (TILE * viewH) / corr;
             const sx = (0.5 * (ang / (fov / 2)) + 0.5) * canvas.width;
@@ -247,14 +322,6 @@ function drawSprites() {
             }
         }
     });
-}
-
-function getFaceIndex() {
-    if (player.hp >= 100) return 0;
-    if (player.hp >= 80) return 1;
-    if (player.hp >= 60) return 2;
-    if (player.hp >= 40) return 3;
-    return 4;
 }
 
 function drawWeapon() {
@@ -277,12 +344,18 @@ function drawHUD() {
     const top = canvas.height - 160;
     ctx.fillStyle = "#222"; ctx.fillRect(0, top, canvas.width, 160);
     ctx.fillStyle = "#000"; ctx.fillRect(40, top + 10, 85, 85);
-    if (faceSheet.complete) ctx.drawImage(faceSheet, getFaceIndex()*64, 0, 64, 64, 45, top+15, 75, 75);
+    if (faceSheet.complete) ctx.drawImage(faceSheet, (player.hp >= 80 ? 0 : player.hp >= 40 ? 2 : 4)*64, 0, 64, 64, 45, top+15, 75, 75);
+    
+    ctx.fillStyle = "white"; ctx.font = "bold 14px monospace";
+    ctx.fillText("INVENTORY:", 150, top + 35);
+    if (player.inventory.silver) { ctx.fillStyle = "silver"; ctx.fillText("[SILVER KEY]", 150, top + 60); }
+    if (player.inventory.gold) { ctx.fillStyle = "gold"; ctx.fillText("[GOLD KEY]", 150, top + 85); }
+    if (player.inventory.ruby) { ctx.fillStyle = "#FF4444"; ctx.fillText("[RUBY KEY]", 150, top + 110); }
+
     ctx.fillStyle = "red"; ctx.font = "bold 16px monospace"; ctx.fillText("HEALTH", 40, top + 115);
     ctx.fillStyle = "white"; ctx.font = "bold 40px monospace"; ctx.fillText(`${player.hp}%`, 40, top + 150);
     ctx.fillStyle = "yellow"; ctx.font = "bold 16px monospace"; ctx.fillText("AMMO", canvas.width - 120, top + 40);
     ctx.fillStyle = "white"; ctx.font = "bold 30px monospace"; ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80);
-    if (player.hasKey) { ctx.fillStyle = "gold"; ctx.font = "bold 18px monospace"; ctx.fillText("KEY OBTAINED", canvas.width/2 - 80, top + 80); }
 }
 
 function loop() {
@@ -293,18 +366,9 @@ function loop() {
     drawWalls(); drawSprites(); drawWeapon(); drawHUD();
     requestAnimationFrame(loop);
 }
+
 loop();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
 
