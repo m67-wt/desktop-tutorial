@@ -53,7 +53,6 @@ const map = [
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,3,0,3,0,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,4,4,4,4,4,4],
-
 ];
 
 function loadImg(src) {
@@ -70,13 +69,12 @@ const wallTextures = [
     loadImg("assets/wall textures-3.png"),      
     loadImg("assets/wall textures-4.png"),      
     loadImg("assets/wall_texture_door-1.png"),  
-    loadImg("assets/wall_texture_door_open-2.png") 
+    loadImg("assets/wall_texture_door_open-2.png"),
+    loadImg("assets/wall textures-5.png"), // Texture for Key 6, 7, 8
+    loadImg("assets/wall textures-5.png")
 ]
 
-const keyTexture = loadImg("assets/wall textures-5.png");
-const sprites = [{ x: TILE * 4.5, y: TILE * 1.5, texture: keyTexture, collected: false }];
 const openDoors = {}; 
-
 const reloadSheet = loadImg("assets/gun_reloading.png")
 const fireSheet = loadImg("assets/gun_fire.png")
 const faceSheet = loadImg("assets/charater_hurt_models.png")
@@ -99,18 +97,23 @@ window.addEventListener("keydown", e => {
     if (k === "e") tryOpenDoor();
 })
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
-window.addEventListener("mousedown", () => handleAction())
 
 function isWall(x, y) {
     const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
     if (!map[my] || map[my][mx] === undefined) return true;
     const tile = map[my][mx];
     
-    // Check if player is already inside this tile
+    // Key Collection Logic (Tiles 6, 7, 8)
+    if (tile >= 6 && tile <= 8) {
+        map[my][mx] = 0; // Remove key from map
+        player.hasKey = true;
+        return false;
+    }
+
     const pmx = Math.floor(player.x / TILE);
     const pmy = Math.floor(player.y / TILE);
     
-    // Door logic: If open OR player is standing in it, treat as air (return false)
+    // Door logic: If open OR player is standing in it, treat as air
     if (tile === 5 && (openDoors[`${my},${mx}`] || (mx === pmx && my === pmy))) return false;
     
     return tile > 0;
@@ -160,13 +163,6 @@ function update() {
     if (!isWall(nx, player.y)) player.x = nx;
     if (!isWall(player.x, ny)) player.y = ny;
 
-    sprites.forEach(s => {
-        if (!s.collected) {
-            const d = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
-            if (d < 30) { s.collected = true; player.hasKey = true; }
-        }
-    });
-
     const now = performance.now();
     const anim = ANIMS[weapon.state];
     if (weapon.state !== "idle" && now - weapon.lastFrameUpdate > weapon.animSpeed) {
@@ -200,18 +196,16 @@ function drawWalls() {
             if (map[my] && map[my][mx] > 0) {
                 let tid = map[my][mx];
                 
-                // Logic: If player is physically standing inside the door, 
-                // raycast ignores it (sets it as air).
                 if (tid === 5 && mx === pmx && my === pmy) continue;
-
-                // Texture swapping for normal interaction
                 if (tid === 5 && openDoors[`${my},${mx}`]) tid = 6;
+                // Map keys 6, 7, 8 to the key texture index
+                let drawTid = (tid >= 6 && tid <= 8) ? 7 : tid;
 
                 const corr = dist * Math.cos(rayAngle - player.angle);
                 zBuffer[x] = corr; 
                 const h = (TILE * viewH) / corr;
                 const yPos = (viewH - h) / 2;
-                const tex = wallTextures[tid];
+                const tex = wallTextures[drawTid];
                 
                 if (tex && tex.complete) {
                     let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
@@ -226,32 +220,6 @@ function drawWalls() {
             }
         }
     }
-}
-
-function drawSprites() {
-    const viewH = canvas.height - 160;
-    const fov = Math.PI / 3;
-    sprites.forEach(s => {
-        if (s.collected || !s.texture.complete) return;
-        const dx = s.x - player.x, dy = s.y - player.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        let ang = Math.atan2(dy, dx) - player.angle;
-        while (ang < -Math.PI) ang += 2 * Math.PI;
-        while (ang > Math.PI) ang -= 2 * Math.PI;
-        const corr = dist * Math.cos(ang);
-        
-        if (Math.abs(ang) < fov && corr > 10) {
-            const h = (TILE * viewH) / corr;
-            const sx = (0.5 * (ang / (fov / 2)) + 0.5) * canvas.width;
-            for (let i = 0; i < h; i++) {
-                const cx = Math.floor(sx - h/2 + i);
-                if (cx >= 0 && cx < canvas.width && zBuffer[cx] > corr) {
-                    const texX = Math.floor((i/h) * s.texture.width);
-                    ctx.drawImage(s.texture, texX, 0, 1, s.texture.height, cx, (viewH-h)/2, 1, h);
-                }
-            }
-        }
-    });
 }
 
 function getFaceIndex() {
@@ -295,7 +263,7 @@ function loop() {
     const vH = canvas.height - 160;
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2);
     ctx.fillStyle = "#222"; ctx.fillRect(0, vH/2, canvas.width, vH/2);
-    drawWalls(); drawSprites(); drawWeapon(); drawHUD();
+    drawWalls(); drawWeapon(); drawHUD();
     requestAnimationFrame(loop);
 }
 loop();
