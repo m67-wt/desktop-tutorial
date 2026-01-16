@@ -121,14 +121,14 @@ const keys = {}
 window.addEventListener("keydown", e => {
     const k = e.key.toLowerCase()
     keys[k] = true
-    if (gameState === "win") { location.reload(); return }
+    if (gameState !== "playing") { location.reload(); return }
     if (k === " ") handleAction()
     if (k === "r") reload()
     if (k === "e") tryOpenDoor()
 })
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
 window.addEventListener("mousedown", () => {
-    if (gameState === "win") location.reload()
+    if (gameState !== "playing") location.reload()
     else handleAction()
 })
 
@@ -223,7 +223,7 @@ function updateEnemies() {
                 player.hp -= 15
                 player.lastDmgTime = now
                 s.lastAttack = now
-                if (player.hp < 0) player.hp = 0
+                if (player.hp <= 0) { player.hp = 0; gameState = "lose" }
             }
         } else if (s.type === 'exploder') {
             if (s.state === 'chase') {
@@ -245,7 +245,7 @@ function updateEnemies() {
                         if (dist <= 16) player.hp = 0 
                         else if (dist <= 32) player.hp -= 128
                         else player.hp -= 50
-                        if (player.hp < 0) player.hp = 0
+                        if (player.hp <= 0) { player.hp = 0; gameState = "lose" }
                     }
                     s.health = 0
                 }
@@ -441,21 +441,25 @@ function drawHUD() {
     ctx.fillStyle = "white"; ctx.font = "bold 30px monospace"; ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80)
 }
 
-function drawWinScreen() {
+function drawEndScreen(text, color) {
     ctx.fillStyle = "black"
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.textAlign = "center"
-    ctx.fillStyle = "#90EE90"
+    ctx.fillStyle = color
     ctx.font = "bold 60px monospace"
-    ctx.fillText("YOU WIN", canvas.width/2, canvas.height/2)
+    ctx.fillText(text, canvas.width/2, canvas.height/2)
     ctx.fillStyle = "white"
     ctx.font = "24px monospace"
-    ctx.fillText("PLAY AGAIN", canvas.width/2, canvas.height/2 + 60)
+    ctx.fillText("TRY AGAIN", canvas.width/2, canvas.height/2 + 60)
 }
 
 function loop() {
     if (gameState === "win") {
-        drawWinScreen()
+        drawEndScreen("YOU WIN", "#90EE90")
+        return
+    }
+    if (gameState === "lose") {
+        drawEndScreen("YOU LOSE", "#FF0000")
         return
     }
     update()
