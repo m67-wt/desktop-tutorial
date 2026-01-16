@@ -80,7 +80,9 @@ const wallTextures = {
 const sprites = [
     { x: TILE * 21.5, y: TILE * 21.5, texture: loadImg("assets/wall textures-5.png"), type: 'gold', collected: false },
     { x: TILE * 29.5, y: TILE * 4.5, texture: loadImg("assets/silver_key-2.png"), type: 'silver', collected: false },
-    { x: TILE * 37.5, y: TILE * 8.5, texture: loadImg("assets/ruby_key-1.png"), type: 'ruby', collected: false }
+    { x: TILE * 37.5, y: TILE * 8.5, texture: loadImg("assets/ruby_key-1.png"), type: 'ruby', collected: false },
+    // ENEMY ADDED HERE
+    { x: TILE * 8.5, y: TILE * 3.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 3, lastAttack: 0, speed: 1.2 }
 ];
 
 const openDoors = {}; 
@@ -118,7 +120,6 @@ function isWall(x, y) {
 
     if (tile === 0) return false;
     
-    // Ghost Door logic: Passable if door is open OR player is currently inside that tile
     if ([5, 6, 7, 8].includes(tile)) {
         const pmx = Math.floor(player.x / TILE);
         const pmy = Math.floor(player.y / TILE);
@@ -157,6 +158,22 @@ function handleAction() {
 function shoot() {
     weapon.ammo = 0; weapon.state = "fire"; weapon.frame = 0;
     weapon.animSpeed = ANIMS.fire.speed; weapon.lastFrameUpdate = performance.now();
+    
+    // Enemy hit logic: Check if any enemy is in front of player when shooting
+    sprites.forEach(s => {
+        if (s.type === 'enemy' && s.health > 0) {
+            const dx = s.x - player.x, dy = s.y - player.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            let ang = Math.atan2(dy, dx) - player.angle;
+            while (ang < -Math.PI) ang += 2 * Math.PI;
+            while (ang > Math.PI) ang -= 2 * Math.PI;
+            
+            // If enemy is roughly in center of screen and within range
+            if (Math.abs(ang) < 0.2 && dist < 600) {
+                s.health--;
+            }
+        }
+    });
 }
 
 function reload() {
@@ -164,6 +181,33 @@ function reload() {
         weapon.state = "reload"; weapon.frame = 0;
         weapon.animSpeed = ANIMS.reload.speed; weapon.lastFrameUpdate = performance.now();
     }
+}
+
+function updateEnemies() {
+    const now = performance.now();
+    sprites.forEach(s => {
+        if (s.type === 'enemy' && s.health > 0) {
+            const dx = player.x - s.x;
+            const dy = player.y - s.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            // Detection range: 5 tiles (5 * 64 = 320)
+            if (dist < 320 && dist > 40) {
+                const angle = Math.atan2(dy, dx);
+                const nx = s.x + Math.cos(angle) * s.speed;
+                const ny = s.y + Math.sin(angle) * s.speed;
+                if (!isWall(nx, s.y)) s.x = nx;
+                if (!isWall(s.x, ny)) s.y = ny;
+            }
+
+            // Melee range: ~1 tile or less (60 units)
+            if (dist <= 60 && now - s.lastAttack > 1500) {
+                player.hp -= 15;
+                s.lastAttack = now;
+                if (player.hp < 0) player.hp = 0;
+            }
+        }
+    });
 }
 
 function update() {
@@ -179,11 +223,13 @@ function update() {
     if (!isWall(player.x, ny)) player.y = ny;
 
     sprites.forEach(s => {
-        if (!s.collected) {
+        if (s.type !== 'enemy' && !s.collected) {
             const d = Math.sqrt((player.x - s.x)**2 + (player.y - s.y)**2);
             if (d < 30) { s.collected = true; player.inventory[s.type] = true; }
         }
     });
+
+    updateEnemies();
 
     const now = performance.now();
     const anim = ANIMS[weapon.state];
@@ -215,15 +261,12 @@ function drawWalls() {
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
 
             if (map[my] && map[my][mx] > 0) {
-                // If the player is currently inside this door tile, treat it as empty space (delete it)
                 if (mx === pmx && my === pmy) continue;
 
                 let tid = map[my][mx];
                 let tex;
                 if ([5, 6, 7, 8].includes(tid)) {
                     const state = openDoors[`${my},${mx}`] ? "open" : "closed";
-                    // If door is open, skip drawing it unless we want to see the open frame (tid 6 in your old code)
-                    // Here we just skip drawing open doors so they disappear
                     if (state === "open") continue; 
                     tex = wallTextures[`${tid}_${state}`];
                 } else {
@@ -251,8 +294,16 @@ function drawWalls() {
 function drawSprites() {
     const viewH = canvas.height - 160;
     const fov = Math.PI / 3;
+    
+    // Sort sprites by distance so closer ones draw on top
+    sprites.sort((a,b) => {
+        const distA = Math.sqrt((a.x-player.x)**2 + (a.y-player.y)**2);
+        const distB = Math.sqrt((b.x-player.x)**2 + (b.y-player.y)**2);
+        return distB - distA;
+    });
+
     sprites.forEach(s => {
-        if (s.collected || !s.texture.complete) return;
+        if (s.collected || (s.type === 'enemy' && s.health <= 0) || !s.texture.complete) return;
         const dx = s.x - player.x, dy = s.y - player.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         let ang = Math.atan2(dy, dx) - player.angle;
