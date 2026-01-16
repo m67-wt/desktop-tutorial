@@ -12,6 +12,7 @@ const canvas = document.getElementById("c")
 const ctx = canvas.getContext("2d")
 
 let zBuffer = []
+let gameState = "playing"
 
 function resize() {
     canvas.width = window.innerWidth
@@ -120,12 +121,16 @@ const keys = {}
 window.addEventListener("keydown", e => {
     const k = e.key.toLowerCase()
     keys[k] = true
+    if (gameState === "win") { location.reload(); return }
     if (k === " ") handleAction()
     if (k === "r") reload()
     if (k === "e") tryOpenDoor()
 })
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
-window.addEventListener("mousedown", () => handleAction())
+window.addEventListener("mousedown", () => {
+    if (gameState === "win") location.reload()
+    else handleAction()
+})
 
 function isWall(x, y) {
     const mx = Math.floor(x / TILE)
@@ -158,7 +163,7 @@ function tryOpenDoor() {
         if (tile === 5) canOpen = true
         if (tile === 6 && player.inventory.silver) canOpen = true
         if (tile === 7 && player.inventory.gold) canOpen = true
-        if (tile === 8 && player.inventory.ruby) canOpen = true
+        if (tile === 8 && player.inventory.ruby) { gameState = "win"; return }
 
         if (canOpen && !openDoors[doorPos]) {
             openDoors[doorPos] = true
@@ -436,7 +441,23 @@ function drawHUD() {
     ctx.fillStyle = "white"; ctx.font = "bold 30px monospace"; ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80)
 }
 
+function drawWinScreen() {
+    ctx.fillStyle = "black"
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.textAlign = "center"
+    ctx.fillStyle = "#90EE90"
+    ctx.font = "bold 60px monospace"
+    ctx.fillText("YOU WIN", canvas.width/2, canvas.height/2)
+    ctx.fillStyle = "white"
+    ctx.font = "24px monospace"
+    ctx.fillText("PLAY AGAIN", canvas.width/2, canvas.height/2 + 60)
+}
+
 function loop() {
+    if (gameState === "win") {
+        drawWinScreen()
+        return
+    }
     update()
     const vH = canvas.height - 160
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2)
