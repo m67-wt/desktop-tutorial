@@ -583,7 +583,10 @@ function drawHUD() {
 
 
 function loop() {
-
+// Add this inside the while loop:
+if (mx === pmx && my === pmy && [5, 6, 7, 8].includes(map[my][mx])) {
+    continue; // This "hides" the door tile if you are standing in it
+}
     update();
 
     const vH = canvas.height - 160;
@@ -599,14 +602,12 @@ function loop() {
 }
 
 loop();
-// Add this inside the while loop:
-if (mx === pmx && my === pmy && [5, 6, 7, 8].includes(map[my][mx])) {
-    continue; // This "hides" the door tile if you are standing in it
-}
+
 </script>
 
 </body>
 
 </html>
+
 
 
