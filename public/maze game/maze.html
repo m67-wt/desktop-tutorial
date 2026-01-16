@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Wolfenstein Raycaster - Fixed</title>
+    <title>Wolfenstein Raycaster - Full System</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; font-family: monospace; }
         canvas { display: block; }
@@ -26,13 +26,41 @@ resize()
 const TILE = 64
 const TEXTURE_SIZE = 500
 
-// Map: 5=Normal, 6=Silver, 7=Gold, 8=Ruby
+/** * MAP LEGEND:
+ * 5: Normal Door (No Key)
+ * 6: Silver Door (Requires Silver Key)
+ * 7: Gold Door (Requires Gold Key)
+ * 8: Ruby Door (Requires Ruby Key)
+ */
 const map = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,5,0,6,0,7,0,8,0,0,0,0,0,1], 
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,4,4,3],
+    [2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,4,0,0,0,3],
+    [2,0,0,2,0,0,0,0,0,0,2,2,2,2,2,2,2,2,0,1,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,4],
+    [2,0,0,5,0,0,0,0,0,0,5,0,0,0,0,0,0,2,0,1,0,1,1,1,5,1,1,1,1,5,1,1,4,0,0,0,3],
+    [2,2,2,2,0,0,0,0,0,0,2,0,0,0,0,0,0,2,0,1,0,1,1,0,0,0,0,1,0,0,0,1,0,0,0,0,4],
+    [0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,0,2,0,1,0,1,1,0,0,0,0,1,0,0,0,1,3,4,4,3,1],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,3,3,0,3,3,1,1,1,1,1,1,1,1,4,4,4,4,4,4,4,4],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,3,0,0,0,0,3,3,3,3,3,3,3,4,0,0,0,0,3,0,0,4],
+    [0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,0,5,0,0,0,0,0,5,0,0,0,0,0,0,7,0,3,3,0,3,3,0,4],
+    [0,0,0,0,0,2,2,2,2,2,2,0,0,3,0,3,0,2,3,0,0,0,0,3,3,3,0,3,3,3,4,0,0,0,0,0,0,0,4],
+    [0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2,3,3,5,3,3,3,0,3,0,3,0,0,4,0,3,3,0,3,3,0,4],
+    [0,0,0,0,0,2,0,2,2,2,2,0,0,3,0,3,0,2,0,4,0,4,0,0,0,3,0,3,0,0,4,0,0,0,0,0,0,0,4],
+    [0,0,0,0,0,2,0,2,0,0,2,2,2,2,2,2,2,2,0,4,0,4,0,0,0,2,0,2,0,0,4,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,1,0,1,1,1,1,1,1,1,1,1,1,0,0,4,0,4,0,0,0,2,0,2,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,1,1,0,5,0,0,0,0,0,0,0,0,1,0,0,4,0,4,0,0,0,2,0,2,0,2,6,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,4,0,4,0,0,0,2,0,2,2,2,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,0,3,1,3,0,1,1,1,0,0,0,0,0,0,0,4,4,4,0,4,4,4,4,2,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,0,0,2,2,2,2,0,0,0,0,0,0,0,0],
+    [0,1,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,4,4,4,4,4,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,2,2,2,2,0,0,2,0,0,0,0,0,0,0,0],
+    [0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,4,4,4,4,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,8,0,0,0,0,0,2,0,0,0,0,0,0,0,0],
+    [1,1,5,1,0,0,0,0,0,0,0,0,0,0,0,0,1,3,4,4,4,3,1,4,4,4,4,5,4,4,4,4,0,0,0,0,0,0,5,0,0,0,0,0,2,2,2,2,0,0,2,0,0,0,0,0,0,0,0],
+    [1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,3,4,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,0,0,0,0,2,0,0,0,2,2,2,0,0,0,0,0,0,0,0],
+    [3,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,4,4,0,3,0,3,0,3,0,4,0,0,0,0,0,0,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,3,4,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,3,4,4,4,3,1,4,0,3,0,3,0,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,3,0,3,0,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,4,4,4,4,4,4],
+
 ];
 
 function loadImg(src) {
@@ -41,43 +69,51 @@ function loadImg(src) {
     return img;
 }
 
-// Fixed Texture Array
-const wallTextures = [
-    null,                                           // 0
-    loadImg("assets/wall textures-1.png"),          // 1
-    loadImg("assets/wall textures-2.png"),          // 2
-    loadImg("assets/wall textures-3.png"),          // 3
-    loadImg("assets/wall textures-4.png"),          // 4
-    loadImg("assets/wall_texture_door-1.png"),      // 5: Normal Door Closed
-    loadImg("assets/wall_texture_door_open-2.png"), // 6: Normal Door Open (used internally)
-    loadImg("assets/wall_texture_silver_door-1.png"),// 7: Silver Door Closed
-    loadImg("assets/wall_texture_silver_door_open-2.png"), // 8: Silver Door Open
-    loadImg("assets/wall_texture_gold_door-3.png"),  // 9: Gold Door Closed
-    loadImg("assets/wall_texture_gold_door_open-4.png"),   // 10: Gold Door Open
-    loadImg("assets/wall_texture_ruby_door-5.png"),  // 11: Ruby Door Closed
-    loadImg("assets/wall_texture_ruby_door_open-6.png")    // 12: Ruby Door Open
-];
+const wallTextures = {
+    1: loadImg("assets/wall textures-1.png"),
+    2: loadImg("assets/wall textures-2.png"),
+    3: loadImg("assets/wall textures-3.png"),
+    4: loadImg("assets/wall textures-4.png"),
+    "5_closed": loadImg("assets/wall_texture_door-1.png"),
+    "5_open":   loadImg("assets/wall_texture_door_open-2.png"),
+    "6_closed": loadImg("assets/wall_texture_silver_door-1.png"),
+    "6_open":   loadImg("assets/wall_texture_silver_door_open-2.png"),
+    "7_closed": loadImg("assets/wall_texture_gold_door-3.png"),
+    "7_open":   loadImg("assets/wall_texture_gold_door_open-4.png"),
+    "8_closed": loadImg("assets/wall_texture_ruby_door-5.png"),
+    "8_open":   loadImg("assets/wall_texture_ruby_door_open-6.png")
+};
 
 const sprites = [
-    { x: TILE * 4.5, y: TILE * 3.5, texture: loadImg("assets/wall_texture_silver_door-1.png"), type: 'silver', collected: false },
-    { x: TILE * 6.5, y: TILE * 3.5, texture: loadImg("assets/wall textures-5.png"), type: 'gold', collected: false },
-    { x: TILE * 8.5, y: TILE * 3.5, texture: loadImg("assets/wall_texture_ruby_door-5.png"), type: 'ruby', collected: false }
+    { x: TILE * 21.5, y: TILE * 21.5, texture: loadImg("assets/wall textures-5.png"), type: 'gold', collected: false },
+    { x: TILE * 22.5, y: TILE * 21.5, texture: loadImg("assets/wall_texture_silver_door-1.png"), type: 'silver', collected: false },
+    { x: TILE * 23.5, y: TILE * 21.5, texture: loadImg("assets/wall_texture_ruby_door-5.png"), type: 'ruby', collected: false }
 ];
 
 const openDoors = {}; 
-const faceSheet = loadImg("assets/charater_hurt_models.png");
-const keys = {};
+const reloadSheet = loadImg("assets/gun_reloading.png")
+const fireSheet = loadImg("assets/gun_fire.png")
+const faceSheet = loadImg("assets/charater_hurt_models.png")
 
-const player = { 
-    x: TILE * 1.5, y: TILE * 1.5, angle: 0, move: 2.5, rot: 0.05, hp: 100,
-    inventory: { gold: false, silver: false, ruby: false }
-};
+const ANIMS = {
+    idle:   { frames: [0], sheet: reloadSheet, count: 21, speed: 125 },
+    fire:   { frames: [0, 1, 2, 3, 4], sheet: fireSheet, count: 5, speed: 166 }, 
+    reload: { frames: Array.from({length: 21}, (_, i) => i), sheet: reloadSheet, count: 21, speed: 125 }
+}
+
+const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 }
+const player = { x: TILE * 2.5, y: TILE * 2.5, angle: 0, move: 2.5, rot: 0.05, hp: 100, inventory: { gold: false, silver: false, ruby: false } }
+const keys = {}
 
 window.addEventListener("keydown", e => {
-    keys[e.key.toLowerCase()] = true;
-    if (e.key.toLowerCase() === "e") tryOpenDoor();
-});
-window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+    const k = e.key.toLowerCase();
+    keys[k] = true;
+    if (k === " ") handleAction();
+    if (k === "r") reload();
+    if (k === "e") tryOpenDoor();
+})
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false)
+window.addEventListener("mousedown", () => handleAction())
 
 function isWall(x, y) {
     const mx = Math.floor(x / TILE), my = Math.floor(y / TILE);
@@ -88,8 +124,8 @@ function isWall(x, y) {
 }
 
 function tryOpenDoor() {
-    const dx = player.x + Math.cos(player.angle) * 64;
-    const dy = player.y + Math.sin(player.angle) * 64;
+    const dx = player.x + Math.cos(player.angle) * 60;
+    const dy = player.y + Math.sin(player.angle) * 60;
     const mx = Math.floor(dx / TILE), my = Math.floor(dy / TILE);
     
     if (map[my]) {
@@ -106,6 +142,23 @@ function tryOpenDoor() {
             openDoors[doorPos] = true;
             setTimeout(() => { delete openDoors[doorPos]; }, 5000);
         }
+    }
+}
+
+function handleAction() {
+    if (weapon.state !== "idle") return;
+    if (weapon.ammo > 0) shoot(); else reload();
+}
+
+function shoot() {
+    weapon.ammo = 0; weapon.state = "fire"; weapon.frame = 0;
+    weapon.animSpeed = ANIMS.fire.speed; weapon.lastFrameUpdate = performance.now();
+}
+
+function reload() {
+    if (weapon.state === "idle" && weapon.ammo === 0) {
+        weapon.state = "reload"; weapon.frame = 0;
+        weapon.animSpeed = ANIMS.reload.speed; weapon.lastFrameUpdate = performance.now();
     }
 }
 
@@ -127,52 +180,58 @@ function update() {
             if (d < 30) { s.collected = true; player.inventory[s.type] = true; }
         }
     });
+
+    const now = performance.now();
+    const anim = ANIMS[weapon.state];
+    if (weapon.state !== "idle" && now - weapon.lastFrameUpdate > weapon.animSpeed) {
+        weapon.frame++;
+        weapon.lastFrameUpdate = now;
+        if (weapon.frame >= anim.frames.length) {
+            if (weapon.state === "fire") { weapon.state = "reload"; weapon.frame = 0; }
+            else { weapon.ammo = 1; weapon.state = "idle"; weapon.frame = 0; }
+        }
+    }
 }
 
-function draw() {
-    const viewH = canvas.height - 160;
+function drawWalls() {
     const fov = Math.PI / 3;
-    
-    // Background
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, viewH/2);
-    ctx.fillStyle = "#222"; ctx.fillRect(0, viewH/2, canvas.width, viewH/2);
-
+    const viewH = canvas.height - 160;
     zBuffer = [];
     for (let x = 0; x < canvas.width; x++) {
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
         const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
         let rx = player.x, ry = player.y, dist = 0;
-
-        while (dist < 1000) {
+        while (dist < 1200) {
             rx += rayCos * 2; ry += raySin * 2; dist += 2;
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
-            
             if (map[my] && map[my][mx] > 0) {
                 let tid = map[my][mx];
-                let texIdx = tid;
-
-                // Door Rendering logic
-                if (tid === 5) texIdx = openDoors[`${my},${mx}`] ? 6 : 5;
-                if (tid === 6) texIdx = openDoors[`${my},${mx}`] ? 8 : 7;
-                if (tid === 7) texIdx = openDoors[`${my},${mx}`] ? 10 : 9;
-                if (tid === 8) texIdx = openDoors[`${my},${mx}`] ? 12 : 11;
-
+                let tex;
+                if ([5, 6, 7, 8].includes(tid)) {
+                    const state = openDoors[`${my},${mx}`] ? "open" : "closed";
+                    tex = wallTextures[`${tid}_${state}`];
+                } else {
+                    tex = wallTextures[tid];
+                }
                 const corr = dist * Math.cos(rayAngle - player.angle);
                 zBuffer[x] = corr;
                 const h = (TILE * viewH) / corr;
-                const tex = wallTextures[texIdx];
-                
                 if (tex && tex.complete) {
                     let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
                     let texX = Math.floor(((hitV ? ry % TILE : rx % TILE) / TILE) * TEXTURE_SIZE);
                     ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH-h)/2, 1, h);
                 }
+                ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, dist/800)})`;
+                ctx.fillRect(x, (viewH-h)/2, 1, h);
                 break;
             }
         }
     }
+}
 
-    // Sprites
+function drawSprites() {
+    const viewH = canvas.height - 160;
+    const fov = Math.PI / 3;
     sprites.forEach(s => {
         if (s.collected || !s.texture.complete) return;
         const dx = s.x - player.x, dy = s.y - player.y;
@@ -193,22 +252,54 @@ function draw() {
             }
         }
     });
+}
 
-    // HUD
+function getFaceIndex() {
+    if (player.hp >= 80) return 0;
+    if (player.hp >= 40) return 2;
+    return 4;
+}
+
+function drawWeapon() {
+    const anim = ANIMS[weapon.state];
+    const sheet = anim.sheet;
+    if (sheet.complete && sheet.width > 0) {
+        const fw = sheet.width / anim.count;
+        const fh = sheet.height;
+        const dh = canvas.height * 0.7;
+        const dw = dh * (fw / fh);
+        ctx.save();
+        ctx.translate(canvas.width * 0.25, canvas.height - 160);
+        ctx.rotate(15 * Math.PI / 180);
+        ctx.drawImage(sheet, anim.frames[weapon.frame] * fw, 0, fw, fh, -dw * 0.1, -dh * 0.95, dw, dh);
+        ctx.restore();
+    }
+}
+
+function drawHUD() {
     const top = canvas.height - 160;
-    ctx.fillStyle = "#333"; ctx.fillRect(0, top, canvas.width, 160);
-    if (faceSheet.complete) ctx.drawImage(faceSheet, 0, 0, 64, 64, 40, top+20, 80, 80);
+    ctx.fillStyle = "#222"; ctx.fillRect(0, top, canvas.width, 160);
+    ctx.fillStyle = "#000"; ctx.fillRect(40, top + 10, 85, 85);
+    if (faceSheet.complete) ctx.drawImage(faceSheet, getFaceIndex()*64, 0, 64, 64, 45, top+15, 75, 75);
     
-    ctx.fillStyle = "white"; ctx.font = "14px monospace";
-    ctx.fillText("INVENTORY:", 150, top + 40);
-    if (player.inventory.silver) { ctx.fillStyle = "silver"; ctx.fillText("[SILVER KEY]", 150, top + 65); }
-    if (player.inventory.gold) { ctx.fillStyle = "gold"; ctx.fillText("[GOLD KEY]", 150, top + 90); }
-    if (player.inventory.ruby) { ctx.fillStyle = "#ff4444"; ctx.fillText("[RUBY KEY]", 150, top + 115); }
+    ctx.fillStyle = "white"; ctx.font = "bold 14px monospace";
+    ctx.fillText("INVENTORY:", 150, top + 35);
+    if (player.inventory.silver) { ctx.fillStyle = "silver"; ctx.fillText("[SILVER KEY]", 150, top + 60); }
+    if (player.inventory.gold) { ctx.fillStyle = "gold"; ctx.fillText("[GOLD KEY]", 150, top + 85); }
+    if (player.inventory.ruby) { ctx.fillStyle = "#FF4444"; ctx.fillText("[RUBY KEY]", 150, top + 110); }
+
+    ctx.fillStyle = "red"; ctx.font = "bold 16px monospace"; ctx.fillText("HEALTH", 40, top + 115);
+    ctx.fillStyle = "white"; ctx.font = "bold 40px monospace"; ctx.fillText(`${player.hp}%`, 40, top + 150);
+    ctx.fillStyle = "yellow"; ctx.font = "bold 16px monospace"; ctx.fillText("AMMO", canvas.width - 120, top + 40);
+    ctx.fillStyle = "white"; ctx.font = "bold 30px monospace"; ctx.fillText(weapon.ammo > 0 ? "1/1" : "0/1", canvas.width - 120, top + 80);
 }
 
 function loop() {
     update();
-    draw();
+    const vH = canvas.height - 160;
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2);
+    ctx.fillStyle = "#222"; ctx.fillRect(0, vH/2, canvas.width, vH/2);
+    drawWalls(); drawSprites(); drawWeapon(); drawHUD();
     requestAnimationFrame(loop);
 }
 loop();
