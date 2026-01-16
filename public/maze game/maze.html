@@ -377,77 +377,80 @@ function update() {
 }
 
 
-
 function drawWalls() {
-
     const fov = Math.PI / 3;
-
     const viewH = canvas.height - 160;
-
     zBuffer = [];
+    
+    // Get player's current tile to handle "inside-the-wall" rendering
+    const pmx = Math.floor(player.x / TILE);
+    const pmy = Math.floor(player.y / TILE);
 
     for (let x = 0; x < canvas.width; x++) {
-
         const rayAngle = player.angle - fov/2 + (x/canvas.width)*fov;
-
         const rayCos = Math.cos(rayAngle), raySin = Math.sin(rayAngle);
-
+        
         let rx = player.x, ry = player.y, dist = 0;
+        let hit = false;
 
         while (dist < 1200) {
-
-            rx += rayCos * 2; ry += raySin * 2; dist += 2;
+            rx += rayCos * 1.5; // Smaller steps for better accuracy
+            ry += raySin * 1.5; 
+            dist += 1.5;
 
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
 
             if (map[my] && map[my][mx] > 0) {
+                // Ignore the wall if the player is currently standing inside it
+                if (mx === pmx && my === pmy) continue;
 
                 let tid = map[my][mx];
-
                 let tex;
-
+                
                 if ([5, 6, 7, 8].includes(tid)) {
-
                     const state = openDoors[`${my},${mx}`] ? "open" : "closed";
-
+                    // If door is fully open, ray should pass through
+                    if (state === "open") continue; 
                     tex = wallTextures[`${tid}_${state}`];
-
                 } else {
-
                     tex = wallTextures[tid];
-
                 }
 
                 const corr = dist * Math.cos(rayAngle - player.angle);
-
                 zBuffer[x] = corr;
-
                 const h = (TILE * viewH) / corr;
-                const pmx = Math.floor(player.x / TILE);
-const pmy = Math.floor(player.y / TILE);
 
                 if (tex && tex.complete) {
-
                     let hitV = Math.floor((rx - rayCos * 2) / TILE) !== mx;
-
                     let texX = Math.floor(((hitV ? ry % TILE : rx % TILE) / TILE) * TEXTURE_SIZE);
-
                     ctx.drawImage(tex, texX, 0, 1, TEXTURE_SIZE, x, (viewH-h)/2, 1, h);
-
                 }
 
+                // Shading based on distance
                 ctx.fillStyle = `rgba(0,0,0,${Math.min(0.8, dist/800)})`;
-
                 ctx.fillRect(x, (viewH-h)/2, 1, h);
-
+                hit = true;
                 break;
-
             }
-
         }
-
+        if (!hit) zBuffer[x] = 1200;
     }
+}
 
+function loop() {
+    update();
+    const vH = canvas.height - 160;
+    
+    // Clear and draw Background
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2); // Ceiling
+    ctx.fillStyle = "#222"; ctx.fillRect(0, vH/2, canvas.width, vH/2); // Floor
+    
+    drawWalls(); 
+    drawSprites(); 
+    drawWeapon(); 
+    drawHUD();
+    
+    requestAnimationFrame(loop);
 }
 
 
@@ -608,6 +611,7 @@ loop();
 </body>
 
 </html>
+
 
 
 
