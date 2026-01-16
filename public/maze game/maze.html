@@ -118,7 +118,10 @@ function isWall(x, y) {
 
     if (tile === 0) return false;
     if ([5, 6, 7, 8].includes(tile)) {
-        if (openDoors[doorPos] || player.lastDoor === doorPos) return false;
+        // Door is passable if open OR if we are currently standing inside that specific tile
+        const px = Math.floor(player.x / TILE);
+        const py = Math.floor(player.y / TILE);
+        if (openDoors[doorPos] || (px === mx && py === my)) return false;
     }
     return tile > 0;
 }
@@ -163,12 +166,6 @@ function reload() {
 }
 
 function update() {
-    const pMX = Math.floor(player.x / TILE);
-    const pMY = Math.floor(player.y / TILE);
-    const currentTile = map[pMY] ? map[pMY][pMX] : 0;
-    
-    player.lastDoor = [5,6,7,8].includes(currentTile) ? `${pMY},${pMX}` : null;
-
     let moveStep = 0;
     if (keys["w"]) moveStep = player.move;
     if (keys["s"]) moveStep = -player.move;
@@ -217,8 +214,8 @@ function drawWalls() {
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
 
             if (map[my] && map[my][mx] > 0) {
-                // If we are standing inside this specific door tile, don't render it
-                if (mx === pmx && my === pmy && [5,6,7,8].includes(map[my][mx])) continue;
+                // IMPORTANT: Only ignore the wall/door if the player is currently inside it
+                if (mx === pmx && my === pmy) continue;
 
                 let tid = map[my][mx];
                 let tex;
