@@ -83,9 +83,27 @@ const sprites = [
     { x: TILE * 21.5, y: TILE * 21.5, texture: loadImg("assets/wall textures-5.png"), type: 'gold', collected: false },
     { x: TILE * 29.5, y: TILE * 4.5, texture: loadImg("assets/silver_key-2.png"), type: 'silver', collected: false },
     { x: TILE * 37.5, y: TILE * 8.5, texture: loadImg("assets/ruby_key-1.png"), type: 'ruby', collected: false },
-    { x: TILE * 8.5, y: TILE * 3.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.2 },
-    // NEW KAMIKAZE ENEMY
-    { x: TILE * 9.5, y: TILE * 3.5, texture: loadImg("assets/enemy_exploder-1.png"), type: 'exploder', health: 1, speed: 2.0, state: 'chase', timer: 0, frame: 0 }
+    { x: TILE * 8.5, y: TILE * 3.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 30.5, y: TILE * 4.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 19.5, y: TILE * 21.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 42.5, y: TILE * 19.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 21.5, y: TILE * 8.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 35.5, y: TILE * 3.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 27.5, y: TILE * 23.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 49.5, y: TILE * 15.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 14.5, y: TILE * 14.0, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 27.5, y: TILE * 21.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 29.5, y: TILE * 13.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+    { x: TILE * 27.5, y: TILE * 8.5, texture: loadImg("assets/enemy_melee-1.png"), type: 'enemy', health: 2, lastAttack: 0, speed: 1.0 },
+
+    
+    { x: TILE * 9.5, y: TILE * 4.5, texture: loadImg("assets/enemy_exploder-1.png"), type: 'exploder', health: 1, speed: 2.0, state: 'chase', timer: 0, frame: 0 }
+    { x: TILE * 35.5, y: TILE * 11.5, texture: loadImg("assets/enemy_exploder-1.png"), type: 'exploder', health: 1, speed: 2.0, state: 'chase', timer: 0, frame: 0 },
+    { x: TILE * 35.5, y: TILE * 7.5, texture: loadImg("assets/enemy_exploder-1.png"), type: 'exploder', health: 1, speed: 2.0, state: 'chase', timer: 0, frame: 0 },
+    { x: TILE * 20.5, y: TILE * 21.5, texture: loadImg("assets/enemy_exploder-1.png"), type: 'exploder', health: 1, speed: 2.0, state: 'chase', timer: 0, frame: 0 },
+    { x: TILE * 1.5, y: TILE * 21.5, texture: loadImg("assets/enemy_exploder-1.png"), type: 'exploder', health: 1, speed: 2.0, state: 'chase', timer: 0, frame: 0 },
+    { x: TILE * 41.5, y: TILE * 21.5, texture: loadImg("assets/enemy_exploder-1.png"), type: 'exploder', health: 1, speed: 2.0, state: 'chase', timer: 0, frame: 0 },
+    { x: TILE * 36.5, y: TILE * 3.5, texture: loadImg("assets/enemy_exploder-1.png"), type: 'exploder', health: 1, speed: 2.0, state: 'chase', timer: 0, frame: 0 },
 ];
 
 const openDoors = {}; 
@@ -430,5 +448,6 @@ loop();
 </script>
 </body>
 </html>
+
 
 
