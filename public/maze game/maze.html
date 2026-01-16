@@ -232,7 +232,34 @@ function updateEnemies() {
         }
     });
 }
+function drawCrosshair() {
+    const centerX = canvas.width / 2;
+    const centerY = (canvas.height - 160) / 2; // Centers it on the game view, above the HUD
+    const size = 10; // Length of the crosshair lines
+    const gap = 5;   // Gap in the middle
 
+    ctx.strokeStyle = "lime"; // Classic Wolfenstein green
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    // Vertical lines
+    ctx.moveTo(centerX, centerY - size - gap);
+    ctx.lineTo(centerX, centerY - gap);
+    ctx.moveTo(centerX, centerY + gap);
+    ctx.lineTo(centerX, centerY + size + gap);
+
+    // Horizontal lines
+    ctx.moveTo(centerX - size - gap, centerY);
+    ctx.lineTo(centerX - gap, centerY);
+    ctx.moveTo(centerX + gap, centerY);
+    ctx.lineTo(centerX + size + gap, centerY);
+    
+    ctx.stroke();
+
+    // Optional: Tiny center dot
+    ctx.fillStyle = "lime";
+    ctx.fillRect(centerX - 1, centerY - 1, 2, 2);
+}
 function update() {
     let moveStep = 0;
     if (keys["w"]) moveStep = player.move;
@@ -391,7 +418,11 @@ function loop() {
     const vH = canvas.height - 160;
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, canvas.width, vH/2);
     ctx.fillStyle = "#222"; ctx.fillRect(0, vH/2, canvas.width, vH/2);
-    drawWalls(); drawSprites(); drawWeapon(); drawHUD();
+    drawWalls(); 
+    drawSprites(); 
+    drawWeapon(); 
+    drawHUD();
+    drawCrosshair(); // <--- Add this here
     requestAnimationFrame(loop);
 }
 
@@ -399,3 +430,4 @@ loop();
 </script>
 </body>
 </html>
+
