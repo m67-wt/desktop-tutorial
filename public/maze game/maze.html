@@ -201,7 +201,7 @@ function updateEnemies() {
             }
 
             // Melee range: ~1 tile or less (60 units)
-            if (dist <= 20 && now - s.lastAttack > 1500) {
+            if (dist <= 45 && now - s.lastAttack > 1500) {
                 player.hp -= 15;
                 s.lastAttack = now;
                 if (player.hp < 0) player.hp = 0;
@@ -371,4 +371,5 @@ loop();
 </script>
 </body>
 </html>
+
 
