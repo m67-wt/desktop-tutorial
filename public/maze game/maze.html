@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Wolfenstein Raycaster - Full System</title>
+    <title>Wolfenstein Raycaster - Ghost Doors</title>
     <style>
         body { margin: 0; overflow: hidden; background: black; font-family: monospace; }
         canvas { display: block; }
@@ -95,7 +95,7 @@ const ANIMS = {
 }
 
 const weapon = { ammo: 1, state: "idle", frame: 0, lastFrameUpdate: 0, animSpeed: 125 }
-const player = { x: TILE * 2.5, y: TILE * 2.5, angle: 0, move: 2.5, rot: 0.05, hp: 100, inventory: { gold: false, silver: false, ruby: false }, lastDoor: null }
+const player = { x: TILE * 2.5, y: TILE * 2.5, angle: 0, move: 2.5, rot: 0.05, hp: 100, inventory: { gold: false, silver: false, ruby: false } }
 const keys = {}
 
 window.addEventListener("keydown", e => {
@@ -117,8 +117,12 @@ function isWall(x, y) {
     const doorPos = `${my},${mx}`;
 
     if (tile === 0) return false;
+    
+    // Ghost Door logic: Passable if door is open OR player is currently inside that tile
     if ([5, 6, 7, 8].includes(tile)) {
-        if (openDoors[doorPos] || player.lastDoor === doorPos) return false;
+        const pmx = Math.floor(player.x / TILE);
+        const pmy = Math.floor(player.y / TILE);
+        if (openDoors[doorPos] || (pmx === mx && pmy === my)) return false;
     }
     return tile > 0;
 }
@@ -163,12 +167,6 @@ function reload() {
 }
 
 function update() {
-    const pMX = Math.floor(player.x / TILE);
-    const pMY = Math.floor(player.y / TILE);
-    const currentTile = map[pMY] ? map[pMY][pMX] : 0;
-    
-    player.lastDoor = [5,6,7,8].includes(currentTile) ? `${pMY},${pMX}` : null;
-
     let moveStep = 0;
     if (keys["w"]) moveStep = player.move;
     if (keys["s"]) moveStep = -player.move;
@@ -217,13 +215,15 @@ function drawWalls() {
             let mx = Math.floor(rx/TILE), my = Math.floor(ry/TILE);
 
             if (map[my] && map[my][mx] > 0) {
-                // If we are standing inside this specific door tile, don't render it
-                if (mx === pmx && my === pmy && [5,6,7,8].includes(map[my][mx])) continue;
+                // If the player is currently inside this door tile, treat it as empty space (delete it)
+                if (mx === pmx && my === pmy) continue;
 
                 let tid = map[my][mx];
                 let tex;
                 if ([5, 6, 7, 8].includes(tid)) {
                     const state = openDoors[`${my},${mx}`] ? "open" : "closed";
+                    // If door is open, skip drawing it unless we want to see the open frame (tid 6 in your old code)
+                    // Here we just skip drawing open doors so they disappear
                     if (state === "open") continue; 
                     tex = wallTextures[`${tid}_${state}`];
                 } else {
