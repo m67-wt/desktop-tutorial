@@ -214,19 +214,14 @@ function isWall(x, y) {
     const tile = map[my][mx];
     const doorPos = `${my},${mx}`;
 
-    // 1. If it's air, it's not a wall
     if (tile === 0) return false;
 
-    // 2. If it's a door
     if ([5, 6, 7, 8].includes(tile)) {
-        // Allow walking through if:
-        // - The door is marked as open via the 'E' key
-        // - OR the player is currently occupying this specific door tile
+        // If door is open OR we are already inside it, let us pass
         if (openDoors[doorPos] || player.lastDoor === doorPos) {
             return false;
         }
     }
-
     return tile > 0;
 }
 
@@ -428,6 +423,8 @@ function drawWalls() {
                 zBuffer[x] = corr;
 
                 const h = (TILE * viewH) / corr;
+                const pmx = Math.floor(player.x / TILE);
+const pmy = Math.floor(player.y / TILE);
 
                 if (tex && tex.complete) {
 
@@ -602,10 +599,14 @@ function loop() {
 }
 
 loop();
-
+// Add this inside the while loop:
+if (mx === pmx && my === pmy && [5, 6, 7, 8].includes(map[my][mx])) {
+    continue; // This "hides" the door tile if you are standing in it
+}
 </script>
 
 </body>
 
 </html>
+
 
