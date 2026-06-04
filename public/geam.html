@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>???</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            text-align: center;
+        }
+
+        canvas {
+            background-color: #1a1a1a;
+            border: 2px solid #444;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            display: block;
+        }
+
+        #ui {
+            margin-top: 15px;
+            font-size: 18px;
+            letter-spacing: 2px;
+            height: 24px;
+        }
+
+        #instructions {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <div id="ui">Score: 0</div>
+        <div id="instructions">Use Left and Right Arrow Keys (or A / D)</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const ui = document.getElementById('ui');
+
+        // Game State
+        let score = 0;
+        let gameOver = false;
+        const speedMultiplier = 1.05;
+
+        // Player object
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 50,
+            radius: 12,
+            color: '#00ffcc',
+            speed: 6,
+            dx: 0
+        };
+
+        // Arrays for falling entities
+        const hazards = [];
+        const targets = [];
+
+        // Spawn timers
+        let lastHazardSpawn = 0;
+        let lastTargetSpawn = 0;
+        let hazardInterval = 1200; // ms
+        let targetInterval = 2000; // ms
+
+        // Controls
+        const keys = {};
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (gameOver && e.code === 'Space') {
+                resetGame();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        function spawnHazard() {
+            const size = Math.random() * 20 + 10;
+            hazards.push({
+                x: Math.random() * (canvas.width - size) + size/2,
+                y: -size,
+                size: size,
+                speed: Math.random() * 3 + 2,
+                color: '#ff4136'
+            });
+        }
+
+        function spawnTarget() {
+            const radius = 8;
+            targets.push({
+                x: Math.random() * (canvas.width - radius * 2) + radius,
+                y: -radius,
+                radius: radius,
+                speed: Math.random() * 2 + 2,
+                color: '#ffdc00'
+            });
+        }
+
+        function resetGame() {
+            score = 0;
+            gameOver = false;
+            hazards.length = 0;
+            targets.length = 0;
+            hazardInterval = 1200;
+            player.x = canvas.width / 2;
+            ui.textContent = `Score: ${score}`;
+            requestAnimationFrame(update);
+        }
+
+        function update(timestamp) {
+            if (gameOver) return;
+
+            // Handle Input
+            player.dx = 0;
+            if (keys['ArrowLeft'] || keys['KeyA']) player.dx = -player.speed;
+            if (keys['ArrowRight'] || keys['KeyD']) player.dx = player.speed;
+
+            // Move Player
+            player.x += player.dx;
+            // Screen boundaries
+            if (player.x - player.radius < 0) player.x = player.radius;
+            if (player.x + player.radius > canvas.width) player.x = canvas.width - player.radius;
+
+            // Spawning
+            if (timestamp - lastHazardSpawn > hazardInterval) {
+                spawnHazard();
+                lastHazardSpawn = timestamp;
+            }
+            if (timestamp - lastTargetSpawn > targetInterval) {
+                spawnTarget();
+                lastTargetSpawn = timestamp;
+            }
+
+            // Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Player
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = player.color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = player.color;
+            ctx.fill();
+            ctx.closePath();
+            ctx.shadowBlur = 0; // Reset shadow
+
+            // Update & Draw Hazards
+            for (let i = hazards.length - 1; i >= 0; i--) {
+                const h = hazards[i];
+                h.y += h.speed;
+
+                // Draw Hazard (Square)
+                ctx.fillStyle = h.color;
+                ctx.fillRect(h.x - h.size/2, h.y - h.size/2, h.size, h.size);
+
+                // Collision with Player
+                const distX = Math.abs(player.x - h.x);
+                const distY = Math.abs(player.y - h.y);
+
+                if (distX <= (h.size/2 + player.radius) && distY <= (h.size/2 + player.radius)) {
+                    gameOver = true;
+                }
+
+                // Remove offscreen
+                if (h.y - h.size > canvas.height) {
+                    hazards.splice(i, 1);
+                }
+            }
+
+            // Update & Draw Targets
+            for (let i = targets.length - 1; i >= 0; i--) {
+                const t = targets[i];
+                t.y += t.speed;
+
+                // Draw Target (Triangle)
+                ctx.beginPath();
+                ctx.moveTo(t.x, t.y - t.radius);
+                ctx.lineTo(t.x + t.radius, t.y + t.radius);
+                ctx.lineTo(t.x - t.radius, t.y + t.radius);
+                ctx.closePath();
+                ctx.fillStyle = t.color;
+                ctx.fill();
+
+                // Collision with Player (Circle-to-Circle approximation)
+                const dist = Math.hypot(player.x - t.x, player.y - t.y);
+                if (dist < player.radius + t.radius) {
+                    score += 10;
+                    ui.textContent = `Score: ${score}`;
+                    targets.splice(i, 1);
+                    
+                    // Ramp up difficulty slightly
+                    hazardInterval = Math.max(400, hazardInterval * 0.98);
+                    continue;
+                }
+
+                // Remove offscreen
+                if (t.y - t.radius > canvas.height) {
+                    targets.splice(i, 1);
+                }
+            }
+
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#ff4136';
+                ctx.font = '30px "Courier New"';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
+
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px "Courier New"';
+                ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+                ctx.fillText('Press SPACE to Restart', canvas.width / 2, canvas.height / 2 + 60);
+            } else {
+                requestAnimationFrame(update);
+            }
+        }
+
+        // Start the loop
+        requestAnimationFrame((timestamp) => {
+            lastHazardSpawn = timestamp;
+            lastTargetSpawn = timestamp;
+            update(timestamp);
+        });
+    </script>
+</body>
+</html>
